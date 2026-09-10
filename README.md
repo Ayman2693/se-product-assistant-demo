@@ -933,3 +933,52 @@ production uses at most three concurrent source crawls.
 
 A redeploy safely stops any old in-memory background sync. Catalog imports are
 upserts, so already committed products are not corrupted by interruption.
+
+
+# Phase 4.7 — Capacitor engineering qualification
+
+Capacitors now have their own technical qualification flow instead of being
+treated as a category-only product.
+
+Core interactive questions:
+
+1. capacitance
+2. minimum voltage rating
+3. capacitor technology
+4. mounting style
+5. capacitance tolerance
+
+The parser also accepts these directly in natural language, for example:
+
+`47 uF 25 V tantalum SMD capacitor ±10%`
+
+Advanced optional requirements are parsed and used when supplied:
+
+- case size (0402, 0603, 0805, 1206, ...)
+- maximum ESR
+- minimum ripple current
+- minimum lifetime
+- operating temperature range
+- explicit minimum stored energy
+
+Catalog feature extraction now captures the corresponding fields from SE
+product text when they are present. Unknown fields remain unknown; the matcher
+does not invent missing specifications.
+
+Engineering comparison rules:
+
+- capacitance: nominal value must match
+- rated voltage: product rating must be >= requested minimum
+- tolerance: tighter is acceptable
+- ESR: lower/equal is acceptable
+- ripple current: higher/equal is acceptable
+- lifetime: higher/equal is acceptable
+- temperature: product range must cover the requested range
+- stored energy: compares ideal 0.5*C*V^2 only when the customer explicitly
+  asks for an energy requirement; it is labelled theoretical and is not a
+  usable-energy guarantee
+
+No database migration is required. Existing ProductFeature.raw_features_json is
+used for capacitor-specific structured values. On Render, the production
+bootstrap re-extracts structured features for the existing catalog on deploy,
+so a second full catalog web crawl is not required for Phase 4.7.

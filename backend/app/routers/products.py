@@ -167,6 +167,7 @@ def _json(value, fallback):
 def serialize_features(f: ProductFeature | None):
     if not f:
         return None
+    raw = _json(f.raw_features_json, {})
     return {
         "technologies": _json(f.technologies_json, []),
         "cellular_class": f.cellular_class,
@@ -184,6 +185,16 @@ def serialize_features(f: ProductFeature | None):
         "documents_url": f.documents_url or "",
         "request_url": f.request_url or "",
         "imported_live": bool(f.imported_live),
+        "capacitance_uf": raw.get("capacitance_uf"),
+        "capacitor_voltage_v": raw.get("capacitor_voltage_v"),
+        "capacitor_tolerance_pct": raw.get("capacitor_tolerance_pct"),
+        "capacitor_technology": raw.get("capacitor_technology"),
+        "capacitor_mounting": raw.get("capacitor_mounting"),
+        "capacitor_case_size": raw.get("capacitor_case_size"),
+        "capacitor_esr_ohm": raw.get("capacitor_esr_ohm"),
+        "capacitor_ripple_current_a": raw.get("capacitor_ripple_current_a"),
+        "capacitor_lifetime_h": raw.get("capacitor_lifetime_h"),
+        "capacitor_theoretical_energy_j": raw.get("capacitor_theoretical_energy_j"),
     }
 
 def serialize_product(p: Product):

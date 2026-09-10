@@ -39,6 +39,19 @@ type Requirements = {
   maxFootprint?: string;
   formFactor?: string;
   gnssDualBand?: string;
+
+  // Capacitor-specific engineering requirements.
+  capacitorCapacitance?: string;
+  capacitorVoltage?: string;
+  capacitorTechnology?: string;
+  capacitorMounting?: string;
+  capacitorTolerance?: string;
+  capacitorCaseSize?: string;
+  capacitorEsrMax?: string;
+  capacitorRippleMin?: string;
+  capacitorLifetimeMin?: string;
+  capacitorTemperatureRange?: string;
+  capacitorEnergyMin?: string;
 };
 
 type QuestionKey =
@@ -69,7 +82,18 @@ type QuestionKey =
   | "bluetoothRequirement"
   | "maxFootprint"
   | "formFactor"
-  | "gnssDualBand";
+  | "gnssDualBand"
+  | "capacitorCapacitance"
+  | "capacitorVoltage"
+  | "capacitorTechnology"
+  | "capacitorMounting"
+  | "capacitorTolerance"
+  | "capacitorCaseSize"
+  | "capacitorEsrMax"
+  | "capacitorRippleMin"
+  | "capacitorLifetimeMin"
+  | "capacitorTemperatureRange"
+  | "capacitorEnergyMin";
 
 type Option = {
   label: string;
@@ -93,6 +117,16 @@ type ProductFeatures = {
   documents_url: string;
   request_url: string;
   imported_live: boolean;
+  capacitance_uf?: number | null;
+  capacitor_voltage_v?: number | null;
+  capacitor_tolerance_pct?: number | null;
+  capacitor_technology?: string | null;
+  capacitor_mounting?: string | null;
+  capacitor_case_size?: string | null;
+  capacitor_esr_ohm?: number | null;
+  capacitor_ripple_current_a?: number | null;
+  capacitor_lifetime_h?: number | null;
+  capacitor_theoretical_energy_j?: number | null;
 };
 
 type Product = {
@@ -166,6 +200,19 @@ type RequirementInterpretResponse = {
     max_footprint_mm2?: number | null;
     form_factor?: string | null;
     gnss_dual_band?: boolean | null;
+    capacitance_uf?: number | null;
+    capacitor_voltage_v?: number | null;
+    capacitor_tolerance_pct?: number | null;
+    capacitor_tolerance_open?: boolean;
+    capacitor_technology?: string | null;
+    capacitor_mounting?: string | null;
+    capacitor_case_size?: string | null;
+    capacitor_esr_max_ohm?: number | null;
+    capacitor_ripple_current_min_a?: number | null;
+    capacitor_lifetime_min_h?: number | null;
+    capacitor_temperature_min_c?: number | null;
+    capacitor_temperature_max_c?: number | null;
+    capacitor_energy_min_j?: number | null;
   };
   evidence: string[];
   confidence: number;
@@ -211,6 +258,17 @@ const LABELS_DE: Record<string, string> = {
   maxFootprint: "Maximale Fläche",
   formFactor: "Bauform",
   gnssDualBand: "GNSS-Bänder",
+  capacitorCapacitance: "Kapazität",
+  capacitorVoltage: "Nennspannung",
+  capacitorTechnology: "Kondensatortechnologie",
+  capacitorMounting: "Montage",
+  capacitorTolerance: "Toleranz",
+  capacitorCaseSize: "Baugröße",
+  capacitorEsrMax: "Max. ESR",
+  capacitorRippleMin: "Min. Ripple-Strom",
+  capacitorLifetimeMin: "Min. Lebensdauer",
+  capacitorTemperatureRange: "Temperaturbereich",
+  capacitorEnergyMin: "Min. Energie",
 };
 
 const OPTION_DE: Record<string, string> = {
@@ -273,6 +331,15 @@ const OPTION_DE: Record<string, string> = {
   "Analog output": "Analogausgang",
   "Digital output": "Digitalausgang",
   "No preference / not sure": "Keine Präferenz / noch offen",
+  "Ceramic / MLCC": "Keramik / MLCC",
+  "Tantalum": "Tantal",
+  "Film": "Folie",
+  "Aluminum electrolytic": "Aluminium-Elektrolyt",
+  "Polymer": "Polymer",
+  "Supercapacitor": "Superkondensator",
+  "SMD / SMT": "SMD / SMT",
+  "Through-hole": "THT / bedrahtet",
+  "No preference": "Keine Präferenz",
   "Yes": "Ja",
   "No": "Nein",
   "Yes, GNSS positioning": "Ja, GNSS-Positionierung",
@@ -601,6 +668,60 @@ function evidenceSourceLabel(item: MatchCriterionEvidence) {
   return item.page_number ? `${base} · p. ${item.page_number}` : base;
 }
 
+
+function parseCapacitanceUf(text: string): number | null {
+  const m = text.match(/(\d+(?:[.,]\d+)?)\s*(pF|nF|uF|µF|μF|mF|F)\b/i);
+  if (!m) return null;
+  const value = Number(m[1].replace(",", "."));
+  const unit = m[2].toLowerCase();
+  const factor =
+    unit === "pf" ? 1e-6 :
+    unit === "nf" ? 1e-3 :
+    unit === "mf" ? 1e3 :
+    unit === "f" ? 1e6 : 1;
+  return value * factor;
+}
+
+function formatCapacitanceUf(value: number): string {
+  const clean = (n: number) => Number(n.toPrecision(6)).toString();
+  if (value >= 1e6) return `${clean(value / 1e6)} F`;
+  if (value >= 1000) return `${clean(value / 1000)} mF`;
+  if (value >= 1) return `${clean(value)} µF`;
+  if (value >= 0.001) return `${clean(value * 1000)} nF`;
+  return `${clean(value * 1e6)} pF`;
+}
+
+function parseSimpleNumber(text: string): number | null {
+  const m = text.match(/-?\d+(?:[.,]\d+)?/);
+  return m ? Number(m[0].replace(",", ".")) : null;
+}
+
+function parseEsrOhm(text: string): number | null {
+  const m = text.match(/(\d+(?:[.,]\d+)?)\s*(mohm|mΩ|ohm|Ω)/i);
+  if (!m) return null;
+  const v = Number(m[1].replace(",", "."));
+  return /^m/i.test(m[2]) ? v / 1000 : v;
+}
+
+function parseCurrentA(text: string): number | null {
+  const m = text.match(/(\d+(?:[.,]\d+)?)\s*(mA|A)\b/i);
+  if (!m) return null;
+  const v = Number(m[1].replace(",", "."));
+  return m[2].toLowerCase() === "ma" ? v / 1000 : v;
+}
+
+function capacitorTechnologyFromText(text: string): string | undefined {
+  const t = text.toLowerCase();
+  if (/super\s*cap|supercapacitor|ultracap|edlc/.test(t)) return "Supercapacitor";
+  if (/tantal/.test(t) && /polymer/.test(t)) return "Tantalum polymer";
+  if (/tantal/.test(t)) return "Tantalum";
+  if (/ceramic|mlcc|keramik|\bx7r\b|\bx5r\b|\bc0g\b|\bnp0\b|\by5v\b/.test(t)) return "Ceramic";
+  if (/film|polypropylene|polyester|folie/.test(t)) return "Film";
+  if (/alumin(?:um|ium).*(electrolytic|elektrolyt)|\belko\b/.test(t)) return "Aluminum electrolytic";
+  if (/polymer/.test(t)) return "Polymer";
+  return undefined;
+}
+
 function inferFromText(text: string): Partial<Requirements> {
   const t = text.toLowerCase();
   const out: Partial<Requirements> = {};
@@ -701,6 +822,52 @@ function inferFromText(text: string): Partial<Requirements> {
     if (/external antenna|externe antenne/.test(t)) out.catalogCategory = "External Antennas";
     else if (/smd antenna|chip antenna|smd-?antenne|chip-?antenne/.test(t)) out.catalogCategory = "SMD Antennas";
     else if (/embedded antenna|eingebettete antenne|leiterplattenantenne/.test(t)) out.catalogCategory = "Embedded Antennas";
+  }
+
+
+  // Capacitor-specific values can be supplied directly in the first sentence.
+  if (out.catalogCategory === "Capacitors") {
+    const c = parseCapacitanceUf(text);
+    if (c != null) out.capacitorCapacitance = formatCapacitanceUf(c);
+
+    const vm = text.match(/(\d+(?:[.,]\d+)?)\s*V\b/i);
+    if (vm) out.capacitorVoltage = `${Number(vm[1].replace(",", "."))} V`;
+
+    const tol = text.match(/(?:±|\+\/-|\+-)\s*(\d+(?:[.,]\d+)?)\s*%/);
+    if (tol) out.capacitorTolerance = `±${Number(tol[1].replace(",", "."))}%`;
+
+    const technology = capacitorTechnologyFromText(text);
+    if (technology) out.capacitorTechnology = technology;
+
+    if (/through[- ]?hole|\btht\b|\bradial\b|\baxial\b|\bleaded\b/.test(t)) {
+      out.capacitorMounting = "Through-hole";
+    } else if (/\bsmd\b|\bsmt\b|surface[- ]?mount/.test(t)) {
+      out.capacitorMounting = "SMD";
+    }
+
+    const caseMatch = text.match(/\b(0201|0402|0603|0805|1206|1210|1812|2220)\b/i);
+    if (caseMatch) out.capacitorCaseSize = caseMatch[1];
+
+    const esr = /(?:\besr\b|equivalent series resistance)/i.test(text) ? parseEsrOhm(text) : null;
+    if (esr != null) out.capacitorEsrMax = `≤ ${esr} Ω`;
+
+    if (/ripple/i.test(text)) {
+      const ripple = parseCurrentA(text);
+      if (ripple != null) out.capacitorRippleMin = `≥ ${ripple} A`;
+    }
+
+    const life = text.match(/(?:life(?:time)?|load life|service life|lebensdauer)[^0-9]{0,16}(\d{2,7})\s*(?:h|hours?|stunden)/i);
+    if (life) out.capacitorLifetimeMin = `≥ ${life[1]} h`;
+
+    const temp = text.match(/(-?\d{1,3})\s*(?:°\s*C)?\s*(?:to|\.\.\.|…|-)\s*\+?(-?\d{1,3})\s*°\s*C/i);
+    if (temp) out.capacitorTemperatureRange = `${temp[1]}…${temp[2]} °C`;
+
+    const energy = text.match(/(?:energy|stored energy|energie)[^0-9]{0,12}(\d+(?:[.,]\d+)?)\s*(mJ|J)\b/i);
+    if (energy) {
+      let e = Number(energy[1].replace(",", "."));
+      if (energy[2].toLowerCase() === "mj") e /= 1000;
+      out.capacitorEnergyMin = `≥ ${e} J`;
+    }
   }
 
   if (/\bi2c\b|\bi²c\b/.test(t)) out.genericInterface = "i2c";
@@ -828,6 +995,28 @@ async function interpretWithBackend(text: string): Promise<Partial<Requirements>
     maxFootprint: r.max_footprint_mm2 ? `≤ ${r.max_footprint_mm2} mm²` : undefined,
     formFactor: r.form_factor ?? undefined,
     gnssDualBand: r.gnss_dual_band ? "L1 + L5 required" : undefined,
+    capacitorCapacitance:
+      r.capacitance_uf != null ? formatCapacitanceUf(r.capacitance_uf) : undefined,
+    capacitorVoltage:
+      r.capacitor_voltage_v != null ? `${r.capacitor_voltage_v} V` : undefined,
+    capacitorTolerance:
+      r.capacitor_tolerance_pct != null ? `±${r.capacitor_tolerance_pct}%` :
+      r.capacitor_tolerance_open ? "No preference" : undefined,
+    capacitorTechnology: r.capacitor_technology ?? undefined,
+    capacitorMounting: r.capacitor_mounting ?? undefined,
+    capacitorCaseSize: r.capacitor_case_size ?? undefined,
+    capacitorEsrMax:
+      r.capacitor_esr_max_ohm != null ? `≤ ${r.capacitor_esr_max_ohm} Ω` : undefined,
+    capacitorRippleMin:
+      r.capacitor_ripple_current_min_a != null ? `≥ ${r.capacitor_ripple_current_min_a} A` : undefined,
+    capacitorLifetimeMin:
+      r.capacitor_lifetime_min_h != null ? `≥ ${r.capacitor_lifetime_min_h} h` : undefined,
+    capacitorTemperatureRange:
+      r.capacitor_temperature_min_c != null && r.capacitor_temperature_max_c != null
+        ? `${r.capacitor_temperature_min_c}…${r.capacitor_temperature_max_c} °C`
+        : undefined,
+    capacitorEnergyMin:
+      r.capacitor_energy_min_j != null ? `≥ ${r.capacitor_energy_min_j} J` : undefined,
   };
 }
 
@@ -888,6 +1077,78 @@ function questionFor(req: Requirements): { key: QuestionKey; text: string; optio
         { label: "No preference / not sure", value: "No preference" },
       ],
     };
+  }
+
+  if (req.catalogCategory === "Capacitors") {
+    if (!req.capacitorCapacitance) {
+      return {
+        key: "capacitorCapacitance",
+        text: "What capacitance do you need?",
+        options: [
+          { label: "100 nF", value: "100 nF" },
+          { label: "1 µF", value: "1 µF" },
+          { label: "10 µF", value: "10 µF" },
+          { label: "47 µF", value: "47 µF" },
+          { label: "100 µF", value: "100 µF" },
+        ],
+      };
+    }
+
+    if (!req.capacitorVoltage) {
+      return {
+        key: "capacitorVoltage",
+        text: "What minimum voltage rating should the capacitor support?",
+        options: [
+          { label: "6.3 V", value: "6.3 V" },
+          { label: "10 V", value: "10 V" },
+          { label: "16 V", value: "16 V" },
+          { label: "25 V", value: "25 V" },
+          { label: "50 V", value: "50 V" },
+          { label: "100 V", value: "100 V" },
+        ],
+      };
+    }
+
+    if (!req.capacitorTechnology) {
+      return {
+        key: "capacitorTechnology",
+        text: "Do you have a preferred capacitor technology?",
+        options: [
+          { label: "Ceramic / MLCC", value: "Ceramic" },
+          { label: "Tantalum", value: "Tantalum" },
+          { label: "Film", value: "Film" },
+          { label: "Aluminum electrolytic", value: "Aluminum electrolytic" },
+          { label: "Polymer", value: "Polymer" },
+          { label: "Supercapacitor", value: "Supercapacitor" },
+          { label: "No preference", value: "No preference" },
+        ],
+      };
+    }
+
+    if (!req.capacitorMounting) {
+      return {
+        key: "capacitorMounting",
+        text: "What mounting style do you need?",
+        options: [
+          { label: "SMD / SMT", value: "SMD" },
+          { label: "Through-hole", value: "Through-hole" },
+          { label: "No preference", value: "No preference" },
+        ],
+      };
+    }
+
+    if (!req.capacitorTolerance) {
+      return {
+        key: "capacitorTolerance",
+        text: "Do you have a capacitance tolerance requirement?",
+        options: [
+          { label: "±5%", value: "±5%" },
+          { label: "±10%", value: "±10%" },
+          { label: "±20%", value: "±20%" },
+          { label: "No preference", value: "No preference" },
+        ],
+      };
+    }
   }
 
   if (!req.specialRequirements) {
@@ -1384,6 +1645,56 @@ function editableQuestionFor(
       text: "Update the product type:",
       options: DOMAIN_CATEGORY_OPTIONS[req.productDomain ?? ""] ?? [],
     },
+    capacitorCapacitance: {
+      text: "Update the required capacitance:",
+      options: [
+        { label: "100 nF", value: "100 nF" },
+        { label: "1 µF", value: "1 µF" },
+        { label: "10 µF", value: "10 µF" },
+        { label: "47 µF", value: "47 µF" },
+        { label: "100 µF", value: "100 µF" },
+      ],
+    },
+    capacitorVoltage: {
+      text: "Update the minimum voltage rating:",
+      options: [
+        { label: "6.3 V", value: "6.3 V" },
+        { label: "10 V", value: "10 V" },
+        { label: "16 V", value: "16 V" },
+        { label: "25 V", value: "25 V" },
+        { label: "50 V", value: "50 V" },
+        { label: "100 V", value: "100 V" },
+      ],
+    },
+    capacitorTechnology: {
+      text: "Update the capacitor technology:",
+      options: [
+        { label: "Ceramic / MLCC", value: "Ceramic" },
+        { label: "Tantalum", value: "Tantalum" },
+        { label: "Film", value: "Film" },
+        { label: "Aluminum electrolytic", value: "Aluminum electrolytic" },
+        { label: "Polymer", value: "Polymer" },
+        { label: "Supercapacitor", value: "Supercapacitor" },
+        { label: "No preference", value: "No preference" },
+      ],
+    },
+    capacitorMounting: {
+      text: "Update the mounting style:",
+      options: [
+        { label: "SMD / SMT", value: "SMD" },
+        { label: "Through-hole", value: "Through-hole" },
+        { label: "No preference", value: "No preference" },
+      ],
+    },
+    capacitorTolerance: {
+      text: "Update the tolerance requirement:",
+      options: [
+        { label: "±5%", value: "±5%" },
+        { label: "±10%", value: "±10%" },
+        { label: "±20%", value: "±20%" },
+        { label: "No preference", value: "No preference" },
+      ],
+    },
     genericInterface: {
       text: "Update the preferred electrical interface / output:",
       options: [
@@ -1645,6 +1956,26 @@ function naturalReply(key: QuestionKey, value: Option["value"]) {
     maxFootprint: `Good — mechanical footprint target: <strong>${htmlEscape(v)}</strong>.`,
     formFactor: `Understood — form factor: <strong>${htmlEscape(v)}</strong>.`,
     gnssDualBand: `Thanks — GNSS band requirement: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorCapacitance: `Good — required capacitance: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorVoltage: `Good — minimum voltage rating: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorTechnology:
+      v === "No preference"
+        ? "Okay — I won’t restrict the selection to one capacitor technology."
+        : `Understood — capacitor technology: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorMounting:
+      v === "No preference"
+        ? "Okay — mounting style remains open."
+        : `Understood — mounting: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorTolerance:
+      v === "No preference"
+        ? "Okay — no fixed capacitance tolerance is required."
+        : `Good — tolerance requirement: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorCaseSize: `Case size: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorEsrMax: `Maximum ESR: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorRippleMin: `Minimum ripple current: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorLifetimeMin: `Minimum lifetime: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorTemperatureRange: `Operating temperature: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorEnergyMin: `Minimum stored-energy requirement: <strong>${htmlEscape(v)}</strong>.`,
   };
   return replies[key] ?? `Thanks — <strong>${htmlEscape(v)}</strong>.`;
 }
@@ -1685,6 +2016,23 @@ function localizedNaturalReply(key: QuestionKey, value: Option["value"], languag
     maxFootprint: `Maximale Fläche: <strong>${htmlEscape(v)}</strong>.`,
     formFactor: `Bauform: <strong>${htmlEscape(v)}</strong>.`,
     gnssDualBand: `GNSS-Bänder: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorCapacitance: `Kapazität: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorVoltage: `Nennspannung mindestens: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorTechnology: v === "No preference"
+      ? "Okay — keine feste Kondensatortechnologie."
+      : `Kondensatortechnologie: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorMounting: v === "No preference"
+      ? "Okay — Montageart bleibt offen."
+      : `Montage: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorTolerance: v === "No preference"
+      ? "Okay — keine feste Toleranzvorgabe."
+      : `Toleranz: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorCaseSize: `Baugröße: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorEsrMax: `Maximaler ESR: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorRippleMin: `Minimaler Ripple-Strom: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorLifetimeMin: `Mindestlebensdauer: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorTemperatureRange: `Temperaturbereich: <strong>${htmlEscape(v)}</strong>.`,
+    capacitorEnergyMin: `Mindestenergie: <strong>${htmlEscape(v)}</strong>.`,
   };
   return generic[key] ?? "Verstanden.";
 }
@@ -1822,6 +2170,15 @@ function App() {
     } else if (DOMAIN_CATEGORY_OPTIONS[requirements.productDomain ?? ""]?.length) {
       expected.push("catalogCategory");
       if (requirements.productDomain === "sensors") expected.push("genericInterface");
+      if (requirements.catalogCategory === "Capacitors") {
+        expected.push(
+          "capacitorCapacitance",
+          "capacitorVoltage",
+          "capacitorTechnology",
+          "capacitorMounting",
+          "capacitorTolerance"
+        );
+      }
     }
 
     const unique = [...new Set(expected)];
@@ -1891,6 +2248,45 @@ function App() {
       form_factor:
         req.formFactor && req.formFactor !== "No preference" ? req.formFactor : null,
       gnss_dual_band: req.gnssDualBand === "L1 + L5 required" ? true : null,
+
+      capacitance_uf:
+        req.capacitorCapacitance ? parseCapacitanceUf(req.capacitorCapacitance) : null,
+      capacitor_voltage_v:
+        req.capacitorVoltage ? parseSimpleNumber(req.capacitorVoltage) : null,
+      capacitor_tolerance_pct:
+        req.capacitorTolerance && req.capacitorTolerance !== "No preference"
+          ? parseSimpleNumber(req.capacitorTolerance)
+          : null,
+      capacitor_technology:
+        req.capacitorTechnology && req.capacitorTechnology !== "No preference"
+          ? req.capacitorTechnology
+          : null,
+      capacitor_mounting:
+        req.capacitorMounting && req.capacitorMounting !== "No preference"
+          ? req.capacitorMounting
+          : null,
+      capacitor_case_size: req.capacitorCaseSize ?? null,
+      capacitor_esr_max_ohm:
+        req.capacitorEsrMax ? parseSimpleNumber(req.capacitorEsrMax) : null,
+      capacitor_ripple_current_min_a:
+        req.capacitorRippleMin ? parseSimpleNumber(req.capacitorRippleMin) : null,
+      capacitor_lifetime_min_h:
+        req.capacitorLifetimeMin ? Math.round(parseSimpleNumber(req.capacitorLifetimeMin) ?? 0) || null : null,
+      capacitor_temperature_min_c:
+        req.capacitorTemperatureRange
+          ? Number(req.capacitorTemperatureRange.match(/-?\d+(?:[.,]\d+)?/)?.[0].replace(",", ".") ?? "") || null
+          : null,
+      capacitor_temperature_max_c:
+        req.capacitorTemperatureRange
+          ? (() => {
+              const values = [...req.capacitorTemperatureRange.matchAll(/-?\d+(?:[.,]\d+)?/g)].map((m) =>
+                Number(m[0].replace(",", "."))
+              );
+              return values.length >= 2 ? values[1] : null;
+            })()
+          : null,
+      capacitor_energy_min_j:
+        req.capacitorEnergyMin ? parseSimpleNumber(req.capacitorEnergyMin) : null,
       mandatory: [],
     };
 
@@ -2065,6 +2461,17 @@ function App() {
         next.catalogCategory = undefined;
         next.genericInterface = undefined;
         next.technologies = defaultTechnologiesForDomain(next.productDomain);
+        next.capacitorCapacitance = undefined;
+        next.capacitorVoltage = undefined;
+        next.capacitorTechnology = undefined;
+        next.capacitorMounting = undefined;
+        next.capacitorTolerance = undefined;
+        next.capacitorCaseSize = undefined;
+        next.capacitorEsrMax = undefined;
+        next.capacitorRippleMin = undefined;
+        next.capacitorLifetimeMin = undefined;
+        next.capacitorTemperatureRange = undefined;
+        next.capacitorEnergyMin = undefined;
 
         if (next.productDomain !== "connectivity") {
           next.cellularClass = undefined;
@@ -2085,6 +2492,52 @@ function App() {
       }
       case "catalogCategory":
         next.catalogCategory = String(value);
+        if (next.catalogCategory !== "Capacitors") {
+          next.capacitorCapacitance = undefined;
+          next.capacitorVoltage = undefined;
+          next.capacitorTechnology = undefined;
+          next.capacitorMounting = undefined;
+          next.capacitorTolerance = undefined;
+          next.capacitorCaseSize = undefined;
+          next.capacitorEsrMax = undefined;
+          next.capacitorRippleMin = undefined;
+          next.capacitorLifetimeMin = undefined;
+          next.capacitorTemperatureRange = undefined;
+          next.capacitorEnergyMin = undefined;
+        }
+        break;
+      case "capacitorCapacitance":
+        next.capacitorCapacitance = String(value);
+        break;
+      case "capacitorVoltage":
+        next.capacitorVoltage = String(value);
+        break;
+      case "capacitorTechnology":
+        next.capacitorTechnology = String(value);
+        break;
+      case "capacitorMounting":
+        next.capacitorMounting = String(value);
+        break;
+      case "capacitorTolerance":
+        next.capacitorTolerance = String(value);
+        break;
+      case "capacitorCaseSize":
+        next.capacitorCaseSize = String(value);
+        break;
+      case "capacitorEsrMax":
+        next.capacitorEsrMax = String(value);
+        break;
+      case "capacitorRippleMin":
+        next.capacitorRippleMin = String(value);
+        break;
+      case "capacitorLifetimeMin":
+        next.capacitorLifetimeMin = String(value);
+        break;
+      case "capacitorTemperatureRange":
+        next.capacitorTemperatureRange = String(value);
+        break;
+      case "capacitorEnergyMin":
+        next.capacitorEnergyMin = String(value);
         break;
       case "genericInterface":
         next.genericInterface = String(value);
@@ -2095,6 +2548,17 @@ function App() {
         break;
       case "specialRequirements": {
         const values = Array.isArray(value) ? value.map(String) : [String(value)];
+
+        if (next.catalogCategory === "Capacitors") {
+          const detail = values.join(" ");
+          const inferredCap = inferFromText(`capacitor ${detail}`);
+          if (inferredCap.capacitorCaseSize) next.capacitorCaseSize = inferredCap.capacitorCaseSize;
+          if (inferredCap.capacitorEsrMax) next.capacitorEsrMax = inferredCap.capacitorEsrMax;
+          if (inferredCap.capacitorRippleMin) next.capacitorRippleMin = inferredCap.capacitorRippleMin;
+          if (inferredCap.capacitorLifetimeMin) next.capacitorLifetimeMin = inferredCap.capacitorLifetimeMin;
+          if (inferredCap.capacitorTemperatureRange) next.capacitorTemperatureRange = inferredCap.capacitorTemperatureRange;
+          if (inferredCap.capacitorEnergyMin) next.capacitorEnergyMin = inferredCap.capacitorEnergyMin;
+        }
         const noSpecial = values.some((v) => /no special/i.test(v));
         next.specialRequirements = noSpecial ? "No special requirements" : values.join(" + ");
         if (values.some((v) => /battery|low power/i.test(v))) {
@@ -2261,6 +2725,35 @@ function App() {
       if (inferred.genericInterface) return applyAnswer(activeQuestion, inferred.genericInterface, q);
       if (/no preference|not sure/i.test(q)) return applyAnswer(activeQuestion, "No preference", q);
     }
+    if (activeQuestion === "capacitorCapacitance") {
+      const c = parseCapacitanceUf(q);
+      if (c != null) return applyAnswer(activeQuestion, formatCapacitanceUf(c), q);
+    }
+    if (activeQuestion === "capacitorVoltage") {
+      const v = parseSimpleNumber(q);
+      if (v != null && v > 0) return applyAnswer(activeQuestion, `${v} V`, q);
+    }
+    if (activeQuestion === "capacitorTechnology") {
+      const tech = capacitorTechnologyFromText(q);
+      if (tech) return applyAnswer(activeQuestion, tech, q);
+      if (/no preference|not sure|any|egal|keine präferenz|keine praeferenz/i.test(q))
+        return applyAnswer(activeQuestion, "No preference", q);
+    }
+    if (activeQuestion === "capacitorMounting") {
+      if (/through[- ]?hole|tht|radial|axial|leaded|bedrahtet/i.test(q))
+        return applyAnswer(activeQuestion, "Through-hole", q);
+      if (/smd|smt|surface[- ]?mount/i.test(q))
+        return applyAnswer(activeQuestion, "SMD", q);
+      if (/no preference|not sure|any|egal|keine präferenz|keine praeferenz/i.test(q))
+        return applyAnswer(activeQuestion, "No preference", q);
+    }
+    if (activeQuestion === "capacitorTolerance") {
+      const tol = q.match(/(?:±|\+\/-|\+-)?\s*(\d+(?:[.,]\d+)?)\s*%/);
+      if (tol) return applyAnswer(activeQuestion, `±${Number(tol[1].replace(",", "."))}%`, q);
+      if (/no preference|not sure|any|egal|keine präferenz|keine praeferenz/i.test(q))
+        return applyAnswer(activeQuestion, "No preference", q);
+    }
+
     if (activeQuestion === "supportRequested") {
       if (/^(yes|y|ja)|support|contact|kontakt|unterstützung|unterstuetzung/i.test(q)) return applyAnswer(activeQuestion, true, q);
       if (/^(no|n|nein)|enough|not now|reicht|nicht jetzt/i.test(q)) return applyAnswer(activeQuestion, false, q);
@@ -2580,6 +3073,24 @@ function App() {
                         {match.product.features.gnss_precision && <span>GNSS: {match.product.features.gnss_precision}</span>}
                         {match.product.features.wifi_generation && <span>Wi-Fi {match.product.features.wifi_generation}</span>}
                         {match.product.features.form_factor && <span>{match.product.features.form_factor}</span>}
+                        {match.product.features.capacitance_uf != null && (
+                          <span>C: {formatCapacitanceUf(match.product.features.capacitance_uf)}</span>
+                        )}
+                        {match.product.features.capacitor_voltage_v != null && (
+                          <span>{match.product.features.capacitor_voltage_v} V</span>
+                        )}
+                        {match.product.features.capacitor_tolerance_pct != null && (
+                          <span>±{match.product.features.capacitor_tolerance_pct}%</span>
+                        )}
+                        {match.product.features.capacitor_technology && (
+                          <span>{match.product.features.capacitor_technology}</span>
+                        )}
+                        {match.product.features.capacitor_mounting && (
+                          <span>{match.product.features.capacitor_mounting}</span>
+                        )}
+                        {match.product.features.capacitor_case_size && (
+                          <span>{match.product.features.capacitor_case_size}</span>
+                        )}
                         {match.product.features.temperature_min != null && match.product.features.temperature_max != null && (
                           <span>{match.product.features.temperature_min}…+{match.product.features.temperature_max} °C</span>
                         )}

@@ -40,6 +40,142 @@ def _temperature(text: str):
             return lo, hi
     return None, None
 
+
+_CAP_UF_FACTORS = {
+    "pf": 1e-6,
+    "nf": 1e-3,
+    "uf": 1.0,
+    "µf": 1.0,
+    "μf": 1.0,
+    "mf": 1e3,
+    "f": 1e6,
+}
+
+
+def _number(value: str) -> float:
+    return float(value.replace(",", "."))
+
+
+def _capacitance_uf(text: str) -> float | None:
+    m = re.search(
+        r"(?<![A-Za-z0-9])(\d+(?:[.,]\d+)?)\s*(pF|nF|uF|µF|μF|mF|F)\b",
+        text,
+        re.I,
+    )
+    if not m:
+        return None
+    return _number(m.group(1)) * _CAP_UF_FACTORS[m.group(2).lower()]
+
+
+def _capacitor_voltage_v(text: str) -> float | None:
+    # Prefer explicitly labelled rated/working voltage.
+    labelled = re.search(
+        r"(?:rated|working|nominal)?\s*(?:voltage|spannung|nennspannung)"
+        r"\s*[:=]?\s*(\d+(?:[.,]\d+)?)\s*v\b",
+        text,
+        re.I,
+    )
+    if labelled:
+        return _number(labelled.group(1))
+
+    # On capacitor catalog cards a standalone value such as "25 V" is
+    # conventionally the voltage rating. Keep this fallback capacitor-only.
+    m = re.search(r"(?<![A-Za-z0-9])(\d+(?:[.,]\d+)?)\s*v\b", text, re.I)
+    return _number(m.group(1)) if m else None
+
+
+def _capacitor_tolerance_pct(text: str) -> float | None:
+    m = re.search(
+        r"(?:±|\+/-|\+-)\s*(\d+(?:[.,]\d+)?)\s*%|"
+        r"(?:tolerance|toleranz)\s*[:=]?\s*(\d+(?:[.,]\d+)?)\s*%",
+        text,
+        re.I,
+    )
+    if not m:
+        return None
+    value = m.group(1) or m.group(2)
+    return _number(value)
+
+
+def _capacitor_technology(text: str) -> str | None:
+    t = _norm(text)
+    if re.search(r"\bsuper\s*cap(?:acitor)?s?\b|\bsupercapacitor\b|\bultracap\b|\bedlc\b", t):
+        return "Supercapacitor"
+    if "tantal" in t and "polymer" in t:
+        return "Tantalum polymer"
+    if "alumin" in t and "polymer" in t:
+        return "Aluminum polymer"
+    if re.search(r"\btantal(?:um)?\b|\btantalelko\b", t):
+        return "Tantalum"
+    if re.search(r"\bceramic\b|\bmlcc\b|\bkeramik\b|\bx7r\b|\bx5r\b|\bc0g\b|\bnp0\b|\by5v\b", t):
+        return "Ceramic"
+    if re.search(r"\bfilm\b|\bfolienkondensator\b|\bpolypropylene\b|\bpolyester\b", t):
+        return "Film"
+    if re.search(r"\balumin(?:um|ium)\b.*\belectrolytic\b|\belko\b|\belektrolyt", t):
+        return "Aluminum electrolytic"
+    if re.search(r"\bpolymer\b", t):
+        return "Polymer"
+    return None
+
+
+def _capacitor_mounting(text: str) -> str | None:
+    t = _norm(text)
+    if re.search(r"\bthrough[- ]?hole\b|\btht\b|\bradial\b|\baxial\b|\bleaded\b|\bdrahtanschluss\b", t):
+        return "Through-hole"
+    if re.search(r"\bsmd\b|\bsmt\b|\bchip\b|\bsurface[- ]?mount", t):
+        return "SMD"
+    return None
+
+
+def _capacitor_case_size(text: str) -> str | None:
+    # Common passive SMD imperial package codes. Requiring boundaries avoids
+    # matching arbitrary digits embedded inside manufacturer part numbers.
+    m = re.search(
+        r"(?<![A-Za-z0-9])(?:case|package|bauform|size)?\s*"
+        r"(0201|0402|0603|0805|1206|1210|1812|2220)(?![A-Za-z0-9])",
+        text,
+        re.I,
+    )
+    return m.group(1) if m else None
+
+
+def _capacitor_esr_ohm(text: str) -> float | None:
+    m = re.search(
+        r"(?:\besr\b|equivalent\s+series\s+resistance)"
+        r"[^0-9]{0,12}(\d+(?:[.,]\d+)?)\s*(mohm|mω|mΩ|ohm|ω|Ω)",
+        text,
+        re.I,
+    )
+    if not m:
+        return None
+    value = _number(m.group(1))
+    unit = m.group(2).lower()
+    return value / 1000.0 if unit.startswith("m") else value
+
+
+def _capacitor_ripple_current_a(text: str) -> float | None:
+    m = re.search(
+        r"(?:ripple\s*current|ripple|rippelstrom|ripple-strom)"
+        r"[^0-9]{0,16}(\d+(?:[.,]\d+)?)\s*(ma|a)\b",
+        text,
+        re.I,
+    )
+    if not m:
+        return None
+    value = _number(m.group(1))
+    return value / 1000.0 if m.group(2).lower() == "ma" else value
+
+
+def _capacitor_lifetime_h(text: str) -> int | None:
+    m = re.search(
+        r"(?:life(?:time)?|load\s+life|service\s+life|lebensdauer)"
+        r"[^0-9]{0,16}(\d{2,7})\s*(?:h|hours?|stunden)\b",
+        text,
+        re.I,
+    )
+    return int(m.group(1)) if m else None
+
+
 def _wifi_generation(text: str):
     t = _norm(text)
     if re.search(r"wi-?fi\s*6e|802\.11ax[^.;,]*6\s*ghz|\b6\s*ghz\b", t):
@@ -197,10 +333,56 @@ def extract_features(part_number: str, manufacturer: str, category: str, descrip
 
     raw = {
         "text_length": len(text),
-        "source": "deterministic_regex_v2.4",
+        "source": "deterministic_regex_v2.5-capacitors",
         "low_power_positive": low_power_positive,
         "low_power_negative": low_power_negative,
     }
+
+    # Capacitor-specific extraction is deliberately scoped to capacitor
+    # products to prevent values such as 5 V or 100 nF from unrelated boards
+    # being interpreted as the requested component rating.
+    is_capacitor = (
+        "capacitor" in category_l
+        or "capacitor" in t
+        or "kondensator" in t
+        or "passivecap" in t
+    )
+    if is_capacitor:
+        capacitance_uf = _capacitance_uf(text)
+        capacitor_voltage_v = _capacitor_voltage_v(text)
+        capacitor_tolerance_pct = _capacitor_tolerance_pct(text)
+        capacitor_technology = _capacitor_technology(text)
+        capacitor_mounting = _capacitor_mounting(text)
+        capacitor_case_size = _capacitor_case_size(text)
+        capacitor_esr_ohm = _capacitor_esr_ohm(text)
+        capacitor_ripple_current_a = _capacitor_ripple_current_a(text)
+        capacitor_lifetime_h = _capacitor_lifetime_h(text)
+
+        if capacitance_uf is not None:
+            raw["capacitance_uf"] = capacitance_uf
+        if capacitor_voltage_v is not None:
+            raw["capacitor_voltage_v"] = capacitor_voltage_v
+        if capacitor_tolerance_pct is not None:
+            raw["capacitor_tolerance_pct"] = capacitor_tolerance_pct
+        if capacitor_technology:
+            raw["capacitor_technology"] = capacitor_technology
+        if capacitor_mounting:
+            raw["capacitor_mounting"] = capacitor_mounting
+        if capacitor_case_size:
+            raw["capacitor_case_size"] = capacitor_case_size
+        if capacitor_esr_ohm is not None:
+            raw["capacitor_esr_ohm"] = capacitor_esr_ohm
+        if capacitor_ripple_current_a is not None:
+            raw["capacitor_ripple_current_a"] = capacitor_ripple_current_a
+        if capacitor_lifetime_h is not None:
+            raw["capacitor_lifetime_h"] = capacitor_lifetime_h
+
+        if capacitance_uf is not None and capacitor_voltage_v is not None:
+            # Ideal stored energy at rated voltage. This is a theoretical
+            # comparison value, not a usable-energy guarantee.
+            raw["capacitor_theoretical_energy_j"] = (
+                0.5 * capacitance_uf * 1e-6 * capacitor_voltage_v ** 2
+            )
 
     return {
         "technologies": sorted(set(technologies)),

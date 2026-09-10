@@ -23,6 +23,18 @@ class ProductFeaturesOut(BaseModel):
     request_url: str = ""
     imported_live: bool = False
 
+    # Capacitor-specific structured catalog fields.
+    capacitance_uf: Optional[float] = None
+    capacitor_voltage_v: Optional[float] = None
+    capacitor_tolerance_pct: Optional[float] = None
+    capacitor_technology: Optional[str] = None
+    capacitor_mounting: Optional[str] = None
+    capacitor_case_size: Optional[str] = None
+    capacitor_esr_ohm: Optional[float] = None
+    capacitor_ripple_current_a: Optional[float] = None
+    capacitor_lifetime_h: Optional[int] = None
+    capacitor_theoretical_energy_j: Optional[float] = None
+
 class ProductOut(BaseModel):
     id: int
     part_number: str
@@ -56,6 +68,23 @@ class MatchRequest(BaseModel):
     max_footprint_mm2: Optional[float] = None
     form_factor: Optional[str] = None
     gnss_dual_band: Optional[bool] = None
+
+    # Capacitor qualification. Numeric thresholds use engineering semantics:
+    # voltage >= requested minimum, tolerance <= requested maximum, ESR <= max,
+    # ripple/lifetime/energy >= requested minimum.
+    capacitance_uf: Optional[float] = None
+    capacitor_voltage_v: Optional[float] = None
+    capacitor_tolerance_pct: Optional[float] = None
+    capacitor_technology: Optional[str] = None
+    capacitor_mounting: Optional[str] = None
+    capacitor_case_size: Optional[str] = None
+    capacitor_esr_max_ohm: Optional[float] = None
+    capacitor_ripple_current_min_a: Optional[float] = None
+    capacitor_lifetime_min_h: Optional[int] = None
+    capacitor_temperature_min_c: Optional[float] = None
+    capacitor_temperature_max_c: Optional[float] = None
+    capacitor_energy_min_j: Optional[float] = None
+
     mandatory: List[str] = Field(default_factory=list)
 
 class MatchCriterionEvidence(BaseModel):
@@ -125,6 +154,21 @@ class RequirementState(BaseModel):
     max_footprint_mm2: Optional[float] = None
     form_factor: Optional[str] = None
     gnss_dual_band: Optional[bool] = None
+
+    # Capacitor-domain requirement state.
+    capacitance_uf: Optional[float] = None
+    capacitor_voltage_v: Optional[float] = None
+    capacitor_tolerance_pct: Optional[float] = None
+    capacitor_tolerance_open: bool = False
+    capacitor_technology: Optional[str] = None
+    capacitor_mounting: Optional[str] = None
+    capacitor_case_size: Optional[str] = None
+    capacitor_esr_max_ohm: Optional[float] = None
+    capacitor_ripple_current_min_a: Optional[float] = None
+    capacitor_lifetime_min_h: Optional[int] = None
+    capacitor_temperature_min_c: Optional[float] = None
+    capacitor_temperature_max_c: Optional[float] = None
+    capacitor_energy_min_j: Optional[float] = None
 
 class InterpretRequest(BaseModel):
     text: str

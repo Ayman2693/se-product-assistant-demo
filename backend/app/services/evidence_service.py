@@ -145,6 +145,26 @@ def seed_catalog_evidence_for_product(db: Session, product: Product) -> int:
             )
 
         raw = _json(f.raw_features_json, {})
+        capacitor_mapping = {
+            "capacitance_uf": raw.get("capacitance_uf"),
+            "capacitor_voltage_v": raw.get("capacitor_voltage_v"),
+            "capacitor_tolerance_pct": raw.get("capacitor_tolerance_pct"),
+            "capacitor_technology": raw.get("capacitor_technology"),
+            "capacitor_mounting": raw.get("capacitor_mounting"),
+            "capacitor_case_size": raw.get("capacitor_case_size"),
+            "capacitor_esr_ohm": raw.get("capacitor_esr_ohm"),
+            "capacitor_ripple_current_a": raw.get("capacitor_ripple_current_a"),
+            "capacitor_lifetime_h": raw.get("capacitor_lifetime_h"),
+            "capacitor_theoretical_energy_j": raw.get("capacitor_theoretical_energy_j"),
+        }
+        for field_name, value in capacitor_mapping.items():
+            _add_catalog_evidence(
+                db,
+                product,
+                field_name=field_name,
+                value=value,
+            )
+
         if raw.get("low_power_positive") is True:
             _add_catalog_evidence(
                 db,

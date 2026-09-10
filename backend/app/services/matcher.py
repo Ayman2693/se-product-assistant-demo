@@ -28,6 +28,56 @@ def _raw_features(feature: ProductFeature | None) -> dict:
     except Exception:
         return {}
 
+
+def _capacitor_features(p: Product) -> dict:
+    raw = _raw_features(p.features)
+    keys = {
+        "capacitance_uf",
+        "capacitor_voltage_v",
+        "capacitor_tolerance_pct",
+        "capacitor_technology",
+        "capacitor_mounting",
+        "capacitor_case_size",
+        "capacitor_esr_ohm",
+        "capacitor_ripple_current_a",
+        "capacitor_lifetime_h",
+        "capacitor_theoretical_energy_j",
+    }
+    return {key: raw.get(key) for key in keys}
+
+
+def _float_equal(actual, expected, rel_tol: float = 0.002) -> bool:
+    try:
+        a = float(actual)
+        e = float(expected)
+    except (TypeError, ValueError):
+        return False
+    scale = max(abs(a), abs(e), 1e-12)
+    return abs(a - e) <= scale * rel_tol
+
+
+def _capacitor_technology_matches(actual: str, expected: str) -> bool:
+    a = (actual or "").lower()
+    e = (expected or "").lower()
+    if not a or not e:
+        return False
+    if e in {"any", "no preference"}:
+        return True
+    if e == "polymer":
+        return "polymer" in a
+    if e == "tantalum":
+        return "tantal" in a
+    if e == "ceramic":
+        return "ceramic" in a or "mlcc" in a
+    if e == "film":
+        return "film" in a
+    if e == "aluminum electrolytic":
+        return "aluminum electrolytic" in a or "aluminium electrolytic" in a
+    if e == "supercapacitor":
+        return "supercapacitor" in a
+    return a == e
+
+
 def _low_power_state(p: Product) -> int:
     """
      1 = positive evidence
@@ -278,6 +328,120 @@ def score_product(p: Product, r: MatchRequest):
         if r.catalog_category:
             state = 1 if _catalog_category_matches(p.category, r.catalog_category) else -1
             criterion(40, state, f"Product type: {r.catalog_category}", True)
+
+        # Capacitor-domain engineering qualification. Known hard mismatches
+        # eliminate a part; missing catalog data remains "Not verified" so we
+        # never invent an absence.
+        if r.catalog_category == "Capacitors":
+            cap = _capacitor_features(p)
+
+            if r.capacitance_uf is not None:
+                actual = cap.get("capacitance_uf")
+                state = 0 if actual is None else (1 if _float_equal(actual, r.capacitance_uf) else -1)
+                criterion(34, state, f"Capacitance: {r.capacitance_uf:g} µF", True)
+
+            if r.capacitor_voltage_v is not None:
+                actual = cap.get("capacitor_voltage_v")
+                if actual is None:
+                    state = 0
+                else:
+                    try:
+                        state = 1 if float(actual) >= float(r.capacitor_voltage_v) else -1
+                    except (TypeError, ValueError):
+                        state = 0
+                criterion(26, state, f"Voltage rating ≥ {r.capacitor_voltage_v:g} V", True)
+
+            if r.capacitor_technology and r.capacitor_technology.lower() not in {"any", "no preference"}:
+                actual = cap.get("capacitor_technology")
+                state = 0 if not actual else (1 if _capacitor_technology_matches(str(actual), r.capacitor_technology) else -1)
+                criterion(18, state, f"Technology: {r.capacitor_technology}", True)
+
+            if r.capacitor_mounting and r.capacitor_mounting.lower() not in {"any", "no preference"}:
+                actual = cap.get("capacitor_mounting")
+                state = 0 if not actual else (1 if str(actual).lower() == r.capacitor_mounting.lower() else -1)
+                criterion(14, state, f"Mounting: {r.capacitor_mounting}", True)
+
+            if r.capacitor_tolerance_pct is not None:
+                actual = cap.get("capacitor_tolerance_pct")
+                if actual is None:
+                    state = 0
+                else:
+                    try:
+                        # A tighter tolerance is acceptable: ±5% satisfies ±10%.
+                        state = 1 if float(actual) <= float(r.capacitor_tolerance_pct) else -1
+                    except (TypeError, ValueError):
+                        state = 0
+                criterion(11, state, f"Tolerance ≤ ±{r.capacitor_tolerance_pct:g}%", False)
+
+            if r.capacitor_case_size:
+                actual = cap.get("capacitor_case_size")
+                state = 0 if not actual else (1 if str(actual).lower() == r.capacitor_case_size.lower() else -1)
+                criterion(10, state, f"Case size: {r.capacitor_case_size}", False)
+
+            if r.capacitor_esr_max_ohm is not None:
+                actual = cap.get("capacitor_esr_ohm")
+                if actual is None:
+                    state = 0
+                else:
+                    try:
+                        state = 1 if float(actual) <= float(r.capacitor_esr_max_ohm) else -1
+                    except (TypeError, ValueError):
+                        state = 0
+                criterion(12, state, f"ESR ≤ {r.capacitor_esr_max_ohm:g} Ω", False)
+
+            if r.capacitor_ripple_current_min_a is not None:
+                actual = cap.get("capacitor_ripple_current_a")
+                if actual is None:
+                    state = 0
+                else:
+                    try:
+                        state = 1 if float(actual) >= float(r.capacitor_ripple_current_min_a) else -1
+                    except (TypeError, ValueError):
+                        state = 0
+                criterion(12, state, f"Ripple current ≥ {r.capacitor_ripple_current_min_a:g} A", False)
+
+            if r.capacitor_lifetime_min_h is not None:
+                actual = cap.get("capacitor_lifetime_h")
+                if actual is None:
+                    state = 0
+                else:
+                    try:
+                        state = 1 if int(actual) >= int(r.capacitor_lifetime_min_h) else -1
+                    except (TypeError, ValueError):
+                        state = 0
+                criterion(10, state, f"Lifetime ≥ {r.capacitor_lifetime_min_h} h", False)
+
+            if r.capacitor_temperature_min_c is not None:
+                actual = f.temperature_min if f else None
+                if actual is None:
+                    state = 0
+                else:
+                    state = 1 if float(actual) <= float(r.capacitor_temperature_min_c) else -1
+                criterion(8, state, f"Minimum operating temperature ≤ {r.capacitor_temperature_min_c:g} °C", False)
+
+            if r.capacitor_temperature_max_c is not None:
+                actual = f.temperature_max if f else None
+                if actual is None:
+                    state = 0
+                else:
+                    state = 1 if float(actual) >= float(r.capacitor_temperature_max_c) else -1
+                criterion(8, state, f"Maximum operating temperature ≥ {r.capacitor_temperature_max_c:g} °C", False)
+
+            if r.capacitor_energy_min_j is not None:
+                actual = cap.get("capacitor_theoretical_energy_j")
+                if actual is None:
+                    state = 0
+                else:
+                    try:
+                        state = 1 if float(actual) >= float(r.capacitor_energy_min_j) else -1
+                    except (TypeError, ValueError):
+                        state = 0
+                criterion(
+                    10,
+                    state,
+                    f"Theoretical stored energy ≥ {r.capacitor_energy_min_j:g} J",
+                    False,
+                )
 
         if r.generic_interface:
             actual_interfaces = _generic_interfaces(h)

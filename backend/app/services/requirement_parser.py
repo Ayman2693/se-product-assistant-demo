@@ -4,6 +4,97 @@ from typing import Any
 def _uniq(values):
     return list(dict.fromkeys(values))
 
+
+_CAP_UF_FACTORS = {
+    "pf": 1e-6,
+    "nf": 1e-3,
+    "uf": 1.0,
+    "µf": 1.0,
+    "μf": 1.0,
+    "mf": 1e3,
+    "f": 1e6,
+}
+
+
+def _num(value: str) -> float:
+    return float(value.replace(",", "."))
+
+
+def _parse_capacitance_uf(text: str) -> float | None:
+    m = re.search(
+        r"(?<![A-Za-z0-9])(\d+(?:[.,]\d+)?)\s*(pF|nF|uF|µF|μF|mF|F)\b",
+        text,
+        re.I,
+    )
+    return _num(m.group(1)) * _CAP_UF_FACTORS[m.group(2).lower()] if m else None
+
+
+def _parse_capacitor_voltage_v(text: str) -> float | None:
+    # A user phrase such as "for 12 V" is treated as a minimum required
+    # voltage capability. The matcher may therefore select 16 V, 25 V, etc.
+    m = re.search(
+        r"(?<![A-Za-z0-9])(\d+(?:[.,]\d+)?)\s*v\b",
+        text,
+        re.I,
+    )
+    return _num(m.group(1)) if m else None
+
+
+def _parse_capacitor_tolerance_pct(text: str) -> float | None:
+    m = re.search(r"(?:±|\+/-|\+-)\s*(\d+(?:[.,]\d+)?)\s*%", text, re.I)
+    return _num(m.group(1)) if m else None
+
+
+def _parse_capacitor_esr_ohm(text: str) -> float | None:
+    m = re.search(
+        r"(?:\besr\b|equivalent\s+series\s+resistance)"
+        r"[^0-9]{0,16}(?:max(?:imum)?\s*)?(\d+(?:[.,]\d+)?)\s*(mohm|mω|mΩ|ohm|ω|Ω)",
+        text,
+        re.I,
+    )
+    if not m:
+        return None
+    value = _num(m.group(1))
+    return value / 1000.0 if m.group(2).lower().startswith("m") else value
+
+
+def _parse_capacitor_ripple_current_a(text: str) -> float | None:
+    m = re.search(
+        r"(?:ripple\s*current|ripple|rippelstrom)"
+        r"[^0-9]{0,16}(?:min(?:imum)?\s*)?(\d+(?:[.,]\d+)?)\s*(ma|a)\b",
+        text,
+        re.I,
+    )
+    if not m:
+        return None
+    value = _num(m.group(1))
+    return value / 1000.0 if m.group(2).lower() == "ma" else value
+
+
+def _parse_capacitor_lifetime_h(text: str) -> int | None:
+    m = re.search(
+        r"(?:life(?:time)?|load\s+life|service\s+life|lebensdauer)"
+        r"[^0-9]{0,16}(?:min(?:imum)?\s*)?(\d{2,7})\s*(?:h|hours?|stunden)\b",
+        text,
+        re.I,
+    )
+    return int(m.group(1)) if m else None
+
+
+def _parse_capacitor_temperature(text: str) -> tuple[float | None, float | None]:
+    m = re.search(
+        r"(-?\d{1,3})\s*(?:°\s*c)?\s*(?:to|\.\.\.|…|-)\s*\+?(-?\d{1,3})\s*°\s*c\b",
+        text,
+        re.I,
+    )
+    if not m:
+        return None, None
+    lo, hi = float(m.group(1)), float(m.group(2))
+    if -100 <= lo <= 200 and -100 <= hi <= 200 and lo <= hi:
+        return lo, hi
+    return None, None
+
+
 def interpret_text(text: str) -> dict[str, Any]:
     """
     Deterministic natural-language -> structured technical requirements.
@@ -34,6 +125,21 @@ def interpret_text(text: str) -> dict[str, Any]:
         "max_footprint_mm2": None,
         "form_factor": None,
         "gnss_dual_band": None,
+
+        # Capacitor-specific requirements.
+        "capacitance_uf": None,
+        "capacitor_voltage_v": None,
+        "capacitor_tolerance_pct": None,
+        "capacitor_tolerance_open": False,
+        "capacitor_technology": None,
+        "capacitor_mounting": None,
+        "capacitor_case_size": None,
+        "capacitor_esr_max_ohm": None,
+        "capacitor_ripple_current_min_a": None,
+        "capacitor_lifetime_min_h": None,
+        "capacitor_temperature_min_c": None,
+        "capacitor_temperature_max_c": None,
+        "capacitor_energy_min_j": None,
     }
     evidence: list[str] = []
 
@@ -166,6 +272,91 @@ def interpret_text(text: str) -> dict[str, Any]:
             out["application"] = value
             evidence.append(f"application:{value}")
             break
+
+    # Capacitor engineering requirements.
+    if out["catalog_category"] == "Capacitors":
+        capacitance = _parse_capacitance_uf(raw)
+        if capacitance is not None:
+            out["capacitance_uf"] = capacitance
+            evidence.append(f"capacitance_uf:{capacitance}")
+
+        voltage = _parse_capacitor_voltage_v(raw)
+        if voltage is not None:
+            out["capacitor_voltage_v"] = voltage
+            evidence.append(f"capacitor_voltage_v:{voltage}")
+
+        tolerance = _parse_capacitor_tolerance_pct(raw)
+        if tolerance is not None:
+            out["capacitor_tolerance_pct"] = tolerance
+            evidence.append(f"capacitor_tolerance_pct:{tolerance}")
+
+        if re.search(r"\bsuper\s*cap(?:acitor)?\b|\bsupercapacitor\b|\bultracap\b|\bedlc\b", t, re.I):
+            out["capacitor_technology"] = "Supercapacitor"
+        elif re.search(r"\btantal", t, re.I) and re.search(r"\bpolymer\b", t, re.I):
+            out["capacitor_technology"] = "Tantalum polymer"
+        elif re.search(r"\btantal", t, re.I):
+            out["capacitor_technology"] = "Tantalum"
+        elif re.search(r"\bceramic\b|\bmlcc\b|\bkeramik\b|\bx7r\b|\bx5r\b|\bc0g\b|\bnp0\b|\by5v\b", t, re.I):
+            out["capacitor_technology"] = "Ceramic"
+        elif re.search(r"\bfilm\b|\bpolypropylene\b|\bpolyester\b|\bfolie", t, re.I):
+            out["capacitor_technology"] = "Film"
+        elif re.search(r"\balumin(?:um|ium)\b.*\bpolymer\b", t, re.I):
+            out["capacitor_technology"] = "Aluminum polymer"
+        elif re.search(r"\balumin(?:um|ium)\b.*\belectrolytic\b|\belko\b|\belektrolyt", t, re.I):
+            out["capacitor_technology"] = "Aluminum electrolytic"
+        elif re.search(r"\bpolymer\b", t, re.I):
+            out["capacitor_technology"] = "Polymer"
+
+        if out["capacitor_technology"]:
+            evidence.append(f"capacitor_technology:{out['capacitor_technology']}")
+
+        if re.search(r"\bthrough[- ]?hole\b|\btht\b|\bradial\b|\baxial\b|\bleaded\b", t, re.I):
+            out["capacitor_mounting"] = "Through-hole"
+        elif re.search(r"\bsmd\b|\bsmt\b|\bsurface[- ]?mount\b", t, re.I):
+            out["capacitor_mounting"] = "SMD"
+        if out["capacitor_mounting"]:
+            evidence.append(f"capacitor_mounting:{out['capacitor_mounting']}")
+
+        m_case = re.search(r"(?<![A-Za-z0-9])(0201|0402|0603|0805|1206|1210|1812|2220)(?![A-Za-z0-9])", raw, re.I)
+        if m_case:
+            out["capacitor_case_size"] = m_case.group(1)
+            evidence.append(f"capacitor_case_size:{out['capacitor_case_size']}")
+
+        esr = _parse_capacitor_esr_ohm(raw)
+        if esr is not None:
+            out["capacitor_esr_max_ohm"] = esr
+            evidence.append(f"capacitor_esr_max_ohm:{esr}")
+
+        ripple = _parse_capacitor_ripple_current_a(raw)
+        if ripple is not None:
+            out["capacitor_ripple_current_min_a"] = ripple
+            evidence.append(f"capacitor_ripple_current_min_a:{ripple}")
+
+        lifetime = _parse_capacitor_lifetime_h(raw)
+        if lifetime is not None:
+            out["capacitor_lifetime_min_h"] = lifetime
+            evidence.append(f"capacitor_lifetime_min_h:{lifetime}")
+
+        temp_lo, temp_hi = _parse_capacitor_temperature(raw)
+        if temp_lo is not None and temp_hi is not None:
+            out["capacitor_temperature_min_c"] = temp_lo
+            out["capacitor_temperature_max_c"] = temp_hi
+            evidence.append(f"capacitor_temperature:{temp_lo}:{temp_hi}")
+
+        # Energy is useful mainly for pulse/hold-up/supercapacitor use cases.
+        # Do not infer it from capacitance+voltage in the customer request;
+        # only capture an explicitly requested joule value.
+        m_energy = re.search(
+            r"(?:energy|stored\s+energy|energie)[^0-9]{0,12}(\d+(?:[.,]\d+)?)\s*(mj|j)\b",
+            raw,
+            re.I,
+        )
+        if m_energy:
+            energy = _num(m_energy.group(1))
+            if m_energy.group(2).lower() == "mj":
+                energy /= 1000.0
+            out["capacitor_energy_min_j"] = energy
+            evidence.append(f"capacitor_energy_min_j:{energy}")
 
     # Technologies
     technologies = []
@@ -451,6 +642,21 @@ def missing_requirements(req: dict[str, Any]) -> list[str]:
         if not req.get("catalog_category"):
             missing.append("catalog_category")
 
+        # A capacitor cannot be meaningfully selected from category alone.
+        # Ask the high-value electrical questions first; advanced constraints
+        # remain optional and are parsed when the customer supplies them.
+        if req.get("catalog_category") == "Capacitors":
+            if req.get("capacitance_uf") is None:
+                missing.append("capacitance_uf")
+            if req.get("capacitor_voltage_v") is None:
+                missing.append("capacitor_voltage_v")
+            if not req.get("capacitor_technology"):
+                missing.append("capacitor_technology")
+            if not req.get("capacitor_mounting"):
+                missing.append("capacitor_mounting")
+            if req.get("capacitor_tolerance_pct") is None and not req.get("capacitor_tolerance_open"):
+                missing.append("capacitor_tolerance")
+
     return _uniq(missing)
 
 
@@ -493,6 +699,34 @@ QUESTION_MAP = {
     "wifi_generation": {
         "text": "Which Wi-Fi generation is required?",
         "options": ["Wi-Fi 4", "Wi-Fi 5", "Wi-Fi 6", "Wi-Fi 6E"],
+    },
+    "capacitance_uf": {
+        "text": "What capacitance do you need?",
+        "options": ["100 nF", "1 µF", "10 µF", "47 µF", "100 µF"],
+    },
+    "capacitor_voltage_v": {
+        "text": "What minimum voltage rating should the capacitor support?",
+        "options": ["6.3 V", "10 V", "16 V", "25 V", "50 V", "100 V"],
+    },
+    "capacitor_technology": {
+        "text": "Do you have a preferred capacitor technology?",
+        "options": [
+            "Ceramic / MLCC",
+            "Tantalum",
+            "Film",
+            "Aluminum electrolytic",
+            "Polymer",
+            "Supercapacitor",
+            "No preference",
+        ],
+    },
+    "capacitor_mounting": {
+        "text": "What mounting style do you need?",
+        "options": ["SMD / SMT", "Through-hole", "No preference"],
+    },
+    "capacitor_tolerance": {
+        "text": "Do you have a capacitance tolerance requirement?",
+        "options": ["±5%", "±10%", "±20%", "No preference"],
     },
     "architecture": {
         "text": "How should the wireless solution be controlled?",

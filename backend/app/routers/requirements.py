@@ -33,6 +33,9 @@ def _state_dict(state):
 def _match(db: Session, req_dict: dict):
     request = MatchRequest(
         application=req_dict.get("application"),
+        product_domain=req_dict.get("product_domain"),
+        catalog_category=req_dict.get("catalog_category"),
+        generic_interface=req_dict.get("generic_interface"),
         technologies=req_dict.get("technologies") or [],
         cellular_class=req_dict.get("cellular_class"),
         region=req_dict.get("region"),
@@ -49,6 +52,18 @@ def _match(db: Session, req_dict: dict):
         max_footprint_mm2=req_dict.get("max_footprint_mm2"),
         form_factor=req_dict.get("form_factor"),
         gnss_dual_band=req_dict.get("gnss_dual_band"),
+        capacitance_uf=req_dict.get("capacitance_uf"),
+        capacitor_voltage_v=req_dict.get("capacitor_voltage_v"),
+        capacitor_tolerance_pct=req_dict.get("capacitor_tolerance_pct"),
+        capacitor_technology=req_dict.get("capacitor_technology"),
+        capacitor_mounting=req_dict.get("capacitor_mounting"),
+        capacitor_case_size=req_dict.get("capacitor_case_size"),
+        capacitor_esr_max_ohm=req_dict.get("capacitor_esr_max_ohm"),
+        capacitor_ripple_current_min_a=req_dict.get("capacitor_ripple_current_min_a"),
+        capacitor_lifetime_min_h=req_dict.get("capacitor_lifetime_min_h"),
+        capacitor_temperature_min_c=req_dict.get("capacitor_temperature_min_c"),
+        capacitor_temperature_max_c=req_dict.get("capacitor_temperature_max_c"),
+        capacitor_energy_min_j=req_dict.get("capacitor_energy_min_j"),
         mandatory=[],
     )
 
@@ -92,7 +107,7 @@ def recommend(request: NaturalRecommendRequest, db: Session = Depends(get_db)):
     ready = len(missing) == 0
     match = None
 
-    if merged.get("technologies"):
+    if merged.get("technologies") or merged.get("catalog_category"):
         match = _match(db, merged)
 
     return {

@@ -24,6 +24,18 @@ EXCLUSIVE_FIELDS = {
     "low_power",
     "footprint_mm2",
     "antenna_count",
+    "capacitance_uf",
+    "capacitor_voltage_v",
+    "capacitor_tolerance_pct",
+    "capacitor_technology",
+    "capacitor_mounting",
+    "capacitor_case_size",
+    "capacitor_esr_ohm",
+    "capacitor_ripple_current_a",
+    "capacitor_lifetime_h",
+    "capacitor_theoretical_energy_j",
+    "temperature_min",
+    "temperature_max",
 }
 
 
@@ -181,6 +193,92 @@ def _request_criteria(r: MatchRequest) -> list[dict]:
             "expected": True,
         })
 
+    if r.catalog_category == "Capacitors":
+        if r.capacitance_uf is not None:
+            criteria.append({
+                "key": "capacitance_uf",
+                "label": "Capacitance",
+                "field": "capacitance_uf",
+                "expected": r.capacitance_uf,
+            })
+        if r.capacitor_voltage_v is not None:
+            criteria.append({
+                "key": "capacitor_voltage_v",
+                "label": "Voltage rating",
+                "field": "capacitor_voltage_v",
+                "expected": r.capacitor_voltage_v,
+            })
+        if r.capacitor_tolerance_pct is not None:
+            criteria.append({
+                "key": "capacitor_tolerance_pct",
+                "label": "Tolerance",
+                "field": "capacitor_tolerance_pct",
+                "expected": r.capacitor_tolerance_pct,
+            })
+        if r.capacitor_technology and r.capacitor_technology.lower() not in {"any", "no preference"}:
+            criteria.append({
+                "key": "capacitor_technology",
+                "label": "Capacitor technology",
+                "field": "capacitor_technology",
+                "expected": r.capacitor_technology,
+            })
+        if r.capacitor_mounting and r.capacitor_mounting.lower() not in {"any", "no preference"}:
+            criteria.append({
+                "key": "capacitor_mounting",
+                "label": "Mounting",
+                "field": "capacitor_mounting",
+                "expected": r.capacitor_mounting,
+            })
+        if r.capacitor_case_size:
+            criteria.append({
+                "key": "capacitor_case_size",
+                "label": "Case size",
+                "field": "capacitor_case_size",
+                "expected": r.capacitor_case_size,
+            })
+        if r.capacitor_esr_max_ohm is not None:
+            criteria.append({
+                "key": "capacitor_esr_max_ohm",
+                "label": "Maximum ESR",
+                "field": "capacitor_esr_ohm",
+                "expected": r.capacitor_esr_max_ohm,
+            })
+        if r.capacitor_ripple_current_min_a is not None:
+            criteria.append({
+                "key": "capacitor_ripple_current_min_a",
+                "label": "Minimum ripple current",
+                "field": "capacitor_ripple_current_a",
+                "expected": r.capacitor_ripple_current_min_a,
+            })
+        if r.capacitor_lifetime_min_h is not None:
+            criteria.append({
+                "key": "capacitor_lifetime_min_h",
+                "label": "Minimum lifetime",
+                "field": "capacitor_lifetime_h",
+                "expected": r.capacitor_lifetime_min_h,
+            })
+        if r.capacitor_temperature_min_c is not None:
+            criteria.append({
+                "key": "capacitor_temperature_min_c",
+                "label": "Minimum operating temperature",
+                "field": "temperature_min",
+                "expected": r.capacitor_temperature_min_c,
+            })
+        if r.capacitor_temperature_max_c is not None:
+            criteria.append({
+                "key": "capacitor_temperature_max_c",
+                "label": "Maximum operating temperature",
+                "field": "temperature_max",
+                "expected": r.capacitor_temperature_max_c,
+            })
+        if r.capacitor_energy_min_j is not None:
+            criteria.append({
+                "key": "capacitor_energy_min_j",
+                "label": "Minimum theoretical stored energy",
+                "field": "capacitor_theoretical_energy_j",
+                "expected": r.capacitor_energy_min_j,
+            })
+
     return criteria
 
 
@@ -247,6 +345,39 @@ def _supports(field: str, actual: Any, expected: Any) -> bool:
             return int(float(a)) == int(expected)
         except (TypeError, ValueError):
             return False
+
+    if field == "capacitance_uf":
+        try:
+            av, ev = float(a), float(e)
+            scale = max(abs(av), abs(ev), 1e-12)
+            return abs(av - ev) <= scale * 0.002
+        except (TypeError, ValueError):
+            return False
+
+    if field in {"capacitor_voltage_v", "capacitor_ripple_current_a", "capacitor_lifetime_h", "capacitor_theoretical_energy_j", "temperature_max"}:
+        try:
+            return float(a) >= float(e)
+        except (TypeError, ValueError):
+            return False
+
+    if field in {"capacitor_tolerance_pct", "capacitor_esr_ohm", "temperature_min"}:
+        try:
+            return float(a) <= float(e)
+        except (TypeError, ValueError):
+            return False
+
+    if field == "capacitor_technology":
+        if e == "polymer":
+            return "polymer" in a
+        if e == "tantalum":
+            return "tantal" in a
+        if e == "ceramic":
+            return "ceramic" in a or "mlcc" in a
+        if e == "film":
+            return "film" in a
+        if e == "supercapacitor":
+            return "supercapacitor" in a
+        return a == e
 
     return a == e
 
