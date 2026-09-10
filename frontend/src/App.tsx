@@ -3020,17 +3020,40 @@ function App() {
             <div className="resultsHeader">
               <div>
                 <h3>{tr(language, "Matching results", "Passende Produkte")}</h3>
-                <span>
-                  {matching
-                    ? "Comparing products…"
-                    : matches.length > 3 && !showAllResults
-                      ? tr(language, `${matches.length} candidates · showing top 3`, `${matches.length} Kandidaten · Top 3 angezeigt`)
-                      : tr(language, `${matches.length} candidates`, `${matches.length} Kandidaten`)}
+                <span className={matching ? "matchingStatus" : undefined} aria-live="polite">
+                  {matching ? (
+                    <>
+                      <span className="matchingSpinner matchingSpinnerSmall" aria-hidden="true" />
+                      {tr(language, "Searching for new results…", "Suche nach neuen Ergebnissen…")}
+                    </>
+                  ) : matches.length > 3 && !showAllResults ? (
+                    tr(language, `${matches.length} candidates · showing top 3`, `${matches.length} Kandidaten · Top 3 angezeigt`)
+                  ) : (
+                    tr(language, `${matches.length} candidates`, `${matches.length} Kandidaten`)
+                  )}
                 </span>
               </div>
             </div>
 
-            <div className="results">
+            <div className={`results${matching && matches.length ? " resultsRefreshing" : ""}`}>
+              {matching && (
+                <div className="matchingPanel" role="status" aria-live="polite">
+                  <span className="matchingSpinner" aria-hidden="true" />
+                  <div>
+                    <strong>
+                      {tr(language, "Searching for new results…", "Suche nach neuen Ergebnissen…")}
+                    </strong>
+                    <span>
+                      {tr(
+                        language,
+                        "Comparing your requirements with the SE product database.",
+                        "Ihre Anforderungen werden mit der SE-Produktdatenbank verglichen."
+                      )}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {matches.length ? (
                 (showAllResults ? matches : matches.slice(0, 3)).map((match, index) => (
                   <article className="productCard" key={match.product.id}>

@@ -982,3 +982,18 @@ No database migration is required. Existing ProductFeature.raw_features_json is
 used for capacitor-specific structured values. On Render, the production
 bootstrap re-extracts structured features for the existing catalog on deploy,
 so a second full catalog web crawl is not required for Phase 4.7.
+
+
+# Phase 4.7.1 — Matching progress UX
+
+While the product matcher is running, the customer UI now shows an animated
+waiting indicator with:
+
+- EN: `Searching for new results…`
+- DE: `Suche nach neuen Ergebnissen…`
+
+The panel also explains that the requirements are being compared with the SE
+product database. During a refinement, existing results remain visible but are
+dimmed until the refreshed ranking arrives.
+
+The loading state uses `role="status"` / `aria-live="polite"` for accessibility.
