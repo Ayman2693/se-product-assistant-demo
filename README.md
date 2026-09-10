@@ -853,3 +853,55 @@ Production routing fix:
 - `/api/*` and `/docs` continue to work normally.
 
 This fixes the case where the public Render URL showed JSON instead of the website.
+
+
+# Phase 4.6 — Full SE Catalog Coverage
+
+The live importer now understands SE category landing pages.
+
+Previous behavior:
+- `/en/sbc/` -> no direct product cards -> 0 imported SBC products
+- `/en/passivecap/` -> no direct product cards -> 0 imported capacitor products
+
+New behavior:
+- crawl the configured SE category
+- discover child category/listing pages recursively
+- stay inside the configured category URL prefix
+- follow pagination on every discovered listing
+- deduplicate by part number
+- preserve the broad SE category for deterministic matching
+- preserve the leaf listing title as an additional product tag
+
+Examples:
+- `/en/sbc/` -> `/en/sbc-picoitx/`, other SBC subcategories
+- `/en/com/` -> SMARC, COM Express, Qseven, etc.
+- `/en/passivecap/` -> capacitor subcategories such as tantalum listings
+
+The 51 configured catalog roots still map the public SE product navigation, but
+each root can now contain any number of child listing pages.
+
+## Render Free catalog refresh
+
+New protected endpoints:
+
+- POST `/api/catalog/sync`
+- GET `/api/catalog/sync-status`
+
+`POST /api/catalog/sync` starts the full recursive catalog refresh in the
+background and returns immediately. This avoids requiring Render Shell, which
+is not available on Free web services.
+
+After sync completes, catalog evidence is rebuilt automatically.
+
+## Language/domain routing improvements
+
+Directly understands, among others:
+
+- capacitor / capacitors / Kondensator
+- component / components / Bauteil / Komponente
+- computing / computer / Rechner
+- SBC / PicoITX
+- SMARC / COM Express / Qseven
+- embedded peripherals
+
+No database migration is required.

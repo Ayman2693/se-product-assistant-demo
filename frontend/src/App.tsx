@@ -639,6 +639,24 @@ function inferFromText(text: string): Partial<Requirements> {
   } else if (/gas\s+sensor|co2\s+sensor|air quality sensor/.test(t)) {
     out.productDomain = "sensors";
     out.catalogCategory = "Gas Sensors";
+  } else if (/\bcapacitors?\b|\bkondensator(en)?\b/.test(t)) {
+    out.productDomain = "components";
+    out.catalogCategory = "Capacitors";
+  } else if (/\brelays?\b|\brelais\b/.test(t)) {
+    out.productDomain = "components";
+    out.catalogCategory = "Relays";
+  } else if (/\bcontactors?\b|\bschütz(e)?\b|\bschuetz(e)?\b/.test(t)) {
+    out.productDomain = "components";
+    out.catalogCategory = "Contactors";
+  } else if (/\bconnectors?\b|\bsteckverbinder\b/.test(t)) {
+    out.productDomain = "components";
+    out.catalogCategory = "Connectors";
+  } else if (/\bchokes?\b|\bdrossel(n)?\b/.test(t)) {
+    out.productDomain = "components";
+    out.catalogCategory = "Chokes";
+  } else if (/\b(emi|emc|emv)\b.*\bfilter\b/.test(t)) {
+    out.productDomain = "components";
+    out.catalogCategory = "EMI / EMC Filters";
   } else if (/\bsensor\b|\bsensing\b|\bsensorik\b|\bsensoren?\b/.test(t)) {
     out.productDomain = "sensors";
   } else if (/\btft\b/.test(t)) {
@@ -649,6 +667,15 @@ function inferFromText(text: string): Partial<Requirements> {
     out.catalogCategory = "OLED Displays";
   } else if (/\bdisplay\b|\bhmi\b|\bscreen\b|\banzeige\b|\bbildschirm\b/.test(t)) {
     out.productDomain = "display";
+  } else if (/computer[- ]on[- ]modules?|\bsmarc\b|com\s*express|\bqseven\b|rechnermodul/.test(t)) {
+    out.productDomain = "computing";
+    out.catalogCategory = "Computer on Modules";
+  } else if (/single[- ]board\s+computers?|\bsbc\b|pico[- ]?itx|einplatinenrechner/.test(t)) {
+    out.productDomain = "computing";
+    out.catalogCategory = "Single Board Computer";
+  } else if (/embedded\s+peripherals?|embedded[- ]?peripherie/.test(t)) {
+    out.productDomain = "computing";
+    out.catalogCategory = "Embedded Peripherals";
   } else if (/\bssd\b|\bnvme\b|flash storage|msata|cfast|satadom/.test(t)) {
     out.productDomain = "storage";
     out.catalogCategory = "Flash Storage";
@@ -665,6 +692,10 @@ function inferFromText(text: string): Partial<Requirements> {
     out.catalogCategory = "Crystals";
   } else if (/\btiming\b|\bclock\b|\btakt(ung)?\b|\bzeitgeber\b/.test(t)) {
     out.productDomain = "timing";
+  } else if (/\bcomputing\b|\bembedded computer\b|\bcomputer\b|\brechner\b/.test(t)) {
+    out.productDomain = "computing";
+  } else if (/\bcomponents?\b|\bpassive components?\b|\bbauteil(e)?\b|\bkomponent(e|en)\b|\bemc\b|\bemi\b|\bemv\b/.test(t)) {
+    out.productDomain = "components";
   } else if (/external antenna|smd antenna|chip antenna|embedded antenna|extern(e|en|er|es)? antenne|smd-?antenne|chip-?antenne|eingebettet(e|en|er|es)? antenne|leiterplattenantenne/.test(t)) {
     out.productDomain = "antenna";
     if (/external antenna|externe antenne/.test(t)) out.catalogCategory = "External Antennas";

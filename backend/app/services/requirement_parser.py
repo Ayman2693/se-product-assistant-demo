@@ -60,8 +60,21 @@ def interpret_text(text: str) -> dict[str, Any]:
         ("display", "Display Driver IC", r"\bdisplay\s+driver\b"),
 
         ("storage", "Flash Storage", r"\bflash\s+storage\b|\bssd\b|\bnvme\b|\bmsata\b|\bcfast\b|\bsatadom\b"),
-        ("computing", "Computer on Modules", r"\bcomputer[- ]on[- ]module\b|\bcom\b.*\bmodule\b"),
-        ("computing", "Single Board Computer", r"\bsingle[- ]board\s+computer\b|\bsbc\b"),
+        (
+            "computing",
+            "Computer on Modules",
+            r"\bcomputer[- ]on[- ]modules?\b|\bcom\b.*\bmodule\b|\bsmarc\b|\bcom\s*express\b|\bqseven\b|\brechnermodul(?:e)?\b",
+        ),
+        (
+            "computing",
+            "Single Board Computer",
+            r"\bsingle[- ]board\s+computers?\b|\bsbc\b|\bpico[- ]?itx\b|\beinplatinenrechner\b",
+        ),
+        (
+            "computing",
+            "Embedded Peripherals",
+            r"\bembedded\s+peripherals?\b|\bembedded[- ]?peripherie\b",
+        ),
 
         ("timing", "RTCs", r"\breal[- ]time\s+clock\b|\brtc\b|\bechtzeituhr(?:en)?\b"),
         ("timing", "Oscillators", r"\boscillator\b|\btcxo\b|\bocxo\b|\bvcxo\b|\boszillator(?:en)?\b"),
@@ -75,13 +88,14 @@ def interpret_text(text: str) -> dict[str, Any]:
         ("audio_haptics", "Vibration", r"\bvibration\b|\bhaptic\b"),
         ("audio_haptics", "Audio Codecs", r"\baudio\s+codec\b"),
 
-        ("components", "Capacitors", r"\bcapacitor\b"),
-        ("components", "Relays", r"\brelay\b"),
-        ("components", "Contactors", r"\bcontactor\b"),
-        ("components", "Switches", r"\bswitch(?:es)?\b"),
-        ("components", "Connectors", r"\bconnector\b"),
-        ("components", "Chokes", r"\bchoke\b"),
-        ("components", "EMI / EMC Filters", r"\bemi\b.*\bfilter\b|\bemc\b.*\bfilter\b"),
+        ("components", "Capacitors", r"\bcapacitors?\b|\bkondensator(?:en)?\b"),
+        ("components", "Relays", r"\brelays?\b|\brelais\b"),
+        ("components", "Contactors", r"\bcontactors?\b|\bschütz(?:e)?\b|\bschuetz(?:e)?\b"),
+        ("components", "Switches", r"\bswitch(?:es)?\b|\bschalter\b"),
+        ("components", "Connectors", r"\bconnectors?\b|\bsteckverbinder\b"),
+        ("components", "Chokes", r"\bchokes?\b|\bdrossel(?:n)?\b"),
+        ("components", "EMI / EMC Filters", r"\bemi\b.*\bfilter\b|\bemc\b.*\bfilter\b|\bemv\b.*\bfilter\b"),
+        ("components", "EMI Accessories", r"\bemi\s+accessor(?:y|ies)\b|\bemv[- ]?zubehör\b|\bemv[- ]?zubehoer\b"),
     ]
 
     for domain, category, pattern in category_patterns:
@@ -103,8 +117,19 @@ def interpret_text(text: str) -> dict[str, Any]:
             out["product_domain"] = "timing"
         elif re.search(r"\bantenna\b|\bantenne(?:n)?\b", t, re.I):
             out["product_domain"] = "antenna"
-        elif re.search(r"\bembedded computer\b|\bcomputer module\b|\bsbc\b|\brechnermodul\b|\bembedded[- ]?rechner\b", t, re.I):
+        elif re.search(
+            r"\bcomputing\b|\bembedded computer\b|\bcomputer module\b|\bcomputer\b|"
+            r"\bsbc\b|\brechnermodul\b|\bembedded[- ]?rechner\b|\brechner\b",
+            t,
+            re.I,
+        ):
             out["product_domain"] = "computing"
+        elif re.search(
+            r"\bcomponents?\b|\bpassive components?\b|\bbauteil(?:e)?\b|\bkomponent(?:e|en)\b|\bemc\b|\bemi\b|\bemv\b",
+            t,
+            re.I,
+        ):
+            out["product_domain"] = "components"
 
     # Generic electrical / host interface. This can be useful outside
     # connectivity as well, for example for digital sensors.

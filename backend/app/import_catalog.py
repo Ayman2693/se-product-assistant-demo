@@ -9,7 +9,16 @@ def main():
     parser.add_argument("--source", help="Import only matching source/category, e.g. LTE or Bluetooth")
     parser.add_argument("--limit-sources", type=int, help="Only import the first N matching catalog sections")
     parser.add_argument("--max-pages", type=int, help="Limit pagination per catalog section for testing")
-    parser.add_argument("--all", action="store_true", help="Import all configured SE catalog sections")
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Import all configured SE catalog sections including discovered child listings",
+    )
+    parser.add_argument(
+        "--no-discover-children",
+        action="store_true",
+        help="Disable recursive child-category discovery (debug only)",
+    )
     args = parser.parse_args()
 
     if not args.all and not args.source and args.limit_sources is None:
@@ -27,6 +36,7 @@ def main():
             source_filter=args.source,
             limit_sources=args.limit_sources,
             max_pages=args.max_pages,
+            discover_descendants=not args.no_discover_children,
         ))
         print()
         print("Catalog import complete")
@@ -34,6 +44,7 @@ def main():
         print(f"Sources requested : {result['sources_requested']}")
         print(f"Sources succeeded : {result['sources_succeeded']}")
         print(f"Products seen     : {result['products_seen']}")
+        print(f"Recursive crawl   : {result.get('recursive_discovery', True)}")
         if result["failed"]:
             print("Failures:")
             for row in result["failed"]:

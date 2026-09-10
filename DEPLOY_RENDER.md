@@ -80,3 +80,17 @@ For a real company production deployment:
 Local development remains unchanged:
 - frontend: http://localhost:5173
 - backend: http://localhost:8000
+
+
+## Refresh the full SE catalog after Phase 4.6
+
+After the new version is Live:
+
+1. Open `/docs` on the deployed site.
+2. Find `POST /api/catalog/sync`.
+3. Click **Try it out** -> **Execute**.
+4. Then use `GET /api/catalog/sync-status`.
+5. Wait until `"status": "completed"`.
+6. Check `GET /api/catalog/status` to see the updated product count.
+
+The sync runs in the background and writes to Render PostgreSQL.

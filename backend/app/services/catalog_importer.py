@@ -42,6 +42,97 @@ class ImportedProduct:
 def _clean(text: str) -> str:
     return re.sub(r"\s+", " ", text or "").strip()
 
+def _normalized_page_url(url: str) -> str:
+    parsed = urlparse(url)
+    path = parsed.path or "/"
+    if not path.endswith("/"):
+        path += "/"
+    return f"{parsed.scheme}://{parsed.netloc}{path}"
+
+
+def _source_prefix(path: str) -> str:
+    """
+    Convert a configured catalog landing path into a safe descendant prefix.
+
+    Examples:
+      /en/sbc/        -> /en/sbc
+      /en/com/        -> /en/com
+      /en/passivecap/ -> /en/passivecap
+
+    This intentionally allows:
+      /en/sbc-picoitx/
+      /en/com-smarc/
+      /en/passivecaptantal/
+
+    while excluding unrelated navigation branches.
+    """
+    return (urlparse(path).path or "/").rstrip("/")
+
+
+def discover_child_listing_urls(
+    html: str,
+    *,
+    current_url: str,
+    root_path: str,
+) -> list[str]:
+    """
+    Discover category/sub-category pages below one configured SE catalog source.
+
+    Product detail URLs (-p1234) are excluded because parse_listing() already
+    extracts those as products. Query-only pagination links are also excluded.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    prefix = _source_prefix(root_path)
+    current_normalized = _normalized_page_url(current_url)
+
+    found: set[str] = set()
+
+    for a in soup.find_all("a", href=True):
+        href = urljoin(current_url, a["href"])
+        parsed = urlparse(href)
+
+        if parsed.netloc and parsed.netloc.lower() != urlparse(CATALOG_BASE).netloc.lower():
+            continue
+
+        path = parsed.path or ""
+        if not path.startswith("/en/"):
+            continue
+
+        # Stay strictly inside the configured source family.
+        if not path.rstrip("/").startswith(prefix):
+            continue
+
+        if PRODUCT_PATH_RE.search(path):
+            continue
+
+        normalized = _normalized_page_url(href)
+        if normalized == current_normalized:
+            continue
+
+        # Avoid non-catalog utility/document fragments that happen to share a prefix.
+        label = _clean(a.get_text(" ", strip=True)).lower()
+        if label in {
+            "to the product",
+            "to the documents",
+            "request item",
+            "add to favorites",
+            "contact",
+            "login",
+        }:
+            continue
+
+        found.add(normalized)
+
+    return sorted(found)
+
+
+def _listing_label(html: str, fallback: str) -> str:
+    soup = BeautifulSoup(html, "html.parser")
+    h1 = soup.find("h1")
+    label = _clean(h1.get_text(" ", strip=True)) if h1 else ""
+    return label or fallback
+
+
 def _manufacturer(text: str) -> str:
     t = text.lower()
     for key in sorted(MANUFACTURER_ALIASES, key=len, reverse=True):
@@ -100,7 +191,13 @@ def _max_page(soup: BeautifulSoup, current_url: str) -> int:
                 pass
     return max_page
 
-def parse_listing(html: str, category: str, page_url: str) -> tuple[list[ImportedProduct], int]:
+def parse_listing(
+    html: str,
+    category: str,
+    page_url: str,
+    *,
+    listing_label: str | None = None,
+) -> tuple[list[ImportedProduct], int]:
     soup = BeautifulSoup(html, "html.parser")
     found: dict[str, ImportedProduct] = {}
 
@@ -145,6 +242,8 @@ def parse_listing(html: str, category: str, page_url: str) -> tuple[list[Importe
                 request_url = urljoin(page_url, x["href"])
 
         tags = [manufacturer, category]
+        if listing_label and listing_label.lower() != category.lower():
+            tags.append(listing_label)
         found[part_number.upper()] = ImportedProduct(
             part_number=part_number,
             manufacturer=manufacturer,
@@ -160,22 +259,68 @@ def parse_listing(html: str, category: str, page_url: str) -> tuple[list[Importe
 
     return list(found.values()), _max_page(soup, page_url)
 
-async def crawl_source(client: httpx.AsyncClient, source: dict, max_pages: int | None = None) -> list[ImportedProduct]:
-    base_url = urljoin(CATALOG_BASE, source["path"])
-    response = await client.get(base_url)
-    response.raise_for_status()
+async def crawl_source(
+    client: httpx.AsyncClient,
+    source: dict,
+    max_pages: int | None = None,
+    *,
+    discover_descendants: bool = True,
+    max_listing_pages: int = 80,
+) -> list[ImportedProduct]:
+    """
+    Crawl one configured SE catalog section.
 
-    first, detected_pages = parse_listing(response.text, source["category"], str(response.url))
-    pages = detected_pages if max_pages is None else min(detected_pages, max_pages)
-    products = list(first)
+    Older versions assumed every configured URL was already a product listing.
+    In reality, pages such as /en/sbc/ and /en/passivecap/ are landing pages
+    whose actual products live in child pages. We now discover those child
+    listing pages recursively while staying inside the source URL prefix.
+    """
+    base_url = _normalized_page_url(urljoin(CATALOG_BASE, source["path"]))
+    queue: list[str] = [base_url]
+    visited: set[str] = set()
+    products: list[ImportedProduct] = []
 
-    for page in range(2, pages + 1):
-        response = await client.get(base_url, params={"page": page})
+    while queue and len(visited) < max_listing_pages:
+        current = queue.pop(0)
+        normalized = _normalized_page_url(current)
+        if normalized in visited:
+            continue
+        visited.add(normalized)
+
+        response = await client.get(current)
         response.raise_for_status()
-        rows, _ = parse_listing(response.text, source["category"], str(response.url))
-        products.extend(rows)
 
-    dedup = {}
+        label = _listing_label(response.text, source["category"])
+        first, detected_pages = parse_listing(
+            response.text,
+            source["category"],
+            str(response.url),
+            listing_label=label,
+        )
+        products.extend(first)
+
+        if discover_descendants:
+            for child in discover_child_listing_urls(
+                response.text,
+                current_url=str(response.url),
+                root_path=source["path"],
+            ):
+                if child not in visited and child not in queue:
+                    queue.append(child)
+
+        pages = detected_pages if max_pages is None else min(detected_pages, max_pages)
+        for page in range(2, pages + 1):
+            paged = await client.get(current, params={"page": page})
+            paged.raise_for_status()
+            rows, _ = parse_listing(
+                paged.text,
+                source["category"],
+                str(paged.url),
+                listing_label=label,
+            )
+            products.extend(rows)
+
+    dedup: dict[str, ImportedProduct] = {}
     for item in products:
         dedup[item.part_number.upper()] = item
     return list(dedup.values())
@@ -236,6 +381,7 @@ async def import_catalog(
     source_filter: str | None = None,
     limit_sources: int | None = None,
     max_pages: int | None = None,
+    discover_descendants: bool = True,
 ) -> dict:
     selected = CATALOG_SOURCES
     if source_filter:
@@ -259,7 +405,12 @@ async def import_catalog(
     async with httpx.AsyncClient(timeout=timeout, headers=headers, follow_redirects=True) as client:
         for source in selected:
             try:
-                rows = await crawl_source(client, source, max_pages=max_pages)
+                rows = await crawl_source(
+                    client,
+                    source,
+                    max_pages=max_pages,
+                    discover_descendants=discover_descendants,
+                )
                 for row in rows:
                     upsert_product(db, row)
                 db.commit()
@@ -275,4 +426,5 @@ async def import_catalog(
         "products_seen": imported,
         "source_counts": source_counts,
         "failed": failed,
+        "recursive_discovery": discover_descendants,
     }

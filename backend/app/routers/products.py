@@ -1,19 +1,110 @@
+import asyncio
 import json
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
 from app.catalog_sources import CATALOG_SOURCES
-from app.db import get_db
+from app.db import SessionLocal, get_db
 from app.models import Product, ProductFeature
 from app.schemas import CatalogStatusResponse, MatchRequest, MatchResponse, ProductOut
 from app.services.matcher import score_product
+from app.services.catalog_importer import import_catalog
+from app.services.evidence_service import seed_catalog_evidence
 from app.services.evidence_matcher import (
     annotate_results_with_evidence,
     evidence_sort_key,
 )
 
 router = APIRouter(prefix="/api", tags=["products"])
+
+_catalog_sync_task: asyncio.Task | None = None
+_catalog_sync_state = {
+    "status": "idle",
+    "started_at": None,
+    "finished_at": None,
+    "products_seen": 0,
+    "sources_succeeded": 0,
+    "sources_requested": 0,
+    "failed": [],
+    "error": None,
+}
+
+
+def _utcnow_iso():
+    return datetime.now(timezone.utc).isoformat()
+
+
+async def _run_full_catalog_sync():
+    _catalog_sync_state.update({
+        "status": "running",
+        "started_at": _utcnow_iso(),
+        "finished_at": None,
+        "products_seen": 0,
+        "sources_succeeded": 0,
+        "sources_requested": 0,
+        "failed": [],
+        "error": None,
+    })
+
+    db = SessionLocal()
+    try:
+        result = await import_catalog(
+            db,
+            discover_descendants=True,
+        )
+        evidence = seed_catalog_evidence(db)
+
+        _catalog_sync_state.update({
+            "status": "completed",
+            "finished_at": _utcnow_iso(),
+            "products_seen": result.get("products_seen", 0),
+            "sources_succeeded": result.get("sources_succeeded", 0),
+            "sources_requested": result.get("sources_requested", 0),
+            "failed": result.get("failed", []),
+            "evidence": evidence,
+        })
+    except Exception as exc:
+        _catalog_sync_state.update({
+            "status": "failed",
+            "finished_at": _utcnow_iso(),
+            "error": str(exc),
+        })
+    finally:
+        db.close()
+
+
+@router.post("/catalog/sync")
+async def start_full_catalog_sync():
+    """
+    Start a full recursive SE catalog refresh in the background.
+
+    This is especially useful on Render Free, where shell/one-off jobs are
+    unavailable. The app-level demo Basic Auth protects this endpoint when
+    DEMO_PASSWORD is configured.
+    """
+    global _catalog_sync_task
+
+    if _catalog_sync_task is not None and not _catalog_sync_task.done():
+        return {
+            **_catalog_sync_state,
+            "message": "Catalog sync is already running.",
+        }
+
+    _catalog_sync_task = asyncio.create_task(_run_full_catalog_sync())
+    return {
+        **_catalog_sync_state,
+        "status": "starting",
+        "message": "Full recursive SE catalog sync started.",
+    }
+
+
+@router.get("/catalog/sync-status")
+def full_catalog_sync_status():
+    return dict(_catalog_sync_state)
+
 
 def _json(value, fallback):
     try:
