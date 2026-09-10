@@ -553,19 +553,32 @@ def annotate_results_with_evidence(
         return results
 
     product_ids = [row["product"]["id"] for row in results]
+    criteria = _request_criteria(request)
 
-    rows = (
+    evidence_query = (
         db.query(ProductEvidence)
         .options(selectinload(ProductEvidence.locations))
         .filter(ProductEvidence.product_id.in_(product_ids))
-        .all()
     )
+
+    # A product may have many evidence rows unrelated to the current request.
+    # Loading only the requested fields preserves the exact evidence result
+    # while reducing PostgreSQL rows, Python objects, and location lookups.
+    requested_fields = {
+        criterion["field"]
+        for criterion in criteria
+        if criterion.get("field")
+    }
+    if requested_fields:
+        evidence_query = evidence_query.filter(
+            ProductEvidence.field_name.in_(requested_fields)
+        )
+
+    rows = evidence_query.all()
 
     by_product: dict[int, list[ProductEvidence]] = defaultdict(list)
     for row in rows:
         by_product[row.product_id].append(row)
-
-    criteria = _request_criteria(request)
 
     for result in results:
         evidence_items = [

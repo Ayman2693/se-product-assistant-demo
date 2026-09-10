@@ -1076,3 +1076,38 @@ Result navigation:
   browser page toward the bottom
 
 No database migration and no catalog sync are required.
+
+
+# Phase 4.7.5 — Fast matching path
+
+`POST /api/match` is optimized without reducing the catalog or changing the
+technical ranking rules.
+
+Pipeline:
+
+1. conservative SQL pre-filter by requested product category and mandatory
+   connectivity technologies
+2. eager-load `Product.features` with the candidate query
+3. run the existing deterministic technical scorer
+4. find the Top-10 technical cutoff
+5. retain every product tied at that cutoff
+6. load evidence only for candidates that can still enter Top 10
+7. load only evidence fields relevant to the current request
+8. apply the existing evidence tie-break and return Top 10
+
+Important correctness property:
+
+`match_percent` remains the primary key. Evidence never promotes a lower
+technical score over a higher one. All products tied at the Top-10 technical
+cutoff are included in evidence evaluation.
+
+The API response `count` still reports the number of technical matches, not
+just the smaller evidence pool.
+
+Render logs now include one timing line per match, for example:
+
+`Match completed in 84.2 ms: sql_candidates=280 technical_matches=61 evidence_candidates=12 returned=10`
+
+This makes real production latency measurable.
+
+No database migration and no catalog sync are required.
