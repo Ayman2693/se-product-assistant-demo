@@ -1,0 +1,2041 @@
+[
+  {
+    "id": "ALMA-B106-00B",
+    "category": "Bluetooth LE",
+    "path": "Products → Wireless/RF → Short Range → Bluetooth LE",
+    "url": "https://www.spezial.com/en/alma-b106-00b-p9741/",
+    "desc": "u-blox Bluetooth 5.4 LE stand-alone module, PCB antenna, nRF54H20, Open CPU.",
+    "tags": [
+      "u-blox",
+      "Bluetooth LE",
+      "Open CPU",
+      "PCB antenna"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "ALMA-B101-00B",
+    "category": "Bluetooth LE",
+    "path": "Products → Wireless/RF → Short Range → Bluetooth LE",
+    "url": "https://www.spezial.com/en/alma-b101-00b-p9742/",
+    "desc": "u-blox Bluetooth 5.4 LE stand-alone module, antenna pin, nRF54H20, Open CPU.",
+    "tags": [
+      "u-blox",
+      "Bluetooth LE",
+      "Open CPU",
+      "Antenna pin"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "NORA-B206-00B",
+    "category": "Bluetooth LE",
+    "path": "Products → Wireless/RF → Short Range → Bluetooth LE",
+    "url": "https://www.spezial.com/en/nora-b206-00b-p9745/",
+    "desc": "u-blox Bluetooth LE stand-alone module, PCB antenna, nRF54L15, 1.5 MB NVM, Open CPU.",
+    "tags": [
+      "u-blox",
+      "Bluetooth LE",
+      "Open CPU",
+      "PCB antenna",
+      "1.5 MB NVM"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "NORA-B216-00B",
+    "category": "Bluetooth LE",
+    "path": "Products → Wireless/RF → Short Range → Bluetooth LE",
+    "url": "https://www.spezial.com/en/nora-b216-00b-p10232/",
+    "desc": "u-blox Bluetooth 6.0 LE stand-alone module, PCB antenna, nRF54L10, Open CPU.",
+    "tags": [
+      "u-blox",
+      "Bluetooth 6.0 LE",
+      "Open CPU",
+      "PCB antenna"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "NORA-B226-00B",
+    "category": "Bluetooth LE",
+    "path": "Products → Wireless/RF → Short Range → Bluetooth LE",
+    "url": "https://www.spezial.com/en/nora-b226-00b-p10233/",
+    "desc": "u-blox Bluetooth 6.0 LE stand-alone module, PCB antenna, nRF54L05, Open CPU.",
+    "tags": [
+      "u-blox",
+      "Bluetooth 6.0 LE",
+      "Open CPU",
+      "PCB antenna"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "NORA-B266-00B",
+    "category": "Bluetooth LE",
+    "path": "Products → Wireless/RF → Short Range → Bluetooth LE",
+    "url": "https://www.spezial.com/en/nora-b266-00b-p10330/",
+    "desc": "u-blox Bluetooth 6.0 LE stand-alone module with PCB antenna and u-connectXpress.",
+    "tags": [
+      "u-blox",
+      "Bluetooth 6.0 LE",
+      "u-connectXpress",
+      "PCB antenna"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "NORA-B276-00B",
+    "category": "Bluetooth LE",
+    "path": "Products → Wireless/RF → Short Range → Bluetooth LE",
+    "url": "https://www.spezial.com/en/nora-b276-00b-p10331/",
+    "desc": "u-blox Bluetooth 6.0 LE stand-alone module with PCB antenna and u-connectXpress.",
+    "tags": [
+      "u-blox",
+      "Bluetooth 6.0 LE",
+      "u-connectXpress",
+      "PCB antenna"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "NORA-B201-00B",
+    "category": "Bluetooth LE",
+    "path": "Products → Wireless/RF → Short Range → Bluetooth LE",
+    "url": "https://www.spezial.com/en/nora-b201-00b-p9746/",
+    "desc": "u-blox Bluetooth LE stand-alone module, antenna pin, nRF54L15, Open CPU.",
+    "tags": [
+      "u-blox",
+      "Bluetooth LE",
+      "Open CPU",
+      "Antenna pin"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "MAYA-W266-00B",
+    "category": "Wi-Fi",
+    "path": "Products → Wireless/RF → Short Range → Wi-Fi",
+    "url": "https://www.spezial.com/en/maya-w266-00b-p9714/",
+    "desc": "u-blox host-based multiradio module, Wi-Fi 6 + Bluetooth, PCB antenna / antenna pin.",
+    "tags": [
+      "u-blox",
+      "Wi-Fi 6",
+      "Bluetooth",
+      "Host-based"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "MAYA-W260-00B",
+    "category": "Wi-Fi",
+    "path": "Products → Wireless/RF → Short Range → Wi-Fi",
+    "url": "https://www.spezial.com/en/maya-w260-00b-p294/",
+    "desc": "u-blox host-based multiradio module, Wi-Fi 6 + Bluetooth with 2 U.FL connectors.",
+    "tags": [
+      "u-blox",
+      "Wi-Fi 6",
+      "Bluetooth",
+      "U.FL"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "MAYA-W261-00B",
+    "category": "Wi-Fi",
+    "path": "Products → Wireless/RF → Short Range → Wi-Fi",
+    "url": "https://www.spezial.com/en/maya-w261-00b-p9713/",
+    "desc": "u-blox host-based multiradio module, Wi-Fi 6 + Bluetooth with antenna pins.",
+    "tags": [
+      "u-blox",
+      "Wi-Fi 6",
+      "Bluetooth",
+      "Antenna pins"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "ZED-X20D-00B",
+    "category": "High Precision GNSS",
+    "path": "Products → Wireless/RF → Positioning → High Precision GNSS",
+    "url": "https://www.spezial.com/en/zed-x20d-00b-p10324/",
+    "desc": "u-blox X20 all-band high precision GNSS heading module, dual antenna.",
+    "tags": [
+      "u-blox",
+      "High Precision GNSS",
+      "All-band",
+      "Heading"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "ZED-F20P-00B",
+    "category": "High Precision GNSS",
+    "path": "Products → Wireless/RF → Positioning → High Precision GNSS",
+    "url": "https://www.spezial.com/en/zed-f20p-00b-p10301/",
+    "desc": "u-blox F20 high precision GNSS module, triple band L1/L2/L5.",
+    "tags": [
+      "u-blox",
+      "High Precision GNSS",
+      "L1/L2/L5"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "ZED-X20P-00B",
+    "category": "High Precision GNSS",
+    "path": "Products → Wireless/RF → Positioning → High Precision GNSS",
+    "url": "https://www.spezial.com/en/zed-x20p-p10236/",
+    "desc": "u-blox X20 all-band high precision GNSS receiver.",
+    "tags": [
+      "u-blox",
+      "High Precision GNSS",
+      "All-band",
+      "RTK"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "NEO-F9P-15B",
+    "category": "High Precision GNSS",
+    "path": "Products → Wireless/RF → Positioning → High Precision GNSS",
+    "url": "https://www.spezial.com/en/neo-f9p-15b-p5228/",
+    "desc": "u-blox F9 high precision GNSS module, L1/L5, multi-band RTK + PPP-RTK.",
+    "tags": [
+      "u-blox",
+      "High Precision GNSS",
+      "L1/L5",
+      "RTK"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "ZED-F9P-04B",
+    "category": "High Precision GNSS",
+    "path": "Products → Wireless/RF → Positioning → High Precision GNSS",
+    "url": "https://www.spezial.com/en/zed-f9p-04b-p34/",
+    "desc": "u-blox F9 high precision GNSS module with rover + base functionality.",
+    "tags": [
+      "u-blox",
+      "High Precision GNSS",
+      "RTK",
+      "Rover/Base"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "ZED-F9P-02B",
+    "category": "High Precision GNSS",
+    "path": "Products → Wireless/RF → Positioning → High Precision GNSS",
+    "url": "https://www.spezial.com/en/zed-f9p-02b-p36/",
+    "desc": "u-blox F9 high precision GNSS module with rover + base functionality.",
+    "tags": [
+      "u-blox",
+      "High Precision GNSS",
+      "RTK",
+      "Rover/Base"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "ZED-F9P-05B",
+    "category": "High Precision GNSS",
+    "path": "Products → Wireless/RF → Positioning → High Precision GNSS",
+    "url": "https://www.spezial.com/en/zed-f9p-05b-p2829/",
+    "desc": "u-blox F9 high precision GNSS module, L1/L2, rover + base functionality.",
+    "tags": [
+      "u-blox",
+      "High Precision GNSS",
+      "L1/L2",
+      "RTK"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "ZED-F9P-15B",
+    "category": "High Precision GNSS",
+    "path": "Products → Wireless/RF → Positioning → High Precision GNSS",
+    "url": "https://www.spezial.com/en/zed-f9p-15b-p10205/",
+    "desc": "u-blox F9 high precision GNSS module, L1/L5, rover + base functionality.",
+    "tags": [
+      "u-blox",
+      "High Precision GNSS",
+      "L1/L5",
+      "RTK"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "DAN-F10N-00B",
+    "category": "Standard GNSS",
+    "path": "Products → Wireless/RF → Positioning → Standard GNSS",
+    "url": "https://www.spezial.com/en/dan-f10n-00b-p10283/",
+    "desc": "u-blox F10 GNSS antenna module with flash, TCXO, SAW and LNA.",
+    "tags": [
+      "u-blox",
+      "Standard GNSS",
+      "Antenna module",
+      "F10"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "MAX-F10S-00B",
+    "category": "Standard GNSS",
+    "path": "Products → Wireless/RF → Positioning → Standard GNSS",
+    "url": "https://www.spezial.com/en/max-f10s-00b-p9737/",
+    "desc": "u-blox F10 GNSS LCC module, L1/L5, TCXO, SAW and LNA.",
+    "tags": [
+      "u-blox",
+      "Standard GNSS",
+      "L1/L5",
+      "F10"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "NEO-F10N-00B",
+    "category": "Standard GNSS",
+    "path": "Products → Wireless/RF → Positioning → Standard GNSS",
+    "url": "https://www.spezial.com/en/u-blox-f10-gnss-module2tcxo2flash2saw2lna-p9650/",
+    "desc": "u-blox F10 GNSS module with TCXO, flash, SAW and LNA.",
+    "tags": [
+      "u-blox",
+      "Standard GNSS",
+      "L1/L5",
+      "NEO"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "SAM-M10Q-00B",
+    "category": "Standard GNSS",
+    "path": "Products → Wireless/RF → Positioning → Standard GNSS",
+    "url": "https://www.spezial.com/en/sam-m10q-00b-p19/",
+    "desc": "u-blox M10 concurrent GNSS antenna module with TCXO, SAW and LNA.",
+    "tags": [
+      "u-blox",
+      "Standard GNSS",
+      "M10",
+      "Antenna module"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "XAHP.50.A.301111",
+    "category": "external Antennas",
+    "path": "Products → Wireless/RF → Antennas → external Antennas",
+    "url": "https://www.spezial.com/en/xahp-50-a-301111-p6157/",
+    "desc": "Taoglas permanent-mount active multi-band GNSS external antenna.",
+    "tags": [
+      "Taoglas",
+      "External antenna",
+      "GNSS",
+      "Multi-band"
+    ],
+    "manufacturer": "Taoglas",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "AA.180.501111",
+    "category": "external Antennas",
+    "path": "Products → Wireless/RF → Antennas → external Antennas",
+    "url": "https://www.spezial.com/en/aa-180-501111-p6138/",
+    "desc": "Taoglas magnetic-mount GNSS external antenna.",
+    "tags": [
+      "Taoglas",
+      "External antenna",
+      "GNSS",
+      "Magnetic mount"
+    ],
+    "manufacturer": "Taoglas",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "ANN-MB5-00",
+    "category": "external Antennas",
+    "path": "Products → Wireless/RF → Antennas → external Antennas",
+    "url": "https://www.spezial.com/en/u-blox-multi-band-l1-l5-active-gnss-antenna2sma-p9651/",
+    "desc": "u-blox multi-band L1/L5 active GNSS antenna with SMA and magnetic base.",
+    "tags": [
+      "u-blox",
+      "External antenna",
+      "L1/L5",
+      "SMA"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "ANN-MB1-00",
+    "category": "external Antennas",
+    "path": "Products → Wireless/RF → Antennas → external Antennas",
+    "url": "https://www.spezial.com/en/ann-mb1-00-p94/",
+    "desc": "u-blox multi-band L1/L5 active GNSS antenna for high precision applications.",
+    "tags": [
+      "u-blox",
+      "External antenna",
+      "High precision GNSS",
+      "SMA"
+    ],
+    "manufacturer": "u-blox",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "ABP2LANT001PG2A3XX",
+    "category": "Pressure",
+    "path": "Products → Sensors → Pressure",
+    "url": "https://www.spezial.com/en/abp2lant001pg2a3xx-p7902/",
+    "desc": "Honeywell ABP2 pressure sensor, 1 psi gage, digital I²C, 3.3 V.",
+    "tags": [
+      "Honeywell",
+      "Pressure",
+      "I²C",
+      "1 psi"
+    ],
+    "manufacturer": "Honeywell",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "ABP2LANT001PGAA5XX",
+    "category": "Pressure",
+    "path": "Products → Sensors → Pressure",
+    "url": "https://www.spezial.com/en/abp2lant001pgaa5xx-p7903/",
+    "desc": "Honeywell ABP2 pressure sensor, 1 psi gage, analogue, 5 V.",
+    "tags": [
+      "Honeywell",
+      "Pressure",
+      "Analogue",
+      "1 psi"
+    ],
+    "manufacturer": "Honeywell",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "ABP2LANT001PGSA3XX",
+    "category": "Pressure",
+    "path": "Products → Sensors → Pressure",
+    "url": "https://www.spezial.com/en/abp2lant001pgsa3xx-p7904/",
+    "desc": "Honeywell ABP2 pressure sensor, 1 psi gage, digital SPI, 3.3 V.",
+    "tags": [
+      "Honeywell",
+      "Pressure",
+      "SPI",
+      "1 psi"
+    ],
+    "manufacturer": "Honeywell",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "RV-3028-C7",
+    "category": "RTCs",
+    "path": "Products → Timing → RTCs",
+    "url": "https://www.spezial.com/en/rv-3028-c7-p330/",
+    "desc": "Micro Crystal I²C RTC, 1 ppm, compact C7 package.",
+    "tags": [
+      "Micro Crystal",
+      "RTC",
+      "I²C",
+      "1 ppm"
+    ],
+    "manufacturer": "Micro Crystal",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "RV-4162-C7",
+    "category": "RTCs",
+    "path": "Products → Timing → RTCs",
+    "url": "https://www.spezial.com/en/rv-4162-c7-p339/",
+    "desc": "Micro Crystal I²C RTC, 20 ppm, C7 package.",
+    "tags": [
+      "Micro Crystal",
+      "RTC",
+      "I²C",
+      "20 ppm"
+    ],
+    "manufacturer": "Micro Crystal",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "RV-3032-C7",
+    "category": "RTCs",
+    "path": "Products → Timing → RTCs",
+    "url": "https://www.spezial.com/en/rv-3032-c7-p336/",
+    "desc": "Micro Crystal I²C RTC, 3 ppm, C7 package.",
+    "tags": [
+      "Micro Crystal",
+      "RTC",
+      "I²C",
+      "3 ppm"
+    ],
+    "manufacturer": "Micro Crystal",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "HEL-705-T-0-12-00",
+    "category": "Temperature",
+    "path": "Products → Sensors → Temperature",
+    "url": "https://www.spezial.com/en/hel-705-t-0-12-00-p7953/",
+    "desc": "Honeywell HEL 700-series RTD sensor, -70 to +260 °C.",
+    "tags": [
+      "Honeywell",
+      "RTD",
+      "Temperature",
+      "-70 to +260 °C"
+    ],
+    "manufacturer": "Honeywell",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "HEL-705-T-1-12-00",
+    "category": "Temperature",
+    "path": "Products → Sensors → Temperature",
+    "url": "https://www.spezial.com/en/hel-705-t-1-12-00-p7954/",
+    "desc": "Honeywell HEL 700-series RTD sensor, -70 to +260 °C.",
+    "tags": [
+      "Honeywell",
+      "RTD",
+      "Temperature"
+    ],
+    "manufacturer": "Honeywell",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "HEL-705-U-0-12-00",
+    "category": "Temperature",
+    "path": "Products → Sensors → Temperature",
+    "url": "https://www.spezial.com/en/hel-705-u-0-12-00-p7956/",
+    "desc": "Honeywell HEL 700-series RTD sensor, -70 to +260 °C.",
+    "tags": [
+      "Honeywell",
+      "RTD",
+      "Temperature"
+    ],
+    "manufacturer": "Honeywell",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "HEL-705-U-0-12-C1",
+    "category": "Temperature",
+    "path": "Products → Sensors → Temperature",
+    "url": "https://www.spezial.com/en/hel-705-u-0-12-c1-p7957/",
+    "desc": "Honeywell HEL 700-series RTD sensor, -70 to +260 °C.",
+    "tags": [
+      "Honeywell",
+      "RTD",
+      "Temperature"
+    ],
+    "manufacturer": "Honeywell",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "HEL-705-U-0-18-00",
+    "category": "Temperature",
+    "path": "Products → Sensors → Temperature",
+    "url": "https://www.spezial.com/en/hel-705-u-0-18-00-p7958/",
+    "desc": "Honeywell HEL 700-series RTD sensor, -70 to +260 °C.",
+    "tags": [
+      "Honeywell",
+      "RTD",
+      "Temperature"
+    ],
+    "manufacturer": "Honeywell",
+    "exact": true,
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "ADAM-R11801D-00C",
+    "manufacturer": "Trasna",
+    "category": "LTE Cat 1bis",
+    "desc": "Compact LTE Cat 1bis EMEA/APAC module, 18×18×2.2 mm, -40 to +85 °C; Wi-Fi scanning and power-saving features.",
+    "tags": [
+      "cellular",
+      "LTE Cat 1bis",
+      "EMEA",
+      "APAC",
+      "compact",
+      "Wi-Fi scan",
+      "IoT"
+    ],
+    "url": "https://www.spezial.com/en/adam-r11801d-00c-p10322/",
+    "exact": true,
+    "path": "LTE Cat 1bis · Trasna",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "ADAM-R11001D-00C",
+    "manufacturer": "Trasna",
+    "category": "LTE Cat 1bis",
+    "desc": "Compact global LTE Cat 1bis module, 18×18×2.2 mm, aimed at IoT and tracking.",
+    "tags": [
+      "cellular",
+      "LTE Cat 1bis",
+      "global",
+      "compact",
+      "IoT",
+      "tracking"
+    ],
+    "url": "https://www.spezial.com/en/adam-r11001d-00c-p10323/",
+    "exact": true,
+    "path": "LTE Cat 1bis · Trasna",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "LEXI-R10801D-01B",
+    "manufacturer": "Trasna",
+    "category": "LTE Cat 1bis",
+    "desc": "Ultra-compact LTE Cat 1bis EMEA/APAC single-mode module, data-only.",
+    "tags": [
+      "cellular",
+      "LTE Cat 1bis",
+      "EMEA",
+      "APAC",
+      "16x16",
+      "compact"
+    ],
+    "url": "https://www.spezial.com/en/lexi-r10801d-01b-p10293/",
+    "exact": true,
+    "path": "LTE Cat 1bis · Trasna",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "LEXI-R10001D-01B",
+    "manufacturer": "Trasna",
+    "category": "LTE Cat 1bis",
+    "desc": "Ultra-compact global LTE Cat 1bis single-mode module, data-only.",
+    "tags": [
+      "cellular",
+      "LTE Cat 1bis",
+      "global",
+      "16x16",
+      "compact"
+    ],
+    "url": "https://www.spezial.com/en/lexi-r10001d-01b-p10202/",
+    "exact": true,
+    "path": "LTE Cat 1bis · Trasna",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "LEXI-R10011D-01B",
+    "manufacturer": "Trasna",
+    "category": "LTE Cat 1bis",
+    "desc": "Global LTE Cat 1bis module with US MNO certification / B25 Direct-to-Cell variant context.",
+    "tags": [
+      "cellular",
+      "LTE Cat 1bis",
+      "global",
+      "US",
+      "MNO",
+      "B25"
+    ],
+    "url": "https://www.spezial.com/en/lexi-r10011d-01b-p10294/",
+    "exact": true,
+    "path": "LTE Cat 1bis · Trasna",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "SARA-R422M10S-01B",
+    "manufacturer": "Trasna",
+    "category": "LPWA",
+    "desc": "LTE Cat M1 / NB2 / 2G module with integrated M10 GNSS and security features.",
+    "tags": [
+      "cellular",
+      "LTE-M",
+      "NB-IoT",
+      "2G",
+      "GNSS",
+      "M10",
+      "LPWA"
+    ],
+    "url": "https://www.spezial.com/en/sara-r422m10s-01b-p32/",
+    "exact": true,
+    "path": "LPWA · Trasna",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "C16QS-WW-GNAN",
+    "manufacturer": "Cavli",
+    "category": "LTE Cat 1bis",
+    "desc": "Worldwide LTE Cat 1bis module with integrated L1 GNSS.",
+    "tags": [
+      "cellular",
+      "LTE Cat 1bis",
+      "global",
+      "GNSS",
+      "L1"
+    ],
+    "url": "https://www.spezial.com/en/c16qs-ww-gnan-p10239/",
+    "exact": true,
+    "path": "LTE Cat 1bis · Cavli",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "C16QS-WW-S00N",
+    "manufacturer": "Cavli",
+    "category": "LTE Cat 1bis",
+    "desc": "Worldwide LTE Cat 1bis modem-only module.",
+    "tags": [
+      "cellular",
+      "LTE Cat 1bis",
+      "global",
+      "modem"
+    ],
+    "url": "https://www.spezial.com/en/c16qs-ww-s00n-p10257/",
+    "exact": true,
+    "path": "LTE Cat 1bis · Cavli",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "C16QS-WW-GNAN-MPCI",
+    "manufacturer": "Cavli",
+    "category": "LTE Cat 1bis",
+    "desc": "Worldwide LTE Cat 1bis module with L1 GNSS in Mini PCIe form factor.",
+    "tags": [
+      "cellular",
+      "LTE Cat 1bis",
+      "global",
+      "GNSS",
+      "Mini PCIe"
+    ],
+    "url": "https://www.spezial.com/en/c16qs-ww-gnanmpci-p10282/",
+    "exact": true,
+    "path": "LTE Cat 1bis · Cavli",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "C17QS-WW-GNBN",
+    "manufacturer": "Cavli",
+    "category": "LTE Cat 1bis",
+    "desc": "Worldwide LTE Cat 1bis module with dual-band L1+L5 GNSS.",
+    "tags": [
+      "cellular",
+      "LTE Cat 1bis",
+      "global",
+      "GNSS",
+      "L1",
+      "L5"
+    ],
+    "url": "https://www.spezial.com/en/c17qs-ww-gnbn-p10243/",
+    "exact": true,
+    "path": "LTE Cat 1bis · Cavli",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "C10QM-EAJ-24GNN",
+    "manufacturer": "Cavli",
+    "category": "LTE Cat 1",
+    "desc": "LTE Cat 1 / 2G module with 2 GB RAM + 4 GB NAND for smart embedded applications.",
+    "tags": [
+      "cellular",
+      "LTE Cat 1",
+      "2G",
+      "RAM",
+      "NAND",
+      "smart module"
+    ],
+    "url": "https://www.spezial.com/en/c10qm-eaj-24gnn-p10245/",
+    "exact": true,
+    "path": "LTE Cat 1 · Cavli",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "CQS315-WW-104GNAN",
+    "manufacturer": "Cavli",
+    "category": "LTE Cat 4 Smart Module",
+    "desc": "Worldwide LTE Cat 4 / 2G smart module with 1 GB RAM, 4 GB eMMC and L1 GNSS.",
+    "tags": [
+      "cellular",
+      "LTE Cat 4",
+      "2G",
+      "smart module",
+      "GNSS",
+      "eMMC"
+    ],
+    "url": "https://www.spezial.com/en/cqs315-ww-104gnan-p10261/",
+    "exact": true,
+    "path": "LTE Cat 4 Smart Module · Cavli",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "CQM220-WW-11S00N",
+    "manufacturer": "Cavli",
+    "category": "5G RedCap",
+    "desc": "5G RedCap Release 17 module with LTE Cat 4 fallback, worldwide bands and OpenWrt SDK.",
+    "tags": [
+      "cellular",
+      "5G RedCap",
+      "LTE Cat 4",
+      "global",
+      "OpenWrt",
+      "PCIe"
+    ],
+    "url": "https://www.spezial.com/en/cqm220-ww-11s00n-p10259/",
+    "exact": true,
+    "path": "5G RedCap · Cavli",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "ADFGP.60A.01.0150D",
+    "manufacturer": "Taoglas",
+    "category": "External Antenna",
+    "desc": "All-band GNSS external antenna for high-precision positioning.",
+    "tags": [
+      "antenna",
+      "external",
+      "GNSS",
+      "all-band",
+      "high precision"
+    ],
+    "url": "https://www.spezial.com/en/adfgp-60a-01-0150d-p6139/",
+    "exact": true,
+    "path": "External Antenna · Taoglas",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "ASGGB184.A",
+    "manufacturer": "Taoglas",
+    "category": "SMD Antenna",
+    "desc": "18 mm active GNSS SMD patch covering GPS/GLONASS/BeiDou/Galileo L1.",
+    "tags": [
+      "antenna",
+      "SMD",
+      "active GNSS",
+      "L1",
+      "patch"
+    ],
+    "url": "https://www.spezial.com/en/asggb184-a-p6141/",
+    "exact": true,
+    "path": "SMD Antenna · Taoglas",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "FXUB63.07.0150C",
+    "manufacturer": "Taoglas",
+    "category": "Embedded Antenna",
+    "desc": "FPC wideband embedded antenna for compact wireless products.",
+    "tags": [
+      "antenna",
+      "embedded",
+      "FPC",
+      "wideband",
+      "wireless"
+    ],
+    "url": "https://www.spezial.com/en/fxub63-07-0150c-p6143/",
+    "exact": true,
+    "path": "Embedded Antenna · Taoglas",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "AGVLB.25A.07.0060A",
+    "manufacturer": "Taoglas",
+    "category": "SMD Antenna",
+    "desc": "L1+L5 stacked GNSS patch antenna.",
+    "tags": [
+      "antenna",
+      "SMD",
+      "GNSS",
+      "L1",
+      "L5",
+      "patch"
+    ],
+    "url": "https://www.spezial.com/en/agvlb-25a-07-0060a-p6140/",
+    "exact": true,
+    "path": "SMD Antenna · Taoglas",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "SR4G053 (Raptor)",
+    "manufacturer": "Antenova",
+    "category": "SMD Antenna",
+    "desc": "Compact SMD passive GNSS antenna covering L1/L2 bands.",
+    "tags": [
+      "antenna",
+      "SMD",
+      "GNSS",
+      "L1",
+      "L2",
+      "Raptor"
+    ],
+    "url": "https://www.spezial.com/en/velox-sr4g053-p2850/",
+    "exact": true,
+    "path": "SMD Antenna · Antenova",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "SR4L002 (Lucida)",
+    "manufacturer": "Antenova",
+    "category": "Antennas",
+    "desc": "SMD LTE antenna, compact form factor.",
+    "tags": [
+      "antenna",
+      "SMD",
+      "LTE"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/antenova/",
+    "exact": false,
+    "path": "Antennas · Antenova",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "SR42W009 (Trogona)",
+    "manufacturer": "Antenova",
+    "category": "Antennas",
+    "desc": "Dual-band Wi-Fi SMD antenna.",
+    "tags": [
+      "antenna",
+      "SMD",
+      "Wi-Fi",
+      "2.4 GHz",
+      "5 GHz"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/antenova/",
+    "exact": false,
+    "path": "Antennas · Antenova",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "SR4L049-L (Integra)",
+    "manufacturer": "Antenova",
+    "category": "Antennas",
+    "desc": "SMD LTE antenna for compact devices.",
+    "tags": [
+      "antenna",
+      "SMD",
+      "LTE"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/antenova/",
+    "exact": false,
+    "path": "Antennas · Antenova",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "SRF2W012-100 (Dromus)",
+    "manufacturer": "Antenova",
+    "category": "Antennas",
+    "desc": "Flexible dual-band Wi-Fi embedded antenna.",
+    "tags": [
+      "antenna",
+      "embedded",
+      "Wi-Fi",
+      "flex"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/antenova/",
+    "exact": false,
+    "path": "Antennas · Antenova",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "M20057-1 (Activa Sinica)",
+    "manufacturer": "Antenova",
+    "category": "Antennas",
+    "desc": "Active GNSS antenna module with SAW/LNA.",
+    "tags": [
+      "antenna",
+      "GNSS",
+      "active",
+      "SAW",
+      "LNA"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/antenova/",
+    "exact": false,
+    "path": "Antennas · Antenova",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "CMX655DQ6",
+    "manufacturer": "CML Micro",
+    "category": "Audio Codec",
+    "desc": "Ultra-low-power voice codec with digital microphone interface and Class-D speaker amplifier.",
+    "tags": [
+      "audio",
+      "codec",
+      "voice",
+      "low power",
+      "Class-D",
+      "I2S",
+      "SPI"
+    ],
+    "url": "https://www.spezial.com/en/cmx655dq6-p5267/",
+    "exact": true,
+    "path": "Audio Codec · CML Micro",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "SCT2400HDA",
+    "manufacturer": "CML Micro",
+    "category": "RF / Audio",
+    "desc": "2.4 GHz digital voice and data transceiver.",
+    "tags": [
+      "RF",
+      "2.4 GHz",
+      "transceiver",
+      "voice",
+      "data"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/cml/",
+    "exact": false,
+    "path": "RF / Audio · CML Micro",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "VDES1000",
+    "manufacturer": "CML Micro",
+    "category": "RF / Audio",
+    "desc": "Complete marine VHF data exchange system module.",
+    "tags": [
+      "marine",
+      "VHF",
+      "VDES",
+      "RF"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/cml/",
+    "exact": false,
+    "path": "RF / Audio · CML Micro",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "CMX972Q5",
+    "manufacturer": "CML Micro",
+    "category": "RF / Audio",
+    "desc": "Quadrature demodulator with IF PLL/VCO.",
+    "tags": [
+      "RF",
+      "demodulator",
+      "PLL",
+      "VCO"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/cml/",
+    "exact": false,
+    "path": "RF / Audio · CML Micro",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "CMX7032L9",
+    "manufacturer": "CML Micro",
+    "category": "RF / Audio",
+    "desc": "AIS Class B baseband processor with RF synthesizer.",
+    "tags": [
+      "AIS",
+      "marine",
+      "baseband",
+      "RF"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/cml/",
+    "exact": false,
+    "path": "RF / Audio · CML Micro",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "DECFA-64GM41BC1DC",
+    "manufacturer": "Innodisk",
+    "category": "Flash Storage",
+    "desc": "Industrial CFast 3ME4 flash storage.",
+    "tags": [
+      "memory",
+      "CFast",
+      "industrial",
+      "flash"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/innodisk/",
+    "exact": false,
+    "path": "Flash Storage · Innodisk",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "DHMSR-64GD09BC1DC",
+    "manufacturer": "Innodisk",
+    "category": "Flash Storage",
+    "desc": "Industrial mSATA 3IE3 flash storage.",
+    "tags": [
+      "memory",
+      "mSATA",
+      "industrial",
+      "flash"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/innodisk/",
+    "exact": false,
+    "path": "Flash Storage · Innodisk",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "DECFA-B56D09BW1DC",
+    "manufacturer": "Innodisk",
+    "category": "Flash Storage",
+    "desc": "Wide-temperature industrial CFast storage.",
+    "tags": [
+      "memory",
+      "CFast",
+      "wide temperature",
+      "industrial"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/innodisk/",
+    "exact": false,
+    "path": "Flash Storage · Innodisk",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "DEM24-64GDD1ECADF",
+    "manufacturer": "Innodisk",
+    "category": "Flash Storage",
+    "desc": "M.2 NVMe Gen3x4 industrial flash module.",
+    "tags": [
+      "memory",
+      "M.2",
+      "NVMe",
+      "Gen3x4",
+      "industrial"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/innodisk/",
+    "exact": false,
+    "path": "Flash Storage · Innodisk",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "DESMH-08GD09BW1SC",
+    "manufacturer": "Innodisk",
+    "category": "Flash Storage",
+    "desc": "Wide-temperature SATADOM industrial storage.",
+    "tags": [
+      "memory",
+      "SATADOM",
+      "industrial",
+      "wide temperature"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/innodisk/",
+    "exact": false,
+    "path": "Flash Storage · Innodisk",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "DE0H-512D31C1SB",
+    "manufacturer": "Innodisk",
+    "category": "Flash Storage",
+    "desc": "Industrial EDC 4000 embedded flash device.",
+    "tags": [
+      "memory",
+      "EDC",
+      "industrial",
+      "flash"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/innodisk/",
+    "exact": false,
+    "path": "Flash Storage · Innodisk",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "SiT8021AC-J3-XXS-10.000000",
+    "manufacturer": "SiTime",
+    "category": "Oscillators",
+    "desc": "10 MHz MEMS oscillator, single-ended.",
+    "tags": [
+      "timing",
+      "oscillator",
+      "MEMS",
+      "10 MHz"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/sitime/",
+    "exact": false,
+    "path": "Oscillators · SiTime",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "SIT1534AC-H5-DCC-32.768E",
+    "manufacturer": "SiTime",
+    "category": "Oscillators",
+    "desc": "32.768 kHz MEMS oscillator, LVCMOS.",
+    "tags": [
+      "timing",
+      "oscillator",
+      "MEMS",
+      "32.768 kHz"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/sitime/",
+    "exact": false,
+    "path": "Oscillators · SiTime",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "SIT1581AI-J3-18E-2000.000000E",
+    "manufacturer": "SiTime",
+    "category": "Oscillators",
+    "desc": "2 MHz MEMS oscillator, 1.8 V.",
+    "tags": [
+      "timing",
+      "oscillator",
+      "MEMS",
+      "2 MHz"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/sitime/",
+    "exact": false,
+    "path": "Oscillators · SiTime",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "SIT1569AI-J3-XXE-0050.000000E",
+    "manufacturer": "SiTime",
+    "category": "Oscillators",
+    "desc": "50 kHz µPower MEMS oscillator.",
+    "tags": [
+      "timing",
+      "oscillator",
+      "MEMS",
+      "50 kHz",
+      "low power"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/sitime/",
+    "exact": false,
+    "path": "Oscillators · SiTime",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "SIT1534AI-H4-DCC-00.001E",
+    "manufacturer": "SiTime",
+    "category": "Oscillators",
+    "desc": "1 Hz MEMS oscillator.",
+    "tags": [
+      "timing",
+      "oscillator",
+      "MEMS",
+      "1 Hz"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/sitime/",
+    "exact": false,
+    "path": "Oscillators · SiTime",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "WEO012864JLPP3N00000",
+    "manufacturer": "Winstar",
+    "category": "OLED Displays",
+    "desc": "128×64 yellow OLED Chip-on-Glass display.",
+    "tags": [
+      "display",
+      "OLED",
+      "128x64",
+      "yellow"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/winstar/",
+    "exact": false,
+    "path": "OLED Displays · Winstar",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "WEO012832DWPP3N00008",
+    "manufacturer": "Winstar",
+    "category": "OLED Displays",
+    "desc": "128×32 white OLED Chip-on-Glass display.",
+    "tags": [
+      "display",
+      "OLED",
+      "128x32",
+      "white"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/winstar/",
+    "exact": false,
+    "path": "OLED Displays · Winstar",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "WEH002002AGPP5N00100",
+    "manufacturer": "Winstar",
+    "category": "OLED Displays",
+    "desc": "20×2 green OLED character display.",
+    "tags": [
+      "display",
+      "OLED",
+      "character",
+      "20x2"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/winstar/",
+    "exact": false,
+    "path": "OLED Displays · Winstar",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "WEX025664DLPP3N00000",
+    "manufacturer": "Winstar",
+    "category": "OLED Displays",
+    "desc": "256×64 yellow OLED display.",
+    "tags": [
+      "display",
+      "OLED",
+      "256x64",
+      "yellow"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/winstar/",
+    "exact": false,
+    "path": "OLED Displays · Winstar",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "WEO009664AWPP3N00000",
+    "manufacturer": "Winstar",
+    "category": "OLED Displays",
+    "desc": "96×64 white OLED display.",
+    "tags": [
+      "display",
+      "OLED",
+      "96x64",
+      "white"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/winstar/",
+    "exact": false,
+    "path": "OLED Displays · Winstar",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "WEO012864GWPP3N00000",
+    "manufacturer": "Winstar",
+    "category": "OLED Displays",
+    "desc": "128×64 white OLED display.",
+    "tags": [
+      "display",
+      "OLED",
+      "128x64",
+      "white"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/winstar/",
+    "exact": false,
+    "path": "OLED Displays · Winstar",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "S1A43A",
+    "manufacturer": "Xsens",
+    "category": "Motion Sensors",
+    "desc": "Rugged Sirius AHRS module, IP68, RS232.",
+    "tags": [
+      "sensor",
+      "AHRS",
+      "IMU",
+      "rugged",
+      "IP68"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/xsens/",
+    "exact": false,
+    "path": "Motion Sensors · Xsens",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "MTI-630-DK",
+    "manufacturer": "Xsens",
+    "category": "Motion Sensors",
+    "desc": "MTi-630 AHRS evaluation kit with CAN/RS232/UART/RS422.",
+    "tags": [
+      "sensor",
+      "AHRS",
+      "evaluation",
+      "CAN",
+      "UART"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/xsens/",
+    "exact": false,
+    "path": "Motion Sensors · Xsens",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "S1A43A-DK",
+    "manufacturer": "Xsens",
+    "category": "Motion Sensors",
+    "desc": "Sirius IMU/VRU/AHRS development kit.",
+    "tags": [
+      "sensor",
+      "IMU",
+      "VRU",
+      "AHRS",
+      "development kit"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/xsens/",
+    "exact": false,
+    "path": "Motion Sensors · Xsens",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "MTI-3-5A-DK",
+    "manufacturer": "Xsens",
+    "category": "Motion Sensors",
+    "desc": "MTi-3 AHRS/VRU/IMU development kit with SPI/I2C/UART.",
+    "tags": [
+      "sensor",
+      "IMU",
+      "AHRS",
+      "SPI",
+      "I2C",
+      "UART"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/xsens/",
+    "exact": false,
+    "path": "Motion Sensors · Xsens",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "TC570/i3-1115GRE",
+    "manufacturer": "congatec",
+    "category": "Computer on Modules",
+    "desc": "COM Express Type 6 Compact module with Intel Core i3-1115GRE.",
+    "tags": [
+      "computing",
+      "COM Express Type 6",
+      "Intel Core i3",
+      "embedded"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/congatec/",
+    "exact": false,
+    "path": "Computer on Modules · congatec",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "TC570r/i5-1145GRE-16G",
+    "manufacturer": "congatec",
+    "category": "Computer on Modules",
+    "desc": "COM Express Type 6 Compact module with Intel Core i5-1145GRE and 16 GB LPDDR4X.",
+    "tags": [
+      "computing",
+      "COM Express Type 6",
+      "Intel Core i5",
+      "16GB"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/congatec/",
+    "exact": false,
+    "path": "Computer on Modules · congatec",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "TC570/i5-1145GRE",
+    "manufacturer": "congatec",
+    "category": "Computer on Modules",
+    "desc": "COM Express Type 6 module with Intel Core i5-1145GRE.",
+    "tags": [
+      "computing",
+      "COM Express Type 6",
+      "Intel Core i5"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/congatec/",
+    "exact": false,
+    "path": "Computer on Modules · congatec",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "QA7/x6425E-16G eMMC64",
+    "manufacturer": "congatec",
+    "category": "Computer on Modules",
+    "desc": "Qseven module with Intel Atom x6425E, 16 GB LPDDR4X, 64 GB eMMC.",
+    "tags": [
+      "computing",
+      "Qseven",
+      "Intel Atom",
+      "eMMC"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/congatec/",
+    "exact": false,
+    "path": "Computer on Modules · congatec",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "SA7/x6425E-16G eMMC64",
+    "manufacturer": "congatec",
+    "category": "Computer on Modules",
+    "desc": "SMARC module with Intel Atom x6425E, 16 GB LPDDR4X, 64 GB eMMC.",
+    "tags": [
+      "computing",
+      "SMARC",
+      "Intel Atom",
+      "eMMC"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/congatec/",
+    "exact": false,
+    "path": "Computer on Modules · congatec",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "SMX8-Mini/Quad-4G eMMC16",
+    "manufacturer": "congatec",
+    "category": "Computer on Modules",
+    "desc": "SMARC module based on NXP i.MX 8M Mini Quad.",
+    "tags": [
+      "computing",
+      "SMARC",
+      "NXP i.MX 8M",
+      "ARM"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/congatec/",
+    "exact": false,
+    "path": "Computer on Modules · congatec",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "NovaSensor NPA",
+    "manufacturer": "Amphenol",
+    "category": "Sensors",
+    "desc": "Pressure sensor series.",
+    "tags": [
+      "sensor",
+      "pressure",
+      "NovaSensor"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/amphenol/",
+    "exact": false,
+    "path": "Sensors · Amphenol",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "Thermometrics ZTP",
+    "manufacturer": "Amphenol",
+    "category": "Sensors",
+    "desc": "Infrared temperature sensor series.",
+    "tags": [
+      "sensor",
+      "temperature",
+      "IR"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/amphenol/",
+    "exact": false,
+    "path": "Sensors · Amphenol",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "Telaire ChipCap 2",
+    "manufacturer": "Amphenol",
+    "category": "Sensors",
+    "desc": "Humidity sensor series.",
+    "tags": [
+      "sensor",
+      "humidity"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/amphenol/",
+    "exact": false,
+    "path": "Sensors · Amphenol",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "Telaire T6700",
+    "manufacturer": "Amphenol",
+    "category": "Sensors",
+    "desc": "CO2 sensor series.",
+    "tags": [
+      "sensor",
+      "CO2",
+      "air quality"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/amphenol/",
+    "exact": false,
+    "path": "Sensors · Amphenol",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "RV Series",
+    "manufacturer": "Schaffner",
+    "category": "EMI / EMC",
+    "desc": "Current-compensated chokes.",
+    "tags": [
+      "EMI",
+      "choke",
+      "current compensated"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/schaffner/",
+    "exact": false,
+    "path": "EMI / EMC · Schaffner",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "FN3287 / FN3288",
+    "manufacturer": "Schaffner",
+    "category": "EMI / EMC",
+    "desc": "Three-phase EMC filter series.",
+    "tags": [
+      "EMI",
+      "3-phase",
+      "filter"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/schaffner/",
+    "exact": false,
+    "path": "EMI / EMC · Schaffner",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "RT Series",
+    "manufacturer": "Schaffner",
+    "category": "EMI / EMC",
+    "desc": "Current-compensated chokes / EMC components.",
+    "tags": [
+      "EMI",
+      "choke"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/schaffner/",
+    "exact": false,
+    "path": "EMI / EMC · Schaffner",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "FN304x",
+    "manufacturer": "Schaffner",
+    "category": "EMI / EMC",
+    "desc": "Low-profile low-leakage 3-phase filter series.",
+    "tags": [
+      "EMI",
+      "3-phase",
+      "filter",
+      "low leakage"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/schaffner/",
+    "exact": false,
+    "path": "EMI / EMC · Schaffner",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "Han MPC30 / MPC60",
+    "manufacturer": "Harting",
+    "category": "Connectors",
+    "desc": "Miniature power connectors for UAV and mobile robotics.",
+    "tags": [
+      "connector",
+      "power",
+      "UAV",
+      "robotics"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/harting/",
+    "exact": false,
+    "path": "Connectors · Harting",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "Han 1A",
+    "manufacturer": "Harting",
+    "category": "Connectors",
+    "desc": "Compact industrial connector series.",
+    "tags": [
+      "connector",
+      "industrial"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/harting/",
+    "exact": false,
+    "path": "Connectors · Harting",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "ix Industrial",
+    "manufacturer": "Harting",
+    "category": "Connectors",
+    "desc": "Industrial data connector family.",
+    "tags": [
+      "connector",
+      "data",
+      "industrial"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/harting/",
+    "exact": false,
+    "path": "Connectors · Harting",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "XBee RF Modules",
+    "manufacturer": "Digi",
+    "category": "Wireless / Embedded",
+    "desc": "XBee modules for DigiMesh, Zigbee, Wi-SUN, 868 MHz and cellular.",
+    "tags": [
+      "wireless",
+      "XBee",
+      "Zigbee",
+      "DigiMesh",
+      "Wi-SUN"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/digi/",
+    "exact": false,
+    "path": "Wireless / Embedded · Digi",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "ConnectCore SoMs",
+    "manufacturer": "Digi",
+    "category": "Wireless / Embedded",
+    "desc": "Embedded NXP/ST-based system-on-modules.",
+    "tags": [
+      "computing",
+      "SoM",
+      "NXP",
+      "STM32"
+    ],
+    "url": "https://www.spezial.com/en/manufacturers/digi/",
+    "exact": false,
+    "path": "Wireless / Embedded · Digi",
+    "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  }
+]

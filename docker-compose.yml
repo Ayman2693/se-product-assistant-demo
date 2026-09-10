@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: se_product_assistant
+      POSTGRES_USER: se_user
+      POSTGRES_PASSWORD: se_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - se_pgdata:/var/lib/postgresql/data
+
+volumes:
+  se_pgdata:
