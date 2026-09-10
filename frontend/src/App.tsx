@@ -29,7 +29,7 @@ type Requirements = {
   region?: string;
   architecture?: string;
   antenna?: string;
-  wifiGeneration?: string;
+  wifiGeneration?: string[];
   gnssPrecision?: string;
   lowPower?: boolean;
   hostInterface?: string;
@@ -189,7 +189,7 @@ type RequirementInterpretResponse = {
     region?: string | null;
     architecture?: string | null;
     antenna?: string | null;
-    wifi_generation?: string | null;
+    wifi_generation?: string[] | null;
     gnss_precision?: string | null;
     low_power?: boolean | null;
     host_interface?: string | null;
@@ -402,6 +402,8 @@ function localizeQuestion(
       "Welche Antennenvariante des Moduls bevorzugen Sie?",
     "Which Wi-Fi generation is required?":
       "Welche Wi-Fi-Generation wird benötigt?",
+    "Which Wi-Fi generations are acceptable? You can select more than one.":
+      "Welche Wi-Fi-Generationen sind geeignet? Sie können mehrere auswählen.",
     "What positioning accuracy is required?":
       "Welche Positionierungsgenauigkeit wird benötigt?",
     "Would you like SE technical or commercial support for this project?":
@@ -929,9 +931,12 @@ function inferFromText(text: string): Partial<Requirements> {
   if (/integrated antenna|pcb antenna|internal antenna|integriert(e|en|er|es)? antenne|intern(e|en|er|es)? antenne|leiterplattenantenne/.test(t)) out.antenna = "internal";
   else if (/external antenna|antenna pin|extern(e|en|er|es)? antenne|antennenpin/.test(t)) out.antenna = "external";
 
-  if (/wifi[- ]*6e|wi-fi[- ]*6e|wlan[- ]*6e|6 ghz/.test(t)) out.wifiGeneration = "6E";
-  else if (/wifi[- ]*6|wi-fi[- ]*6|wlan[- ]*6|802.11ax/.test(t)) out.wifiGeneration = "6";
-  else if (/wifi[- ]*4|wi-fi[- ]*4|wlan[- ]*4|802.11n/.test(t)) out.wifiGeneration = "4";
+  const wifiGenerations: string[] = [];
+  if (/wifi[- ]*4|wi-fi[- ]*4|wlan[- ]*4|802\.11n/.test(t)) wifiGenerations.push("4");
+  if (/wifi[- ]*5|wi-fi[- ]*5|wlan[- ]*5|802\.11ac/.test(t)) wifiGenerations.push("5");
+  if (/wifi[- ]*6(?!e)|wi-fi[- ]*6(?!e)|wlan[- ]*6(?!e)|802\.11ax/.test(t)) wifiGenerations.push("6");
+  if (/wifi[- ]*6e|wi-fi[- ]*6e|wlan[- ]*6e|6 ghz/.test(t)) wifiGenerations.push("6E");
+  if (wifiGenerations.length) out.wifiGeneration = [...new Set(wifiGenerations)];
 
   if (/centimeter|centimetre|rtk|high precision|zentimeter|hochpräzise|hochpraezise/.test(t)) out.gnssPrecision = "cm";
   else if (/standard gnss|meter level|metre level|metergenau|meterbereich/.test(t)) out.gnssPrecision = "standard";
@@ -978,7 +983,7 @@ async function interpretWithBackend(text: string): Promise<Partial<Requirements>
     region: r.region ?? undefined,
     architecture: r.architecture ?? undefined,
     antenna: r.antenna ?? undefined,
-    wifiGeneration: r.wifi_generation ?? undefined,
+    wifiGeneration: r.wifi_generation?.length ? r.wifi_generation : undefined,
     gnssPrecision: r.gnss_precision ?? undefined,
     lowPower: r.low_power ?? undefined,
     hostInterface:
@@ -1234,12 +1239,13 @@ function questionFor(req: Requirements): { key: QuestionKey; text: string; optio
       };
     }
 
-    if (tech.has("wifi") && !req.wifiGeneration) {
+    if (tech.has("wifi") && !req.wifiGeneration?.length) {
       return {
         key: "wifiGeneration",
-        text: "Which Wi-Fi generation is required?",
+        text: "Which Wi-Fi generations are acceptable? You can select more than one.",
         options: [
           { label: "Wi-Fi 4", value: "4" },
+          { label: "Wi-Fi 5", value: "5" },
           { label: "Wi-Fi 6", value: "6" },
           { label: "Wi-Fi 6E", value: "6E" },
         ],
@@ -1622,7 +1628,12 @@ function isTieBreakerKey(key: QuestionKey): boolean {
 
 
 function isMultiSelectKey(key: QuestionKey | null): boolean {
-  return key === "specialRequirements" || key === "projectPartners" || key === "technologies";
+  return (
+    key === "specialRequirements" ||
+    key === "projectPartners" ||
+    key === "technologies" ||
+    key === "wifiGeneration"
+  );
 }
 
 function isExclusiveMultiOption(key: QuestionKey, label: string): boolean {
@@ -1822,9 +1833,10 @@ function editableQuestionFor(
       ],
     },
     wifiGeneration: {
-      text: "Update the required Wi-Fi generation:",
+      text: "Update the acceptable Wi-Fi generations:",
       options: [
         { label: "Wi-Fi 4", value: "4" },
+        { label: "Wi-Fi 5", value: "5" },
         { label: "Wi-Fi 6", value: "6" },
         { label: "Wi-Fi 6E", value: "6E" },
       ],
@@ -1944,7 +1956,9 @@ function naturalReply(key: QuestionKey, value: Option["value"]) {
     region: `Thanks — deployment region: <strong>${htmlEscape(v)}</strong>.`,
     architecture: `Good — architecture: <strong>${htmlEscape(v)}</strong>.`,
     antenna: `Understood — antenna preference: <strong>${htmlEscape(v)}</strong>.`,
-    wifiGeneration: `Good — I’ll target <strong>Wi-Fi ${htmlEscape(v)}</strong>.`,
+    wifiGeneration: `Good — acceptable generations: <strong>${htmlEscape(
+      v.split(" + ").map((g) => `Wi-Fi ${g}`).join(" / ")
+    )}</strong>.`,
     gnssPrecision:
       value === "cm"
         ? "Understood — centimeter-level / RTK positioning is required."
@@ -1999,7 +2013,9 @@ function localizedNaturalReply(key: QuestionKey, value: Option["value"], languag
     region: `Einsatzregion: <strong>${htmlEscape(v)}</strong>.`,
     architecture: `Architektur: <strong>${htmlEscape(v)}</strong>.`,
     antenna: `Antennenvariante: <strong>${htmlEscape(v)}</strong>.`,
-    wifiGeneration: `Wi-Fi-Generation: <strong>${htmlEscape(v)}</strong>.`,
+    wifiGeneration: `Geeignete Wi-Fi-Generationen: <strong>${htmlEscape(
+      v.split(" + ").map((g) => `Wi-Fi ${g}`).join(" / ")
+    )}</strong>.`,
     gnssPrecision: `GNSS-Genauigkeit: <strong>${htmlEscape(v)}</strong>.`,
     supportRequested: value === true
       ? "Gerne — ich erfasse noch einige Projektdaten für die SE-Unterstützung."
@@ -2230,7 +2246,7 @@ function App() {
       region: req.region ?? null,
       architecture: req.architecture ?? null,
       antenna: req.antenna ?? null,
-      wifi_generation: req.wifiGeneration ?? null,
+      wifi_generation: req.wifiGeneration ?? [],
       gnss_precision: req.gnssPrecision ?? null,
       low_power: req.lowPower ?? null,
       host_interface:
@@ -2408,7 +2424,7 @@ function App() {
     const selectedOptions = quickOptions.filter((option) => multiSelected.includes(option.label));
     const shown = selectedOptions.map((option) => option.label).join(" + ");
 
-    if (activeQuestion === "technologies") {
+    if (activeQuestion === "technologies" || activeQuestion === "wifiGeneration") {
       const values = [
         ...new Set(
           selectedOptions.flatMap((option) =>
@@ -2652,7 +2668,7 @@ function App() {
         next.antenna = String(value);
         break;
       case "wifiGeneration":
-        next.wifiGeneration = String(value);
+        next.wifiGeneration = Array.isArray(value) ? value.map(String) : [String(value)];
         break;
       case "gnssPrecision":
         next.gnssPrecision = String(value);
@@ -2858,6 +2874,13 @@ function App() {
           const values = Array.isArray(option.value) ? option.value.map(String) : [String(option.value)];
           return values.some((value) => tech.has(value));
         })
+        .map((option) => option.label);
+    }
+
+    if (key === "wifiGeneration") {
+      const generations = new Set(requirements.wifiGeneration ?? []);
+      return options
+        .filter((option) => generations.has(String(option.value)))
         .map((option) => option.label);
     }
 

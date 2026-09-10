@@ -284,10 +284,15 @@ def _request_criteria(r: MatchRequest) -> list[dict]:
 
 def _supports(field: str, actual: Any, expected: Any) -> bool:
     a = _norm(actual)
-    e = _norm(expected)
 
     if not a:
         return False
+
+    if field == "wifi_generation":
+        expected_values = expected if isinstance(expected, (list, tuple, set)) else [expected]
+        return a in {_norm(value) for value in expected_values}
+
+    e = _norm(expected)
 
     if field == "technology":
         return a == e

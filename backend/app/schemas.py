@@ -57,7 +57,7 @@ class MatchRequest(BaseModel):
     region: Optional[str] = None
     architecture: Optional[str] = None
     antenna: Optional[str] = None
-    wifi_generation: Optional[str] = None
+    wifi_generation: List[str] = Field(default_factory=list)
     gnss_precision: Optional[str] = None
     low_power: Optional[bool] = None
     host_interface: Optional[str] = None
@@ -143,7 +143,7 @@ class RequirementState(BaseModel):
     region: Optional[str] = None
     architecture: Optional[str] = None
     antenna: Optional[str] = None
-    wifi_generation: Optional[str] = None
+    wifi_generation: List[str] = Field(default_factory=list)
     gnss_precision: Optional[str] = None
     low_power: Optional[bool] = None
     host_interface: Optional[str] = None

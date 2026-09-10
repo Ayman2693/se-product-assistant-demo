@@ -114,7 +114,7 @@ def interpret_text(text: str) -> dict[str, Any]:
         "region": None,
         "architecture": None,
         "antenna": None,
-        "wifi_generation": None,
+        "wifi_generation": [],
         "gnss_precision": None,
         "low_power": None,
         "host_interface": None,
@@ -478,17 +478,30 @@ def interpret_text(text: str) -> dict[str, Any]:
     if out["antenna"]:
         evidence.append(f"antenna:{out['antenna']}")
 
-    # Wi-Fi generation
+    # Wi-Fi generation(s). Multiple acceptable generations can be supplied
+    # in one sentence, e.g. "Wi-Fi 5 or Wi-Fi 6".
+    wifi_generations: list[str] = []
+    if re.search(r"wi-?fi[-\s]*4\b|wifi[-\s]*4\b|wlan[-\s]*4\b|802\.11n|802\.11bgn", t, re.I):
+        wifi_generations.append("4")
+    if re.search(r"wi-?fi[-\s]*5\b|wifi[-\s]*5\b|wlan[-\s]*5\b|802\.11ac", t, re.I):
+        wifi_generations.append("5")
+    if re.search(r"wi-?fi[-\s]*6\b|wifi[-\s]*6\b|wlan[-\s]*6\b|802\.11ax", t, re.I):
+        wifi_generations.append("6")
     if re.search(r"wi-?fi[-\s]*6e|wifi[-\s]*6e|wlan[-\s]*6e|6\s*ghz", t, re.I):
-        out["wifi_generation"] = "6E"
-    elif re.search(r"wi-?fi[-\s]*6\b|wifi[-\s]*6\b|wlan[-\s]*6\b|802\.11ax", t, re.I):
-        out["wifi_generation"] = "6"
-    elif re.search(r"wi-?fi[-\s]*5\b|wifi[-\s]*5\b|wlan[-\s]*5\b|802\.11ac", t, re.I):
-        out["wifi_generation"] = "5"
-    elif re.search(r"wi-?fi[-\s]*4\b|wifi[-\s]*4\b|wlan[-\s]*4\b|802\.11n|802\.11bgn", t, re.I):
-        out["wifi_generation"] = "4"
-    if out["wifi_generation"]:
-        evidence.append(f"wifi_generation:{out['wifi_generation']}")
+        # 6E also contains "6", so remove the plain 6 only when the text
+        # refers exclusively to 6E and not separately to Wi-Fi 6.
+        explicit_plain_6 = bool(re.search(
+            r"(?:wi-?fi|wifi|wlan)[-\s]*6\b(?!e)",
+            t,
+            re.I,
+        ))
+        if not explicit_plain_6:
+            wifi_generations = [g for g in wifi_generations if g != "6"]
+        wifi_generations.append("6E")
+
+    out["wifi_generation"] = _uniq(wifi_generations)
+    for generation in out["wifi_generation"]:
+        evidence.append(f"wifi_generation:{generation}")
 
     # GNSS precision
     if re.search(r"\brtk\b|centimeter|centimetre|cm[- ]level|high precision|zentimeter|hochpräzis|hochpraezis", t, re.I):
@@ -585,12 +598,13 @@ def merge_requirements(current: dict[str, Any] | None, extracted: dict[str, Any]
     for key, value in extracted.items():
         if value is None:
             continue
-        if key == "technologies":
+        if key in {"technologies", "wifi_generation"}:
             if value:
                 current[key] = _uniq([*(current.get(key) or []), *value])
         else:
             current[key] = value
     current.setdefault("technologies", [])
+    current.setdefault("wifi_generation", [])
     return current
 
 
@@ -697,7 +711,7 @@ QUESTION_MAP = {
         "options": ["Global", "Americas", "Europe / EMEA / APAC"],
     },
     "wifi_generation": {
-        "text": "Which Wi-Fi generation is required?",
+        "text": "Which Wi-Fi generations are acceptable? Select one or more.",
         "options": ["Wi-Fi 4", "Wi-Fi 5", "Wi-Fi 6", "Wi-Fi 6E"],
     },
     "capacitance_uf": {

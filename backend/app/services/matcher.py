@@ -510,12 +510,14 @@ def score_product(p: Product, r: MatchRequest):
             criterion(13, state, f"Antenna: {r.antenna}", True)
 
         if r.wifi_generation:
+            acceptable_wifi = {str(g).lower() for g in r.wifi_generation}
             actual_wifi = f.wifi_generation if (f and f.wifi_generation) else _wifi_generation_from_text(h)
             if actual_wifi:
-                state = 1 if actual_wifi.lower() == r.wifi_generation.lower() else -1
+                state = 1 if actual_wifi.lower() in acceptable_wifi else -1
             else:
                 state = 0
-            criterion(18, state, f"Wi-Fi {r.wifi_generation}", True)
+            wifi_label = " / ".join(f"Wi-Fi {g}" for g in r.wifi_generation)
+            criterion(18, state, f"Acceptable generation: {wifi_label}", True)
 
         if r.gnss_precision:
             if f and f.has_gnss is False:

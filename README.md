@@ -997,3 +997,30 @@ product database. During a refinement, existing results remain visible but are
 dimmed until the refreshed ranking arrives.
 
 The loading state uses `role="status"` / `aria-live="polite"` for accessibility.
+
+
+# Phase 4.7.2 — Wi-Fi 5 + multi-select generations
+
+Wi-Fi qualification now offers:
+
+- Wi-Fi 4
+- Wi-Fi 5
+- Wi-Fi 6
+- Wi-Fi 6E
+
+The Wi-Fi generation question is multi-select. Selected generations are treated
+as acceptable alternatives (OR), not as a requirement that one product somehow
+belong to multiple generations simultaneously.
+
+Example:
+
+`Wi-Fi 5 + Wi-Fi 6`
+
+matches products whose catalog generation is either Wi-Fi 5 or Wi-Fi 6.
+
+Natural-language parsing also understands multiple generations in one request,
+for example:
+
+`I need Wi-Fi 5 or Wi-Fi 6`
+
+No catalog resync or database migration is required.
