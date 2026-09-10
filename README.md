@@ -842,3 +842,14 @@ Changes:
 - Handles optional edit-question options safely under strict TypeScript.
 
 No database, catalog, or evidence rebuild is required.
+
+
+# Phase 4.5.2 — Website root fix
+
+Production routing fix:
+
+- `/` now belongs to the React/Vite frontend.
+- API metadata moved from `/` to `/api`.
+- `/api/*` and `/docs` continue to work normally.
+
+This fixes the case where the public Render URL showed JSON instead of the website.

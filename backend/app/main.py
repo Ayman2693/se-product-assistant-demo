@@ -63,8 +63,8 @@ app.include_router(products_router)
 app.include_router(requirements_router)
 app.include_router(evidence_router)
 
-@app.get("/", response_model=RootResponse)
-def root():
+@app.get("/api", response_model=RootResponse)
+def api_root():
     return {
         "name": settings.app_name,
         "version": "0.1.0",
