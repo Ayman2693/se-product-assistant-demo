@@ -1024,3 +1024,32 @@ for example:
 `I need Wi-Fi 5 or Wi-Fi 6`
 
 No catalog resync or database migration is required.
+
+
+# Phase 4.7.3 — Improved Bluetooth + GNSS qualification
+
+Bluetooth LE is now asked during the main technical qualification, with:
+- version open / not sure
+- Bluetooth LE 5.0+
+- Bluetooth LE 5.1+
+- Bluetooth LE 5.2+
+- Bluetooth LE 5.3+
+- Bluetooth LE 5.4+
+- Bluetooth LE 6.0+
+
+Bluetooth remains single-select because this is a minimum-version threshold.
+
+GNSS is now split into two technical questions:
+1. Positioning performance:
+   - standard meter-level
+   - high precision / centimeter-level RTK
+   - no fixed accuracy / not sure
+2. Frequency-band capability:
+   - L1 sufficient
+   - dual-band L1 + L5 required
+   - no preference / not sure
+
+These questions happen before the first recommendation, not only as tie-breakers.
+English and German wording are included.
+
+No catalog sync or database migration is required.

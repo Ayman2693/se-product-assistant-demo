@@ -547,7 +547,7 @@ def interpret_text(text: str) -> dict[str, Any]:
 
     # Bluetooth requirement / minimum version
     m_bt = re.search(
-        r"(?:bluetooth|ble|bt(?:/ble)?)\s*(?:version\s*)?([4-6](?:\.\d+)?)",
+        r"(?:bluetooth(?:\s+le)?|ble|bt(?:/ble)?)\s*(?:version\s*)?([4-6](?:\.\d+)?)",
         t,
         re.I,
     )
@@ -747,8 +747,12 @@ QUESTION_MAP = {
         "options": ["Host-based", "Open CPU", "u-connectXpress / AT commands", "Standalone"],
     },
     "gnss_precision": {
-        "text": "What GNSS accuracy is required?",
-        "options": ["Standard / meter-level", "Centimeter-level / RTK"],
+        "text": "What positioning performance does your application need?",
+        "options": [
+            "Standard GNSS / meter-level",
+            "High precision / centimeter-level (RTK)",
+            "No fixed accuracy / not sure",
+        ],
     },
 }
 

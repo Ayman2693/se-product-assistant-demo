@@ -331,6 +331,20 @@ const OPTION_DE: Record<string, string> = {
   "Analog output": "Analogausgang",
   "Digital output": "Digitalausgang",
   "No preference / not sure": "Keine Präferenz / noch offen",
+  "Version open / not sure": "Version offen / noch unklar",
+  "Yes — version open / not sure": "Ja — Version offen / noch unklar",
+  "Not required": "Nicht erforderlich",
+  "Bluetooth LE 5.0 or newer": "Bluetooth LE 5.0 oder neuer",
+  "Bluetooth LE 5.1 or newer": "Bluetooth LE 5.1 oder neuer",
+  "Bluetooth LE 5.2 or newer": "Bluetooth LE 5.2 oder neuer",
+  "Bluetooth LE 5.3 or newer": "Bluetooth LE 5.3 oder neuer",
+  "Bluetooth LE 5.4 or newer": "Bluetooth LE 5.4 oder neuer",
+  "Bluetooth LE 6.0 or newer": "Bluetooth LE 6.0 oder neuer",
+  "Standard GNSS / meter-level": "Standard-GNSS / Meterbereich",
+  "High precision / centimeter-level (RTK)": "Hochpräzise / Zentimeterbereich (RTK)",
+  "No fixed accuracy / not sure": "Keine feste Genauigkeit / noch unklar",
+  "L1 is sufficient": "L1 ist ausreichend",
+  "Dual-band L1 + L5 required": "Dual-Band L1 + L5 erforderlich",
   "Ceramic / MLCC": "Keramik / MLCC",
   "Tantalum": "Tantal",
   "Film": "Folie",
@@ -406,6 +420,14 @@ function localizeQuestion(
       "Welche Wi-Fi-Generationen sind geeignet? Sie können mehrere auswählen.",
     "What positioning accuracy is required?":
       "Welche Positionierungsgenauigkeit wird benötigt?",
+    "What positioning performance does your application need?":
+      "Welche Positionierungsgenauigkeit benötigt Ihre Anwendung?",
+    "What minimum Bluetooth LE version does your application require?":
+      "Welche minimale Bluetooth-LE-Version benötigt Ihre Anwendung?",
+    "Should Bluetooth LE also be included in the wireless solution?":
+      "Soll Bluetooth LE ebenfalls in der Funklösung enthalten sein?",
+    "Which GNSS frequency-band capability does your application need?":
+      "Welche GNSS-Frequenzband-Fähigkeit benötigt Ihre Anwendung?",
     "Would you like SE technical or commercial support for this project?":
       "Möchten Sie für dieses Projekt technische oder kaufmännische Unterstützung von SE?",
     "Is this a new design, or are you replacing an existing component?":
@@ -439,6 +461,7 @@ function localizeQuestion(
     [/^What maximum module footprint would you like to target\?$/, "Welche maximale Modulfläche soll eingehalten werden?"],
     [/^Which mechanical form factor is preferred for the GNSS receiver\?$/, "Welche mechanische Bauform wird für den GNSS-Empfänger bevorzugt?"],
     [/^Do you have a minimum Bluetooth LE version requirement\?$/, "Gibt es eine Mindestanforderung an die Bluetooth-LE-Version?"],
+    [/^For this high-precision GNSS application, which frequency-band capability is required\?$/, "Welche Frequenzband-Fähigkeit wird für diese hochpräzise GNSS-Anwendung benötigt?"],
   ];
   for (const [pattern, translated] of tieTranslations) {
     if (pattern.test(question.text)) {
@@ -949,7 +972,7 @@ function inferFromText(text: string): Partial<Requirements> {
   if (/\bu\.?fl\b|\bufl\b/.test(t)) out.antennaConnector = "U.FL";
   else if (/antenna[- ]?pin|ant\.?\s*pins?|solder pads?/.test(t)) out.antennaConnector = "Antenna pin / solder pad";
 
-  const btVersion = t.match(/(?:bluetooth|ble|bt(?:\/ble)?)\s*([4-6](?:\.\d+)?)/);
+  const btVersion = t.match(/(?:bluetooth(?:\s+le)?|ble|bt(?:\/ble)?)\s*([4-6](?:\.\d+)?)/);
   if (btVersion) out.bluetoothRequirement = `Bluetooth ${btVersion[1]}+`;
 
   if (/\bmini\s*pcie\b/.test(t)) out.formFactor = "Mini PCIe";
@@ -1228,6 +1251,22 @@ function questionFor(req: Requirements): { key: QuestionKey; text: string; optio
       };
     }
 
+    if (tech.has("bluetooth") && !req.bluetoothRequirement) {
+      return {
+        key: "bluetoothRequirement",
+        text: "What minimum Bluetooth LE version does your application require?",
+        options: [
+          { label: "Version open / not sure", value: "Bluetooth required, version open" },
+          { label: "Bluetooth LE 5.0 or newer", value: "Bluetooth 5.0+" },
+          { label: "Bluetooth LE 5.1 or newer", value: "Bluetooth 5.1+" },
+          { label: "Bluetooth LE 5.2 or newer", value: "Bluetooth 5.2+" },
+          { label: "Bluetooth LE 5.3 or newer", value: "Bluetooth 5.3+" },
+          { label: "Bluetooth LE 5.4 or newer", value: "Bluetooth 5.4+" },
+          { label: "Bluetooth LE 6.0 or newer", value: "Bluetooth 6.0+" },
+        ],
+      };
+    }
+
     if (tech.has("bluetooth") && !req.antenna) {
       return {
         key: "antenna",
@@ -1255,10 +1294,23 @@ function questionFor(req: Requirements): { key: QuestionKey; text: string; optio
     if (tech.has("gnss") && !req.gnssPrecision) {
       return {
         key: "gnssPrecision",
-        text: "What positioning accuracy is required?",
+        text: "What positioning performance does your application need?",
         options: [
-          { label: "Standard / meter-level", value: "standard" },
-          { label: "Centimeter-level / RTK", value: "cm" },
+          { label: "Standard GNSS / meter-level", value: "standard" },
+          { label: "High precision / centimeter-level (RTK)", value: "cm" },
+          { label: "No fixed accuracy / not sure", value: "No preference" },
+        ],
+      };
+    }
+
+    if (tech.has("gnss") && !req.gnssDualBand) {
+      return {
+        key: "gnssDualBand",
+        text: "Which GNSS frequency-band capability does your application need?",
+        options: [
+          { label: "L1 is sufficient", value: "L1 sufficient" },
+          { label: "Dual-band L1 + L5 required", value: "L1 + L5 required" },
+          { label: "No preference / not sure", value: "No preference" },
         ],
       };
     }
@@ -1267,10 +1319,23 @@ function questionFor(req: Requirements): { key: QuestionKey; text: string; optio
   if (req.productDomain === "positioning" && !req.gnssPrecision) {
     return {
       key: "gnssPrecision",
-      text: "What positioning accuracy is required?",
+      text: "What positioning performance does your application need?",
       options: [
-        { label: "Standard / meter-level", value: "standard" },
-        { label: "Centimeter-level / RTK", value: "cm" },
+        { label: "Standard GNSS / meter-level", value: "standard" },
+        { label: "High precision / centimeter-level (RTK)", value: "cm" },
+        { label: "No fixed accuracy / not sure", value: "No preference" },
+      ],
+    };
+  }
+
+  if (req.productDomain === "positioning" && !req.gnssDualBand) {
+    return {
+      key: "gnssDualBand",
+      text: "Which GNSS frequency-band capability does your application need?",
+      options: [
+        { label: "L1 is sufficient", value: "L1 sufficient" },
+        { label: "Dual-band L1 + L5 required", value: "L1 + L5 required" },
+        { label: "No preference / not sure", value: "No preference" },
       ],
     };
   }
@@ -1511,12 +1576,15 @@ function tieBreakerFor(
         hasCandidateDifference(topMatches, candidateBluetoothVersion)) {
       return {
         key: "bluetoothRequirement",
-        text: "Is Bluetooth also required, and if so is there a minimum version?",
+        text: "Should Bluetooth LE also be included in the wireless solution?",
         options: [
-          { label: "Bluetooth required, version open", value: "Bluetooth required, version open" },
-          { label: "Bluetooth 5.3 or newer", value: "Bluetooth 5.3+" },
-          { label: "Bluetooth 5.4 or newer", value: "Bluetooth 5.4+" },
-          { label: "Not required / no preference", value: "No requirement" },
+          { label: "Not required", value: "No requirement" },
+          { label: "Yes — version open / not sure", value: "Bluetooth required, version open" },
+          { label: "Bluetooth LE 5.0 or newer", value: "Bluetooth 5.0+" },
+          { label: "Bluetooth LE 5.2 or newer", value: "Bluetooth 5.2+" },
+          { label: "Bluetooth LE 5.3 or newer", value: "Bluetooth 5.3+" },
+          { label: "Bluetooth LE 5.4 or newer", value: "Bluetooth 5.4+" },
+          { label: "Bluetooth LE 6.0 or newer", value: "Bluetooth 6.0+" },
         ],
       };
     }
@@ -1538,10 +1606,11 @@ function tieBreakerFor(
     if (tech.has("gnss") && !req.gnssDualBand) {
       return {
         key: "gnssDualBand",
-        text: "Is dual-band GNSS (L1 + L5) required, or is L1 sufficient?",
+        text: "Which GNSS frequency-band capability does your application need?",
         options: [
-          { label: "L1 + L5 required", value: "L1 + L5 required" },
-          { label: "L1 is sufficient / no preference", value: "No preference" },
+          { label: "L1 is sufficient", value: "L1 sufficient" },
+          { label: "Dual-band L1 + L5 required", value: "L1 + L5 required" },
+          { label: "No preference / not sure", value: "No preference" },
         ],
       };
     }
@@ -1552,11 +1621,11 @@ function tieBreakerFor(
         hasCandidateDifference(topMatches, candidateGnssBand)) {
       return {
         key: "gnssDualBand",
-        text: "For this RTK / centimeter-level application, do you require dual-band GNSS (L1 + L5), or is L1 sufficient?",
+        text: "For this high-precision GNSS application, which frequency-band capability is required?",
         options: [
-          { label: "L1 + L5 required", value: "L1 + L5 required" },
-          { label: "L1 is sufficient", value: "No preference" },
-          { label: "Not sure yet", value: "No preference" },
+          { label: "L1 is sufficient", value: "L1 sufficient" },
+          { label: "Dual-band L1 + L5 required", value: "L1 + L5 required" },
+          { label: "No preference / not sure", value: "No preference" },
         ],
       };
     }
@@ -1587,12 +1656,15 @@ function tieBreakerFor(
     if (!req.bluetoothRequirement && hasCandidateDifference(topMatches, candidateBluetoothVersion)) {
       return {
         key: "bluetoothRequirement",
-        text: "Do you have a minimum Bluetooth LE version requirement?",
+        text: "What minimum Bluetooth LE version does your application require?",
         options: [
-          { label: "Version open", value: "Bluetooth required, version open" },
-          { label: "Bluetooth 5.3 or newer", value: "Bluetooth 5.3+" },
-          { label: "Bluetooth 5.4 or newer", value: "Bluetooth 5.4+" },
-          { label: "Bluetooth 6.0 or newer", value: "Bluetooth 6.0+" },
+          { label: "Version open / not sure", value: "Bluetooth required, version open" },
+          { label: "Bluetooth LE 5.0 or newer", value: "Bluetooth 5.0+" },
+          { label: "Bluetooth LE 5.1 or newer", value: "Bluetooth 5.1+" },
+          { label: "Bluetooth LE 5.2 or newer", value: "Bluetooth 5.2+" },
+          { label: "Bluetooth LE 5.3 or newer", value: "Bluetooth 5.3+" },
+          { label: "Bluetooth LE 5.4 or newer", value: "Bluetooth 5.4+" },
+          { label: "Bluetooth LE 6.0 or newer", value: "Bluetooth 6.0+" },
         ],
       };
     }
@@ -1842,10 +1914,11 @@ function editableQuestionFor(
       ],
     },
     gnssPrecision: {
-      text: "Update the required positioning accuracy:",
+      text: "Update the required positioning performance:",
       options: [
-        { label: "Standard / meter-level", value: "standard" },
-        { label: "Centimeter-level / RTK", value: "cm" },
+        { label: "Standard GNSS / meter-level", value: "standard" },
+        { label: "High precision / centimeter-level (RTK)", value: "cm" },
+        { label: "No fixed accuracy / not sure", value: "No preference" },
       ],
     },
     hostInterface: {
@@ -1875,13 +1948,16 @@ function editableQuestionFor(
       ],
     },
     bluetoothRequirement: {
-      text: "Update the Bluetooth requirement:",
+      text: "Update the minimum Bluetooth LE version:",
       options: [
-        { label: "Bluetooth required, version open", value: "Bluetooth required, version open" },
-        { label: "Bluetooth 5.3 or newer", value: "Bluetooth 5.3+" },
-        { label: "Bluetooth 5.4 or newer", value: "Bluetooth 5.4+" },
-        { label: "Bluetooth 6.0 or newer", value: "Bluetooth 6.0+" },
-        { label: "Not required / no preference", value: "No requirement" },
+        { label: "Not required", value: "No requirement" },
+        { label: "Version open / not sure", value: "Bluetooth required, version open" },
+        { label: "Bluetooth LE 5.0 or newer", value: "Bluetooth 5.0+" },
+        { label: "Bluetooth LE 5.1 or newer", value: "Bluetooth 5.1+" },
+        { label: "Bluetooth LE 5.2 or newer", value: "Bluetooth 5.2+" },
+        { label: "Bluetooth LE 5.3 or newer", value: "Bluetooth 5.3+" },
+        { label: "Bluetooth LE 5.4 or newer", value: "Bluetooth 5.4+" },
+        { label: "Bluetooth LE 6.0 or newer", value: "Bluetooth 6.0+" },
       ],
     },
     maxFootprint: {
@@ -1905,10 +1981,11 @@ function editableQuestionFor(
       ],
     },
     gnssDualBand: {
-      text: "Update the GNSS band requirement:",
+      text: "Update the GNSS frequency-band requirement:",
       options: [
-        { label: "L1 + L5 required", value: "L1 + L5 required" },
-        { label: "L1 is sufficient / no preference", value: "No preference" },
+        { label: "L1 is sufficient", value: "L1 sufficient" },
+        { label: "Dual-band L1 + L5 required", value: "L1 + L5 required" },
+        { label: "No preference / not sure", value: "No preference" },
       ],
     },
   };
@@ -1961,15 +2038,27 @@ function naturalReply(key: QuestionKey, value: Option["value"]) {
     )}</strong>.`,
     gnssPrecision:
       value === "cm"
-        ? "Understood — centimeter-level / RTK positioning is required."
-        : "Okay — standard meter-level GNSS accuracy is sufficient.",
+        ? "Understood — high-precision / centimeter-level RTK positioning is required."
+        : value === "standard"
+          ? "Okay — standard meter-level GNSS positioning is sufficient."
+          : "Okay — positioning accuracy remains open.",
     hostInterface: `Good — I’ll use <strong>${htmlEscape(v)}</strong> as the host-interface requirement.`,
     antennaConnector: `Understood — antenna connection: <strong>${htmlEscape(v)}</strong>.`,
     antennaCount: `Understood — antenna connection count: <strong>${htmlEscape(v)}</strong>.`,
-    bluetoothRequirement: `Thanks — Bluetooth requirement: <strong>${htmlEscape(v)}</strong>.`,
+    bluetoothRequirement:
+      v === "Bluetooth required, version open"
+        ? "Okay — Bluetooth LE is required, but the minimum version remains open."
+        : v === "No requirement"
+          ? "Okay — Bluetooth LE is not required."
+          : `Understood — minimum requirement: <strong>${htmlEscape(v)}</strong>.`,
     maxFootprint: `Good — mechanical footprint target: <strong>${htmlEscape(v)}</strong>.`,
     formFactor: `Understood — form factor: <strong>${htmlEscape(v)}</strong>.`,
-    gnssDualBand: `Thanks — GNSS band requirement: <strong>${htmlEscape(v)}</strong>.`,
+    gnssDualBand:
+      v === "L1 + L5 required"
+        ? "Understood — <strong>dual-band L1 + L5</strong> is required."
+        : v === "L1 sufficient"
+          ? "Understood — <strong>L1 is sufficient</strong>."
+          : "Okay — no fixed GNSS frequency-band requirement.",
     capacitorCapacitance: `Good — required capacitance: <strong>${htmlEscape(v)}</strong>.`,
     capacitorVoltage: `Good — minimum voltage rating: <strong>${htmlEscape(v)}</strong>.`,
     capacitorTechnology:
@@ -2179,10 +2268,12 @@ function App() {
       if (requirements.application === "asset tracking") expected.push("lowPower");
       if (requirements.technologies?.includes("cellular")) expected.push("cellularClass", "region");
       if (requirements.technologies?.includes("wifi")) expected.push("architecture", "wifiGeneration");
-      if (requirements.technologies?.includes("bluetooth")) expected.push("architecture", "antenna");
-      if (requirements.technologies?.includes("gnss")) expected.push("gnssPrecision");
+      if (requirements.technologies?.includes("bluetooth"))
+        expected.push("architecture", "bluetoothRequirement", "antenna");
+      if (requirements.technologies?.includes("gnss"))
+        expected.push("gnssPrecision", "gnssDualBand");
     } else if (requirements.productDomain === "positioning") {
-      expected.push("gnssPrecision");
+      expected.push("gnssPrecision", "gnssDualBand");
     } else if (DOMAIN_CATEGORY_OPTIONS[requirements.productDomain ?? ""]?.length) {
       expected.push("catalogCategory");
       if (requirements.productDomain === "sensors") expected.push("genericInterface");
@@ -2247,7 +2338,10 @@ function App() {
       architecture: req.architecture ?? null,
       antenna: req.antenna ?? null,
       wifi_generation: req.wifiGeneration ?? [],
-      gnss_precision: req.gnssPrecision ?? null,
+      gnss_precision:
+        req.gnssPrecision && req.gnssPrecision !== "No preference"
+          ? req.gnssPrecision
+          : null,
       low_power: req.lowPower ?? null,
       host_interface:
         req.hostInterface === "SDIO" ? "sdio" :
@@ -2798,6 +2892,11 @@ function App() {
       return applyAnswer(activeQuestion, inferred.wifiGeneration, q);
     if (activeQuestion === "gnssPrecision" && inferred.gnssPrecision)
       return applyAnswer(activeQuestion, inferred.gnssPrecision, q);
+    if (
+      activeQuestion === "gnssPrecision" &&
+      /not sure|no preference|open|egal|keine präferenz|keine praeferenz|weiß nicht|weiss nicht/i.test(q)
+    )
+      return applyAnswer(activeQuestion, "No preference", q);
 
     if (activeQuestion === "positioning") {
       if (/^(yes|y|ja|gnss|gps)/i.test(q)) return applyAnswer(activeQuestion, "yes", q);
@@ -2849,8 +2948,12 @@ function App() {
     }
 
     if (activeQuestion === "gnssDualBand") {
-      if (/l1\s*\+\s*l5|dual/i.test(q)) return applyAnswer(activeQuestion, "L1 + L5 required", q);
-      if (/l1|no preference|not sure/i.test(q)) return applyAnswer(activeQuestion, "No preference", q);
+      if (/l1\s*\+\s*l5|dual[- ]band/i.test(q))
+        return applyAnswer(activeQuestion, "L1 + L5 required", q);
+      if (/l1 only|l1 is sufficient|single[- ]band/i.test(q))
+        return applyAnswer(activeQuestion, "L1 sufficient", q);
+      if (/not sure|no preference|open|egal|keine präferenz|keine praeferenz/i.test(q))
+        return applyAnswer(activeQuestion, "No preference", q);
     }
 
     addMessage(
