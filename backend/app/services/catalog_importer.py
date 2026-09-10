@@ -1,5 +1,7 @@
+import asyncio
 import json
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from urllib.parse import urljoin, urlparse, parse_qs
 
@@ -265,23 +267,32 @@ async def crawl_source(
     max_pages: int | None = None,
     *,
     discover_descendants: bool = True,
-    max_listing_pages: int = 80,
+    max_child_depth: int = 1,
+    max_listing_pages: int = 40,
 ) -> list[ImportedProduct]:
     """
-    Crawl one configured SE catalog section.
+    Crawl one configured SE product source.
 
-    Older versions assumed every configured URL was already a product listing.
-    In reality, pages such as /en/sbc/ and /en/passivecap/ are landing pages
-    whose actual products live in child pages. We now discover those child
-    listing pages recursively while staying inside the source URL prefix.
+    Phase 4.6.1 intentionally keeps child discovery shallow.
+
+    Why:
+    - SE's category landing pages such as /en/sbc/ and /en/passivecap/
+      normally expose their shop sub-categories directly.
+    - recursively following descendants of descendants made a full sync
+      unnecessarily slow and could generate many avoidable requests.
+
+    We therefore visit:
+      root listing -> directly linked child listings -> pagination
+
+    but do not recursively walk deeper category trees during normal sync.
     """
     base_url = _normalized_page_url(urljoin(CATALOG_BASE, source["path"]))
-    queue: list[str] = [base_url]
+    queue: list[tuple[str, int]] = [(base_url, 0)]
     visited: set[str] = set()
     products: list[ImportedProduct] = []
 
     while queue and len(visited) < max_listing_pages:
-        current = queue.pop(0)
+        current, depth = queue.pop(0)
         normalized = _normalized_page_url(current)
         if normalized in visited:
             continue
@@ -299,16 +310,22 @@ async def crawl_source(
         )
         products.extend(first)
 
-        if discover_descendants:
+        # Discover only direct children of the configured root.
+        if discover_descendants and depth < max_child_depth:
             for child in discover_child_listing_urls(
                 response.text,
                 current_url=str(response.url),
                 root_path=source["path"],
             ):
-                if child not in visited and child not in queue:
-                    queue.append(child)
+                if child not in visited and all(child != item[0] for item in queue):
+                    queue.append((child, depth + 1))
 
         pages = detected_pages if max_pages is None else min(detected_pages, max_pages)
+
+        # Safety guard: a malformed/navigation page must never explode into
+        # hundreds of accidental page requests.
+        pages = min(pages, 100)
+
         for page in range(2, pages + 1):
             paged = await client.get(current, params={"page": page})
             paged.raise_for_status()
@@ -382,12 +399,23 @@ async def import_catalog(
     limit_sources: int | None = None,
     max_pages: int | None = None,
     discover_descendants: bool = True,
+    max_concurrency: int = 3,
+    progress_callback: Callable[[dict], None] | None = None,
 ) -> dict:
+    """
+    Import configured SE catalog sources.
+
+    Network crawling is concurrent with a deliberately small concurrency
+    (default 3) so the sync is much faster without aggressively loading
+    spezial.com. Database writes remain sequential through one SQLAlchemy
+    session.
+
+    progress_callback receives a small state dict after every completed
+    source, allowing /api/catalog/sync-status to show real progress.
+    """
     selected = CATALOG_SOURCES
     if source_filter:
         needle = source_filter.strip().lower()
-        # Match human-readable category names, not arbitrary URL substrings.
-        # Example: "--source LTE" should match LTE-related categories, but not "/filteracc/".
         selected = [
             x for x in selected
             if needle in x["category"].lower()
@@ -396,35 +424,89 @@ async def import_catalog(
         selected = selected[:limit_sources]
 
     imported = 0
-    failed = []
-    source_counts = {}
+    failed: list[dict] = []
+    source_counts: dict[str, int] = {}
+    completed = 0
 
     timeout = httpx.Timeout(30.0, connect=15.0)
-    headers = {"User-Agent": "SE-Product-Assistant/0.2 (+internal catalog sync)"}
+    headers = {"User-Agent": "SE-Product-Assistant/0.3 (+internal catalog sync)"}
+    semaphore = asyncio.Semaphore(max(1, min(max_concurrency, 4)))
 
-    async with httpx.AsyncClient(timeout=timeout, headers=headers, follow_redirects=True) as client:
-        for source in selected:
-            try:
-                rows = await crawl_source(
-                    client,
-                    source,
-                    max_pages=max_pages,
-                    discover_descendants=discover_descendants,
-                )
-                for row in rows:
-                    upsert_product(db, row)
-                db.commit()
-                imported += len(rows)
-                source_counts[source["category"]] = len(rows)
-            except Exception as exc:
-                db.rollback()
-                failed.append({"source": source["category"], "error": str(exc)})
+    if progress_callback:
+        progress_callback({
+            "sources_requested": len(selected),
+            "sources_completed": 0,
+            "sources_succeeded": 0,
+            "products_seen": 0,
+            "current_source": None,
+            "failed": [],
+        })
+
+    async with httpx.AsyncClient(
+        timeout=timeout,
+        headers=headers,
+        follow_redirects=True,
+    ) as client:
+
+        async def fetch_source(source: dict):
+            async with semaphore:
+                try:
+                    rows = await crawl_source(
+                        client,
+                        source,
+                        max_pages=max_pages,
+                        discover_descendants=discover_descendants,
+                    )
+                    return source, rows, None
+                except Exception as exc:
+                    return source, [], str(exc)
+
+        tasks = [
+            asyncio.create_task(fetch_source(source))
+            for source in selected
+        ]
+
+        for future in asyncio.as_completed(tasks):
+            source, rows, error = await future
+            completed += 1
+
+            if error is not None:
+                failed.append({
+                    "source": source["category"],
+                    "error": error,
+                })
+            else:
+                try:
+                    for row in rows:
+                        upsert_product(db, row)
+                    db.commit()
+                    imported += len(rows)
+                    source_counts[source["category"]] = len(rows)
+                except Exception as exc:
+                    db.rollback()
+                    failed.append({
+                        "source": source["category"],
+                        "error": str(exc),
+                    })
+
+            if progress_callback:
+                progress_callback({
+                    "sources_requested": len(selected),
+                    "sources_completed": completed,
+                    "sources_succeeded": len(source_counts),
+                    "products_seen": imported,
+                    "current_source": source["category"],
+                    "failed": list(failed),
+                })
 
     return {
         "sources_requested": len(selected),
+        "sources_completed": completed,
         "sources_succeeded": len(source_counts),
         "products_seen": imported,
         "source_counts": source_counts,
         "failed": failed,
         "recursive_discovery": discover_descendants,
+        "max_concurrency": max(1, min(max_concurrency, 4)),
     }
+

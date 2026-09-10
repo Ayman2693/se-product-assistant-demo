@@ -20,7 +20,11 @@ async def bootstrap():
         print(f"[bootstrap] products before live import: {before}", flush=True)
 
         if before < MIN_FULL_CATALOG_PRODUCTS:
-            result = await import_catalog(db)
+            result = await import_catalog(
+                db,
+                discover_descendants=True,
+                max_concurrency=3,
+            )
             print(json.dumps({"catalog_import": result}, indent=2, ensure_ascii=False), flush=True)
         else:
             print("[bootstrap] full catalog already present; skipping live import.", flush=True)

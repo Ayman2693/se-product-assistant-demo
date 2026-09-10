@@ -94,3 +94,31 @@ After the new version is Live:
 6. Check `GET /api/catalog/status` to see the updated product count.
 
 The sync runs in the background and writes to Render PostgreSQL.
+
+
+## Phase 4.6.1 sync progress
+
+The status endpoint now shows live progress, for example:
+
+```json
+{
+  "status": "running",
+  "sources_requested": 51,
+  "sources_completed": 18,
+  "sources_succeeded": 18,
+  "products_seen": 742,
+  "current_source": "TFT Displays"
+}
+```
+
+When the crawler finishes, status briefly changes to:
+
+`rebuilding_evidence`
+
+and then:
+
+`completed`
+
+If needed, use:
+
+`POST /api/catalog/sync-cancel`

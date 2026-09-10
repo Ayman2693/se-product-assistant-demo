@@ -19,6 +19,12 @@ def main():
         action="store_true",
         help="Disable recursive child-category discovery (debug only)",
     )
+    parser.add_argument(
+        "--concurrency",
+        type=int,
+        default=3,
+        help="Maximum parallel source crawls (1-4, default 3)",
+    )
     args = parser.parse_args()
 
     if not args.all and not args.source and args.limit_sources is None:
@@ -37,6 +43,7 @@ def main():
             limit_sources=args.limit_sources,
             max_pages=args.max_pages,
             discover_descendants=not args.no_discover_children,
+            max_concurrency=max(1, min(args.concurrency, 4)),
         ))
         print()
         print("Catalog import complete")

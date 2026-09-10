@@ -905,3 +905,31 @@ Directly understands, among others:
 - embedded peripherals
 
 No database migration is required.
+
+
+# Phase 4.6.1 — Faster, visible catalog sync
+
+The first recursive full-catalog implementation was intentionally broad but
+proved too slow on Render Free.
+
+Optimizations:
+
+- child-category discovery is limited to one level below each configured SE root
+- pagination is still followed for each root/child listing
+- three catalog sources are fetched concurrently
+- concurrency is capped at four even if a larger value is requested
+- database writes remain sequential and transactional
+- `/api/catalog/sync-status` now reports live progress:
+  - `sources_requested`
+  - `sources_completed`
+  - `sources_succeeded`
+  - `products_seen`
+  - `current_source`
+- evidence rebuild has its own `rebuilding_evidence` status
+- new `POST /api/catalog/sync-cancel` endpoint
+
+This design is substantially faster while keeping outbound load modest:
+production uses at most three concurrent source crawls.
+
+A redeploy safely stops any old in-memory background sync. Catalog imports are
+upserts, so already committed products are not corrupted by interruption.

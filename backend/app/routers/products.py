@@ -27,7 +27,9 @@ _catalog_sync_state = {
     "finished_at": None,
     "products_seen": 0,
     "sources_succeeded": 0,
+    "sources_completed": 0,
     "sources_requested": 0,
+    "current_source": None,
     "failed": [],
     "error": None,
 }
@@ -44,17 +46,36 @@ async def _run_full_catalog_sync():
         "finished_at": None,
         "products_seen": 0,
         "sources_succeeded": 0,
-        "sources_requested": 0,
+        "sources_completed": 0,
+        "sources_requested": len(CATALOG_SOURCES),
+        "current_source": None,
         "failed": [],
         "error": None,
     })
+
+    def on_progress(progress: dict):
+        _catalog_sync_state.update({
+            "products_seen": progress.get("products_seen", 0),
+            "sources_succeeded": progress.get("sources_succeeded", 0),
+            "sources_completed": progress.get("sources_completed", 0),
+            "sources_requested": progress.get("sources_requested", len(CATALOG_SOURCES)),
+            "current_source": progress.get("current_source"),
+            "failed": progress.get("failed", []),
+        })
 
     db = SessionLocal()
     try:
         result = await import_catalog(
             db,
             discover_descendants=True,
+            max_concurrency=3,
+            progress_callback=on_progress,
         )
+
+        # Evidence rebuild happens once, after the product crawl finishes.
+        _catalog_sync_state["status"] = "rebuilding_evidence"
+        _catalog_sync_state["current_source"] = None
+
         evidence = seed_catalog_evidence(db)
 
         _catalog_sync_state.update({
@@ -62,15 +83,24 @@ async def _run_full_catalog_sync():
             "finished_at": _utcnow_iso(),
             "products_seen": result.get("products_seen", 0),
             "sources_succeeded": result.get("sources_succeeded", 0),
+            "sources_completed": result.get("sources_completed", 0),
             "sources_requested": result.get("sources_requested", 0),
             "failed": result.get("failed", []),
             "evidence": evidence,
         })
+    except asyncio.CancelledError:
+        _catalog_sync_state.update({
+            "status": "cancelled",
+            "finished_at": _utcnow_iso(),
+            "current_source": None,
+        })
+        raise
     except Exception as exc:
         _catalog_sync_state.update({
             "status": "failed",
             "finished_at": _utcnow_iso(),
             "error": str(exc),
+            "current_source": None,
         })
     finally:
         db.close()
@@ -104,6 +134,28 @@ async def start_full_catalog_sync():
 @router.get("/catalog/sync-status")
 def full_catalog_sync_status():
     return dict(_catalog_sync_state)
+
+
+@router.post("/catalog/sync-cancel")
+async def cancel_full_catalog_sync():
+    global _catalog_sync_task
+
+    if _catalog_sync_task is None or _catalog_sync_task.done():
+        return {
+            **_catalog_sync_state,
+            "message": "No catalog sync is currently running.",
+        }
+
+    _catalog_sync_task.cancel()
+    try:
+        await _catalog_sync_task
+    except asyncio.CancelledError:
+        pass
+
+    return {
+        **_catalog_sync_state,
+        "message": "Catalog sync cancelled.",
+    }
 
 
 def _json(value, fallback):
