@@ -1053,3 +1053,26 @@ These questions happen before the first recommendation, not only as tie-breakers
 English and German wording are included.
 
 No catalog sync or database migration is required.
+
+
+# Phase 4.7.4 — Smarter question flow + prominent search UX
+
+Qualification:
+- removed the generic mandatory question
+  `Are there any important design constraints or special requirements?`
+- technical qualification now relies on product/domain-specific questions
+- volunteered special requirements can still be captured, but they no longer
+  block the first product search
+
+Waiting state:
+- full-page centered waiting overlay while matching is running
+- large 92 px animated search indicator with magnifying-glass icon
+- clear EN/DE waiting text
+- customer cannot mistake a several-second product comparison for a frozen page
+
+Result navigation:
+- after results arrive, the viewport smoothly moves to recommendation #1
+- chat auto-scroll is confined to the chat pane and no longer pulls the whole
+  browser page toward the bottom
+
+No database migration and no catalog sync are required.

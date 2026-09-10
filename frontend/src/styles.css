@@ -155,6 +155,103 @@ a { color: inherit; }
     animation-duration: 1.8s;
   }
 }
+
+.matchingOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(245, 247, 249, 0.84);
+  backdrop-filter: blur(3px);
+}
+
+.matchingOverlayCard {
+  width: min(470px, calc(100vw - 32px));
+  min-height: 270px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 36px 30px;
+  background: #ffffff;
+  border: 1px solid #dde3e8;
+  border-radius: 22px;
+  box-shadow: 0 22px 60px rgba(23, 33, 43, 0.18);
+  text-align: center;
+}
+
+.matchingHeroIcon {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 4px;
+}
+
+.matchingSpinnerHero {
+  position: absolute;
+  inset: 0;
+  width: 92px;
+  height: 92px;
+  border-width: 7px;
+}
+
+.matchingHeroIcon svg {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  fill: none;
+  stroke: #17212b;
+  stroke-width: 2.1;
+  stroke-linecap: round;
+}
+
+.matchingOverlayCard strong {
+  color: #17212b;
+  font-size: 22px;
+  line-height: 1.3;
+}
+
+.matchingOverlayCard > span {
+  max-width: 370px;
+  color: #64717d;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.productCard {
+  scroll-margin-top: 104px;
+}
+
+@media (max-width: 650px) {
+  .matchingOverlayCard {
+    min-height: 235px;
+    padding: 30px 22px;
+  }
+
+  .matchingHeroIcon,
+  .matchingSpinnerHero {
+    width: 78px;
+    height: 78px;
+  }
+
+  .matchingHeroIcon svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .matchingOverlayCard strong {
+    font-size: 19px;
+  }
+
+  .productCard {
+    scroll-margin-top: 84px;
+  }
+}
 .results { display: grid; gap: 9px; }
 .emptyState {
   color: #64717d; font-size: 14px; line-height: 1.55; padding: 22px;

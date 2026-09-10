@@ -1179,14 +1179,6 @@ function questionFor(req: Requirements): { key: QuestionKey; text: string; optio
     }
   }
 
-  if (!req.specialRequirements) {
-    return {
-      key: "specialRequirements",
-      text: "Are there any important design constraints or special requirements?",
-      options: domainSpecialRequirementOptions(req.productDomain),
-    };
-  }
-
   const tech = new Set(req.technologies ?? []);
 
   if (req.productDomain === "connectivity") {
@@ -2159,7 +2151,9 @@ function App() {
   const [finished, setFinished] = useState(false);
   const [catalogStatus, setCatalogStatus] = useState<{total_products:number;structured_products:number;live_imported_products:number;catalog_sections_configured:number} | null>(null);
   const messageId = useRef(0);
-  const chatEnd = useRef<HTMLDivElement | null>(null);
+  const chatBodyRef = useRef<HTMLDivElement | null>(null);
+  const firstRecommendationRef = useRef<HTMLElement | null>(null);
+  const focusResultsAfterMatch = useRef(false);
 
   const addMessage = (role: Role, html: string) => {
     setMessages((old) => [...old, { id: ++messageId.current, role, html }]);
@@ -2257,11 +2251,32 @@ function App() {
   }, []);
 
   useEffect(() => {
-    chatEnd.current?.scrollIntoView({ behavior: "smooth" });
+    // Keep conversation scrolling inside the chat panel. This avoids moving
+    // the whole browser window toward the bottom of the page.
+    const el = chatBodyRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages, quickOptions]);
 
+  useEffect(() => {
+    if (matching || !matches.length || !focusResultsAfterMatch.current) return;
+
+    focusResultsAfterMatch.current = false;
+
+    // Let React paint the new ranking first, then bring recommendation #1
+    // into view so the customer immediately sees the best result.
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        firstRecommendationRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
+    });
+  }, [matching, matches]);
+
   const completeness = useMemo(() => {
-    const expected = ["productDomain", "specialRequirements"];
+    const expected = ["productDomain"];
 
     if (requirements.productDomain === "connectivity") {
       expected.push("technologies");
@@ -2298,6 +2313,7 @@ function App() {
 
   async function runMatch(req: Requirements, refinement = false) {
     if (!req.technologies?.length && !req.catalogCategory) return;
+    focusResultsAfterMatch.current = true;
     setMatching(true);
     setShowAllResults(false);
     setFinished(false);
@@ -3049,6 +3065,34 @@ function App() {
 
   return (
     <div className="appShell">
+      {matching && (
+        <div
+          className="matchingOverlay"
+          role="status"
+          aria-live="assertive"
+          aria-label={tr(language, "Searching for new results", "Suche nach neuen Ergebnissen")}
+        >
+          <div className="matchingOverlayCard">
+            <div className="matchingHeroIcon" aria-hidden="true">
+              <span className="matchingSpinner matchingSpinnerHero" />
+              <svg viewBox="0 0 24 24" focusable="false">
+                <circle cx="10.5" cy="10.5" r="5.2" />
+                <path d="M14.4 14.4L19.2 19.2" />
+              </svg>
+            </div>
+            <strong>
+              {tr(language, "Searching for new results…", "Suche nach neuen Ergebnissen…")}
+            </strong>
+            <span>
+              {tr(
+                language,
+                "Please wait while your requirements are compared with the SE product database.",
+                "Bitte warten Sie, während Ihre Anforderungen mit der SE-Produktdatenbank verglichen werden."
+              )}
+            </span>
+          </div>
+        </div>
+      )}
       <header className="topbar">
         <div className="brand">
           <img src="/se-logo.png" alt="SE Spezial-Electronic" className="seLogo" />
@@ -3162,27 +3206,13 @@ function App() {
             </div>
 
             <div className={`results${matching && matches.length ? " resultsRefreshing" : ""}`}>
-              {matching && (
-                <div className="matchingPanel" role="status" aria-live="polite">
-                  <span className="matchingSpinner" aria-hidden="true" />
-                  <div>
-                    <strong>
-                      {tr(language, "Searching for new results…", "Suche nach neuen Ergebnissen…")}
-                    </strong>
-                    <span>
-                      {tr(
-                        language,
-                        "Comparing your requirements with the SE product database.",
-                        "Ihre Anforderungen werden mit der SE-Produktdatenbank verglichen."
-                      )}
-                    </span>
-                  </div>
-                </div>
-              )}
-
               {matches.length ? (
                 (showAllResults ? matches : matches.slice(0, 3)).map((match, index) => (
-                  <article className="productCard" key={match.product.id}>
+                  <article
+                    className="productCard"
+                    key={match.product.id}
+                    ref={index === 0 ? firstRecommendationRef : undefined}
+                  >
                     <div className="productTop">
                       <div>
                         <div className="rank">#{index + 1} {tr(language, "recommendation", "Empfehlung")}</div>
@@ -3376,7 +3406,7 @@ function App() {
               <button onClick={reset}>{tr(language, "Restart", "Neu starten")}</button>
             </div>
 
-            <div className="chatBody">
+            <div className="chatBody" ref={chatBodyRef}>
               {messages.map((message) => (
                 <div className={`message ${message.role}`} key={message.id}>
                   <div className="bubble" dangerouslySetInnerHTML={{ __html: message.html }} />
@@ -3443,7 +3473,7 @@ function App() {
                 </div>
               )}
 
-              <div ref={chatEnd} />
+              <div />
             </div>
 
             <div className="chatInput">
