@@ -826,3 +826,19 @@ This prevents antenna wording from hijacking a wireless-module request.
 - Render Blueprint
 - no secrets committed
 - see `DEPLOY_RENDER.md`
+
+
+# Phase 4.5.1 — Render frontend build fix
+
+Fixes the Render Docker failure:
+
+`TS5108: Option 'moduleResolution=node10' has been removed`
+
+Changes:
+- TypeScript `moduleResolution` changed from `Node` to `Bundler` for Vite.
+- Frontend package versions are pinned instead of using `latest`.
+- Vite environment typings explicitly include DEV/PROD/MODE/BASE_URL/SSR.
+- Removes a stray TypeScript expression in the free-text answer parser.
+- Handles optional edit-question options safely under strict TypeScript.
+
+No database, catalog, or evidence rebuild is required.

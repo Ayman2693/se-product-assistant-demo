@@ -2269,7 +2269,6 @@ function App() {
       if (/^(no|n|nein)/i.test(q)) return applyAnswer(activeQuestion, false, q);
     }
 
-("user", htmlEscape(q));
     if (activeQuestion === "hostInterface") {
       if (/\bsdio\b/i.test(q) && /\bpcie\b|pci express/i.test(q)) return applyAnswer(activeQuestion, "SDIO or PCIe", q);
       if (/\bsdio\b/i.test(q)) return applyAnswer(activeQuestion, "SDIO", q);
@@ -2378,8 +2377,9 @@ function App() {
     setFinished(false);
     setShowAllResults(false);
     setActiveQuestion(key);
-    setQuickOptions(q.options);
-    setMultiSelected(isMultiSelectKey(key) ? selectedLabelsForEdit(key, q.options) : []);
+    const editOptions = q.options ?? [];
+    setQuickOptions(editOptions);
+    setMultiSelected(isMultiSelectKey(key) ? selectedLabelsForEdit(key, editOptions) : []);
     addMessage(
       "bot",
       language === "de"
