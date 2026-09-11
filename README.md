@@ -1111,3 +1111,64 @@ Render logs now include one timing line per match, for example:
 This makes real production latency measurable.
 
 No database migration and no catalog sync are required.
+
+
+# Phase 4.8 — Matching Quality Guard
+
+The optimized matcher is now separated into a reusable technical candidate
+engine. It supports both:
+
+- fast SQL-prefiltered matching
+- exhaustive full-catalog matching
+
+`compare_fast_vs_exhaustive()` checks that the fast path does not lose any
+technical matches or any product at the Top-10 technical cutoff.
+
+Manual real-database check:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m app.quality_guard
+```
+
+Optional production shadow checking is available with:
+
+`MATCH_QUALITY_GUARD_SAMPLE_RATE=0.02`
+
+This samples 2% of `/api/match` calls *after the customer response* and logs
+PASS/FAIL. Default is `0`, so normal production has no exhaustive-scan cost.
+
+Match performance logging now separates:
+
+- candidate load time
+- technical scoring time
+- evidence time
+- total time
+
+
+# Phase 4.9 — Adaptive Question Engine / Information Gain
+
+After the initial request establishes product domain/category/technology, the
+frontend asks `/api/requirements/adaptive-question` which technical question
+should come next.
+
+The engine:
+
+1. builds the current technically valid candidate set
+2. measures catalog coverage for each unanswered engineering field
+3. calculates Shannon information gain from the field distribution
+4. asks the field that best separates the remaining candidates
+5. keeps core engineering questions required even when data coverage is weak
+6. falls back to the existing deterministic local flow if the adaptive API is
+   unavailable
+
+For capacitors, capacitance and voltage button values can be generated from the
+actual remaining catalog values instead of relying only on hard-coded examples.
+
+Customer UI gets a short explanation such as:
+
+`This is the most useful next detail for narrowing 86 remaining candidates.`
+
+Developer Mode additionally shows information-gain bits and catalog coverage.
+
+No database migration and no catalog sync are required.

@@ -6,6 +6,10 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173"
     demo_username: str = ""
     demo_password: str = ""
+    # Fraction of /api/match requests checked in the background against an
+    # exhaustive scan. Keep 0 in normal production; use e.g. 0.02 during
+    # validation to sample 2% without slowing customer responses.
+    match_quality_guard_sample_rate: float = 0.0
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

@@ -170,6 +170,33 @@ class RequirementState(BaseModel):
     capacitor_temperature_max_c: Optional[float] = None
     capacitor_energy_min_j: Optional[float] = None
 
+class AdaptiveQuestionOptionOut(BaseModel):
+    label: str
+    value: str | bool | List[str]
+
+
+class AdaptiveQuestionOut(BaseModel):
+    key: str
+    text: str
+    options: List[AdaptiveQuestionOptionOut] = Field(default_factory=list)
+    multi_select: bool = False
+    required: bool = True
+    information_gain: float = 0.0
+    known_coverage: float = 0.0
+    candidate_count: int = 0
+    distinct_known_values: int = 0
+
+
+class AdaptiveQuestionRequest(BaseModel):
+    requirements: MatchRequest
+
+
+class AdaptiveQuestionResponse(BaseModel):
+    candidate_count: int = 0
+    evaluated_fields: int = 0
+    question: Optional[AdaptiveQuestionOut] = None
+
+
 class InterpretRequest(BaseModel):
     text: str
     current: Optional[RequirementState] = None

@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import Product
 from app.schemas import (
+    AdaptiveQuestionRequest,
+    AdaptiveQuestionResponse,
     InterpretRequest,
     InterpretResponse,
     MatchRequest,
@@ -11,7 +12,11 @@ from app.schemas import (
     NaturalRecommendResponse,
 )
 from app.routers.products import serialize_product
-from app.services.matcher import score_product
+from app.services.matching_engine import (
+    run_fast_technical_match,
+    technical_evidence_pool,
+)
+from app.services.adaptive_questions import choose_adaptive_question
 from app.services.evidence_matcher import (
     annotate_results_with_evidence,
     evidence_sort_key,
@@ -67,11 +72,13 @@ def _match(db: Session, req_dict: dict):
         mandatory=[],
     )
 
-    results = []
-    for product in db.query(Product).all():
-        score = score_product(product, request)
-        if score:
-            results.append({"product": serialize_product(product), **score})
+    technical = run_fast_technical_match(db, request)
+    evidence_pool = technical_evidence_pool(technical.scored, limit=10)
+
+    results = [
+        {"product": serialize_product(product), **score}
+        for product, score in evidence_pool
+    ]
 
     annotate_results_with_evidence(db, request, results)
     results.sort(key=evidence_sort_key, reverse=True)
@@ -79,7 +86,15 @@ def _match(db: Session, req_dict: dict):
     for row in results:
         row.pop("_evidence_completeness", None)
 
-    return {"count": len(results), "matches": results[:10]}
+    return {"count": len(technical.scored), "matches": results[:10]}
+
+@router.post("/adaptive-question", response_model=AdaptiveQuestionResponse)
+def adaptive_question(
+    request: AdaptiveQuestionRequest,
+    db: Session = Depends(get_db),
+):
+    return choose_adaptive_question(db, request.requirements)
+
 
 @router.post("/interpret", response_model=InterpretResponse)
 def interpret(request: InterpretRequest):

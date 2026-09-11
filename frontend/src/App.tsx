@@ -100,6 +100,22 @@ type Option = {
   value: string | boolean | string[];
 };
 
+type AdaptiveQuestionResponse = {
+  candidate_count: number;
+  evaluated_fields: number;
+  question?: {
+    key: QuestionKey;
+    text: string;
+    options: Option[];
+    multi_select: boolean;
+    required: boolean;
+    information_gain: number;
+    known_coverage: number;
+    candidate_count: number;
+    distinct_known_values: number;
+  } | null;
+};
+
 type ProductFeatures = {
   technologies: string[];
   cellular_class?: string | null;
@@ -2134,6 +2150,133 @@ function localizedNaturalReply(key: QuestionKey, value: Option["value"], languag
   return generic[key] ?? "Verstanden.";
 }
 
+
+function buildMatchBody(req: Requirements) {
+  const bluetoothRequired =
+    req.bluetoothRequirement && req.bluetoothRequirement !== "No requirement"
+      ? true
+      : null;
+
+  const btMin =
+    req.bluetoothRequirement?.match(/Bluetooth\s+([4-6](?:\.\d+)?)\+/i)?.[1] ?? null;
+
+  const maxFootprint =
+    req.maxFootprint && req.maxFootprint !== "No fixed limit"
+      ? Number(req.maxFootprint.match(/(\d+(?:\.\d+)?)/)?.[1] ?? 0) || null
+      : null;
+
+  const effectiveTechnologies = bluetoothRequired
+    ? [...new Set([...(req.technologies ?? []), "bluetooth"])]
+    : req.technologies ?? [];
+
+  return {
+    application: req.application ?? null,
+    product_domain: req.productDomain ?? null,
+    catalog_category: req.catalogCategory ?? null,
+    generic_interface:
+      req.genericInterface && req.genericInterface !== "No preference"
+        ? req.genericInterface
+        : null,
+    technologies: effectiveTechnologies,
+    cellular_class: req.cellularClass ?? null,
+    region: req.region ?? null,
+    architecture: req.architecture ?? null,
+    antenna: req.antenna ?? null,
+    wifi_generation: req.wifiGeneration ?? [],
+    gnss_precision:
+      req.gnssPrecision && req.gnssPrecision !== "No preference"
+        ? req.gnssPrecision
+        : null,
+    low_power: req.lowPower ?? null,
+    host_interface:
+      req.hostInterface === "SDIO" ? "sdio" :
+      req.hostInterface === "PCIe" ? "pcie" :
+      req.hostInterface === "SDIO or PCIe" ? "sdio_pcie" : null,
+    antenna_connector:
+      req.antennaConnector === "U.FL" ? "ufl" :
+      req.antennaConnector === "Antenna pin / solder pad" ? "antenna_pin" : null,
+    antenna_count:
+      req.antennaCount && req.antennaCount !== "No preference"
+        ? Number(req.antennaCount)
+        : null,
+    bluetooth_required: bluetoothRequired,
+    bluetooth_version_min: btMin,
+    max_footprint_mm2: maxFootprint,
+    form_factor:
+      req.formFactor && req.formFactor !== "No preference"
+        ? req.formFactor
+        : null,
+    gnss_dual_band:
+      req.gnssDualBand === "L1 + L5 required" ? true :
+      req.gnssDualBand === "L1 sufficient" ? false :
+      null,
+
+    capacitance_uf:
+      req.capacitorCapacitance ? parseCapacitanceUf(req.capacitorCapacitance) : null,
+    capacitor_voltage_v:
+      req.capacitorVoltage ? parseSimpleNumber(req.capacitorVoltage) : null,
+    capacitor_tolerance_pct:
+      req.capacitorTolerance && req.capacitorTolerance !== "No preference"
+        ? parseSimpleNumber(req.capacitorTolerance)
+        : null,
+    capacitor_technology:
+      req.capacitorTechnology && req.capacitorTechnology !== "No preference"
+        ? req.capacitorTechnology
+        : null,
+    capacitor_mounting:
+      req.capacitorMounting && req.capacitorMounting !== "No preference"
+        ? req.capacitorMounting
+        : null,
+    capacitor_case_size: req.capacitorCaseSize ?? null,
+    capacitor_esr_max_ohm:
+      req.capacitorEsrMax ? parseSimpleNumber(req.capacitorEsrMax) : null,
+    capacitor_ripple_current_min_a:
+      req.capacitorRippleMin ? parseSimpleNumber(req.capacitorRippleMin) : null,
+    capacitor_lifetime_min_h:
+      req.capacitorLifetimeMin
+        ? Math.round(parseSimpleNumber(req.capacitorLifetimeMin) ?? 0) || null
+        : null,
+    capacitor_temperature_min_c:
+      req.capacitorTemperatureRange
+        ? Number(
+            req.capacitorTemperatureRange
+              .match(/-?\d+(?:[.,]\d+)?/)?.[0]
+              .replace(",", ".") ?? ""
+          ) || null
+        : null,
+    capacitor_temperature_max_c:
+      req.capacitorTemperatureRange
+        ? (() => {
+            const values = [
+              ...req.capacitorTemperatureRange.matchAll(/-?\d+(?:[.,]\d+)?/g),
+            ].map((m) => Number(m[0].replace(",", ".")));
+            return values.length >= 2 ? values[1] : null;
+          })()
+        : null,
+    capacitor_energy_min_j:
+      req.capacitorEnergyMin ? parseSimpleNumber(req.capacitorEnergyMin) : null,
+    mandatory: [],
+  };
+}
+
+
+async function adaptiveQuestionWithBackend(
+  req: Requirements
+): Promise<AdaptiveQuestionResponse> {
+  const response = await fetch(`${API}/api/requirements/adaptive-question`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ requirements: buildMatchBody(req) }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Adaptive question HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
+
+
 function App() {
   const [language, setLanguage] = useState<Language>("en");
   const [viewMode, setViewMode] = useState<ViewMode>("customer");
@@ -2154,23 +2297,102 @@ function App() {
   const chatBodyRef = useRef<HTMLDivElement | null>(null);
   const firstRecommendationRef = useRef<HTMLElement | null>(null);
   const focusResultsAfterMatch = useRef(false);
+  const adaptiveQuestionRequestId = useRef(0);
 
   const addMessage = (role: Role, html: string) => {
     setMessages((old) => [...old, { id: ++messageId.current, role, html }]);
   };
 
-  const askNext = (nextReq: Requirements, selectedLanguage: Language = language) => {
-    const q = localizeQuestion(questionFor(nextReq), selectedLanguage);
-    if (!q) {
+  const askNext = async (
+    nextReq: Requirements,
+    selectedLanguage: Language = language
+  ) => {
+    const fallback = localizeQuestion(questionFor(nextReq), selectedLanguage);
+
+    // These structural questions establish enough context before asking the
+    // catalog which engineering detail is most informative.
+    const structuralKeys = new Set<QuestionKey>([
+      "initialNeed",
+      "productDomain",
+      "catalogCategory",
+      "technologies",
+    ]);
+
+    const showQuestion = (
+      q: { key: QuestionKey; text: string; options?: Option[] },
+      adaptive?: AdaptiveQuestionResponse["question"]
+    ) => {
+      setActiveQuestion(q.key);
+      setQuickOptions(q.options ?? []);
+      setMultiSelected([]);
+
+      let text = q.text;
+      if (adaptive && adaptive.candidate_count > 1) {
+        const customerHint = tr(
+          selectedLanguage,
+          `This is the most useful next detail for narrowing ${adaptive.candidate_count} remaining candidates.`,
+          `Diese Angabe hilft am besten, die ${adaptive.candidate_count} verbleibenden Kandidaten einzugrenzen.`
+        );
+
+        const developerHint =
+          viewMode === "developer"
+            ? tr(
+                selectedLanguage,
+                ` Information gain: ${adaptive.information_gain.toFixed(2)} bits · catalog coverage: ${Math.round(adaptive.known_coverage * 100)}%.`,
+                ` Informationsgewinn: ${adaptive.information_gain.toFixed(2)} Bit · Katalogabdeckung: ${Math.round(adaptive.known_coverage * 100)} %.`
+              )
+            : "";
+
+        text += `<br><span class='botHint'>${customerHint}${developerHint}</span>`;
+      }
+
+      addMessage("bot", text);
+    };
+
+    if (fallback && structuralKeys.has(fallback.key)) {
+      showQuestion(fallback);
+      return;
+    }
+
+    const requestId = ++adaptiveQuestionRequestId.current;
+
+    try {
+      const adaptive = await adaptiveQuestionWithBackend(nextReq);
+      if (requestId !== adaptiveQuestionRequestId.current) return;
+
+      if (adaptive.question) {
+        const localized = localizeQuestion(
+          {
+            key: adaptive.question.key,
+            text: adaptive.question.text,
+            options: adaptive.question.options,
+          },
+          selectedLanguage
+        );
+        if (localized) {
+          showQuestion(localized, adaptive.question);
+          return;
+        }
+      }
+
+      // Backend was reachable and found no further useful/required engineering
+      // question for the current candidate set.
       setActiveQuestion(null);
       setQuickOptions([]);
       void runMatch(nextReq);
       return;
+    } catch {
+      // If adaptive analysis is unavailable, preserve the deterministic local
+      // flow rather than blocking the customer.
+      if (fallback) {
+        showQuestion(fallback);
+        return;
+      }
+
+      setActiveQuestion(null);
+      setQuickOptions([]);
+      void runMatch(nextReq);
     }
-    setActiveQuestion(q.key);
-    setQuickOptions(q.options ?? []);
-    setMultiSelected([]);
-    addMessage("bot", q.text);
   };
 
 
@@ -2209,6 +2431,7 @@ function App() {
     setLanguage(nextLanguage);
     document.documentElement.lang = nextLanguage;
 
+    adaptiveQuestionRequestId.current += 1;
     setRequirements({});
     setMatches([]);
     setShowAllResults(false);
@@ -2217,10 +2440,11 @@ function App() {
     setQuickOptions([]);
     setMultiSelected([]);
     setActiveQuestion(null);
-    window.setTimeout(() => askNext({}, nextLanguage), 30);
+    window.setTimeout(() => void askNext({}, nextLanguage), 30);
   };
 
   const reset = () => {
+    adaptiveQuestionRequestId.current += 1;
     setRequirements({});
     setMatches([]);
     setShowAllResults(false);
@@ -2229,7 +2453,7 @@ function App() {
     setQuickOptions([]);
     setMultiSelected([]);
     setActiveQuestion(null);
-    window.setTimeout(() => askNext({}), 30);
+    window.setTimeout(() => void askNext({}), 30);
   };
 
   useEffect(() => {
@@ -2247,7 +2471,7 @@ function App() {
       .then((data) => setCatalogStatus(data))
       .catch(() => setCatalogStatus(null));
 
-    window.setTimeout(() => askNext({}), 50);
+    window.setTimeout(() => void askNext({}), 50);
   }, []);
 
   useEffect(() => {
@@ -2324,97 +2548,7 @@ function App() {
         : tr(language, "Thanks — I have enough information now. I’m comparing the requirements against the SE product database.", "Danke — die technischen Angaben reichen für einen ersten Vergleich aus. Ich gleiche sie jetzt mit der SE-Produktdatenbank ab.")
     );
 
-    const bluetoothRequired =
-      req.bluetoothRequirement && req.bluetoothRequirement !== "No requirement"
-        ? true
-        : null;
-
-    const btMin = req.bluetoothRequirement?.match(/Bluetooth\s+([4-6](?:\.\d+)?)\+/i)?.[1] ?? null;
-
-    const maxFootprint =
-      req.maxFootprint && req.maxFootprint !== "No fixed limit"
-        ? Number(req.maxFootprint.match(/(\d+(?:\.\d+)?)/)?.[1] ?? 0) || null
-        : null;
-
-    const effectiveTechnologies = bluetoothRequired
-      ? [...new Set([...(req.technologies ?? []), "bluetooth"])]
-      : req.technologies;
-
-    const body = {
-      application: req.application ?? null,
-      product_domain: req.productDomain ?? null,
-      catalog_category: req.catalogCategory ?? null,
-      generic_interface:
-        req.genericInterface && req.genericInterface !== "No preference"
-          ? req.genericInterface
-          : null,
-      technologies: effectiveTechnologies,
-      cellular_class: req.cellularClass ?? null,
-      region: req.region ?? null,
-      architecture: req.architecture ?? null,
-      antenna: req.antenna ?? null,
-      wifi_generation: req.wifiGeneration ?? [],
-      gnss_precision:
-        req.gnssPrecision && req.gnssPrecision !== "No preference"
-          ? req.gnssPrecision
-          : null,
-      low_power: req.lowPower ?? null,
-      host_interface:
-        req.hostInterface === "SDIO" ? "sdio" :
-        req.hostInterface === "PCIe" ? "pcie" :
-        req.hostInterface === "SDIO or PCIe" ? "sdio_pcie" : null,
-      antenna_connector:
-        req.antennaConnector === "U.FL" ? "ufl" :
-        req.antennaConnector === "Antenna pin / solder pad" ? "antenna_pin" : null,
-      antenna_count:
-        req.antennaCount && req.antennaCount !== "No preference" ? Number(req.antennaCount) : null,
-      bluetooth_required: bluetoothRequired,
-      bluetooth_version_min: btMin,
-      max_footprint_mm2: maxFootprint,
-      form_factor:
-        req.formFactor && req.formFactor !== "No preference" ? req.formFactor : null,
-      gnss_dual_band: req.gnssDualBand === "L1 + L5 required" ? true : null,
-
-      capacitance_uf:
-        req.capacitorCapacitance ? parseCapacitanceUf(req.capacitorCapacitance) : null,
-      capacitor_voltage_v:
-        req.capacitorVoltage ? parseSimpleNumber(req.capacitorVoltage) : null,
-      capacitor_tolerance_pct:
-        req.capacitorTolerance && req.capacitorTolerance !== "No preference"
-          ? parseSimpleNumber(req.capacitorTolerance)
-          : null,
-      capacitor_technology:
-        req.capacitorTechnology && req.capacitorTechnology !== "No preference"
-          ? req.capacitorTechnology
-          : null,
-      capacitor_mounting:
-        req.capacitorMounting && req.capacitorMounting !== "No preference"
-          ? req.capacitorMounting
-          : null,
-      capacitor_case_size: req.capacitorCaseSize ?? null,
-      capacitor_esr_max_ohm:
-        req.capacitorEsrMax ? parseSimpleNumber(req.capacitorEsrMax) : null,
-      capacitor_ripple_current_min_a:
-        req.capacitorRippleMin ? parseSimpleNumber(req.capacitorRippleMin) : null,
-      capacitor_lifetime_min_h:
-        req.capacitorLifetimeMin ? Math.round(parseSimpleNumber(req.capacitorLifetimeMin) ?? 0) || null : null,
-      capacitor_temperature_min_c:
-        req.capacitorTemperatureRange
-          ? Number(req.capacitorTemperatureRange.match(/-?\d+(?:[.,]\d+)?/)?.[0].replace(",", ".") ?? "") || null
-          : null,
-      capacitor_temperature_max_c:
-        req.capacitorTemperatureRange
-          ? (() => {
-              const values = [...req.capacitorTemperatureRange.matchAll(/-?\d+(?:[.,]\d+)?/g)].map((m) =>
-                Number(m[0].replace(",", "."))
-              );
-              return values.length >= 2 ? values[1] : null;
-            })()
-          : null,
-      capacitor_energy_min_j:
-        req.capacitorEnergyMin ? parseSimpleNumber(req.capacitorEnergyMin) : null,
-      mandatory: [],
-    };
+    const body = buildMatchBody(req);
 
     try {
       const response = await fetch(`${API}/api/match`, {
@@ -2575,7 +2709,7 @@ function App() {
       setRequirements(next);
       setQuickOptions([]);
       setActiveQuestion(null);
-      window.setTimeout(() => askNext(next), 60);
+      window.setTimeout(() => void askNext(next), 60);
       return;
     }
 
@@ -2823,7 +2957,7 @@ function App() {
       }
       window.setTimeout(() => askCommercialNext(next), 60);
     } else {
-      window.setTimeout(() => askNext(next), 60);
+      window.setTimeout(() => void askNext(next), 60);
     }
   }
 

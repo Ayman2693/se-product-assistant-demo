@@ -2,18 +2,24 @@ import asyncio
 import json
 from datetime import datetime, timezone
 import logging
-import re
+import random
 import time
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session, contains_eager, joinedload
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
 from app.catalog_sources import CATALOG_SOURCES
 from app.db import SessionLocal, get_db
 from app.models import Product, ProductFeature
 from app.schemas import CatalogStatusResponse, MatchRequest, MatchResponse, ProductOut
-from app.services.matcher import score_product
+from app.config import settings
+from app.services.matching_engine import (
+    load_fast_candidates as _load_match_candidates,
+    run_fast_technical_match,
+    technical_evidence_pool as _technical_evidence_pool,
+)
+from app.services.quality_guard import run_shadow_quality_guard
 from app.services.catalog_importer import import_catalog
 from app.services.evidence_service import seed_catalog_evidence
 from app.services.evidence_matcher import (
@@ -23,170 +29,6 @@ from app.services.evidence_matcher import (
 
 
 logger = logging.getLogger(__name__)
-
-_GENERIC_CATEGORY_WORDS = {
-    "sensor", "sensors",
-    "module", "modules",
-    "product", "products",
-    "component", "components",
-    "display", "displays",
-    "solution", "solutions",
-    "device", "devices",
-}
-
-
-def _text_has_any(terms: list[str]):
-    """Broad SQL text predicate used only as a conservative pre-filter."""
-    columns = (
-        Product.part_number,
-        Product.manufacturer,
-        Product.category,
-        Product.description,
-        Product.tags_json,
-    )
-    clauses = []
-    for term in terms:
-        like = f"%{term}%"
-        clauses.extend(column.ilike(like) for column in columns)
-    return or_(*clauses) if clauses else None
-
-
-def _category_prefilter_terms(category: str) -> list[str]:
-    """
-    Return specific category words for a SQL superset filter.
-
-    The Python matcher remains authoritative. This pre-filter intentionally
-    stays broader than _catalog_category_matches() so it cannot choose a
-    winner or invent technical meaning.
-    """
-    words = re.findall(r"[a-z0-9]+", (category or "").lower())
-    specific = [
-        word
-        for word in words
-        if len(word) >= 3 and word not in _GENERIC_CATEGORY_WORDS
-    ]
-    if specific:
-        return specific[:4]
-
-    # "Capacitors" and similar one-word product classes should still narrow.
-    return [word[:-1] if word.endswith("s") and len(word) > 4 else word for word in words[:2]]
-
-
-def _technology_prefilter(technology: str):
-    tech = (technology or "").lower()
-
-    if tech == "wifi":
-        return or_(
-            ProductFeature.wifi_generation.is_not(None),
-            ProductFeature.technologies_json.ilike("%wifi%"),
-            _text_has_any(["wi-fi", "wifi", "wlan", "802.11"]),
-        )
-
-    if tech == "bluetooth":
-        return or_(
-            ProductFeature.has_bluetooth.is_(True),
-            ProductFeature.technologies_json.ilike("%bluetooth%"),
-            _text_has_any(["bluetooth", " ble ", "bt/ble"]),
-        )
-
-    if tech == "gnss":
-        return or_(
-            ProductFeature.has_gnss.is_(True),
-            ProductFeature.technologies_json.ilike("%gnss%"),
-            _text_has_any(["gnss", "gps", "rtk", "galileo", "glonass", "beidou"]),
-        )
-
-    if tech == "cellular":
-        return or_(
-            ProductFeature.cellular_class.is_not(None),
-            ProductFeature.technologies_json.ilike("%cellular%"),
-            _text_has_any(["cellular", "lte", "nb-iot", "nbiot", "redcap", "5g"]),
-        )
-
-    return None
-
-
-def _candidate_query(db: Session, request: MatchRequest):
-    """
-    Build a conservative SQL pre-filter and eager-load Product.features.
-
-    contains_eager() reuses the ProductFeature join for the one-to-one
-    relationship, preventing the old N+1 lazy-load pattern.
-    """
-    query = (
-        db.query(Product)
-        .outerjoin(ProductFeature, ProductFeature.product_id == Product.id)
-        .options(contains_eager(Product.features))
-    )
-    applied_filters = False
-
-    if request.catalog_category:
-        category_terms = _category_prefilter_terms(request.catalog_category)
-        category_clause = _text_has_any(category_terms)
-        if category_clause is not None:
-            # Category intent is mandatory in score_product(). Search only
-            # category text here, but with broad specific terms.
-            clauses = [
-                Product.category.ilike(f"%{term}%")
-                for term in category_terms
-            ]
-            query = query.filter(or_(*clauses))
-            applied_filters = True
-
-    requested_technologies = list(request.technologies or [])
-    if request.bluetooth_required and "bluetooth" not in requested_technologies:
-        requested_technologies.append("bluetooth")
-
-    for technology in requested_technologies:
-        clause = _technology_prefilter(technology)
-        if clause is not None:
-            # Technologies are mandatory in score_product(), so AND across
-            # requested technologies mirrors the existing matcher semantics.
-            query = query.filter(clause)
-            applied_filters = True
-
-    return query, applied_filters
-
-
-def _load_match_candidates(db: Session, request: MatchRequest) -> list[Product]:
-    query, applied_filters = _candidate_query(db, request)
-    candidates = query.all()
-
-    # Correctness guard: if conservative SQL filtering unexpectedly finds
-    # nothing, fall back to the complete catalog with eager-loaded features.
-    # This protects against unusual legacy catalog wording.
-    if not candidates and applied_filters:
-        logger.warning(
-            "Match SQL pre-filter returned zero rows; falling back to full catalog."
-        )
-        return db.query(Product).options(joinedload(Product.features)).all()
-
-    return candidates
-
-
-def _technical_evidence_pool(scored: list[tuple[Product, dict]], limit: int = 10):
-    """
-    Keep only products that can still enter the returned top-N.
-
-    Evidence is only a tie-breaker after technical match_percent. Therefore
-    products below the Nth technical score can never overtake the cutoff and
-    do not need evidence queries. All products tied at the cutoff are kept.
-    """
-    if len(scored) <= limit:
-        return scored
-
-    ordered = sorted(
-        scored,
-        key=lambda item: item[1].get("match_percent", 0),
-        reverse=True,
-    )
-    cutoff_score = ordered[limit - 1][1].get("match_percent", 0)
-    return [
-        item
-        for item in ordered
-        if item[1].get("match_percent", 0) >= cutoff_score
-    ]
-
 
 router = APIRouter(prefix="/api", tags=["products"])
 
@@ -422,27 +264,16 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     return serialize_product(p)
 
 @router.post("/match", response_model=MatchResponse)
-def match_products(r: MatchRequest, db: Session = Depends(get_db)):
+def match_products(
+    r: MatchRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
     started = time.perf_counter()
 
-    # Phase 4.7.5:
-    # 1) conservative SQL pre-filter
-    # 2) eager-load Product.features in the same query
-    # 3) technical scoring remains authoritative
-    candidates = _load_match_candidates(db, r)
-
-    scored: list[tuple[Product, dict]] = []
-    for product in candidates:
-        score = score_product(product, r)
-        if score:
-            scored.append((product, score))
-
-    technical_match_count = len(scored)
-
-    # Evidence can only reorder products with the same technical match score.
-    # Keep every product tied at the Top-10 technical cutoff, but avoid loading
-    # evidence for products that mathematically cannot reach the response.
-    evidence_pool = _technical_evidence_pool(scored, limit=10)
+    technical = run_fast_technical_match(db, r)
+    technical_match_count = len(technical.scored)
+    evidence_pool = _technical_evidence_pool(technical.scored, limit=10)
 
     results = [
         {
@@ -452,22 +283,33 @@ def match_products(r: MatchRequest, db: Session = Depends(get_db)):
         for product, score in evidence_pool
     ]
 
+    evidence_started = time.perf_counter()
     annotate_results_with_evidence(db, r, results)
     results.sort(key=evidence_sort_key, reverse=True)
+    evidence_ms = (time.perf_counter() - evidence_started) * 1000.0
 
     for row in results:
         row.pop("_evidence_completeness", None)
 
     elapsed_ms = (time.perf_counter() - started) * 1000.0
     logger.info(
-        "Match completed in %.1f ms: sql_candidates=%d technical_matches=%d "
+        "Match completed %.1f ms | candidate_load=%.1f ms scoring=%.1f ms "
+        "evidence=%.1f ms | sql_candidates=%d technical_matches=%d "
         "evidence_candidates=%d returned=%d",
         elapsed_ms,
-        len(candidates),
+        technical.candidate_load_ms,
+        technical.scoring_ms,
+        evidence_ms,
+        len(technical.candidates),
         technical_match_count,
         len(evidence_pool),
         min(10, len(results)),
     )
+
+    sample_rate = max(0.0, min(1.0, settings.match_quality_guard_sample_rate))
+    if sample_rate and random.random() < sample_rate:
+        # Runs after the response has been sent and uses its own DB session.
+        background_tasks.add_task(run_shadow_quality_guard, r.model_dump())
 
     return {
         "count": technical_match_count,
