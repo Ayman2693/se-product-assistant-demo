@@ -1507,3 +1507,93 @@ The opening message is now:
 `I am the SE Product Assistant. How can I help you?`
 
 No database migration and no catalog sync are required.
+
+
+# Phase 5.0.6 — Full SE Catalog Coverage
+
+The catalog crawler is now coverage-first for the active SE product tree.
+
+## Why this patch was needed
+
+Some SE shop categories use child URLs that do not inherit the parent URL
+prefix. The important example is:
+
+- Crystals root: `/en/timxtal/`
+- kHz Crystals child: `/en/timkhz/`
+
+The former prefix-only crawler could not discover `/en/timkhz/`, even though it
+is an official child category.
+
+## Explicit nested listing seeds
+
+The following shop listing roots are now guaranteed to be crawled under their
+canonical assistant category:
+
+### Crystals
+
+- `/en/timxtal/`
+- `/en/timxtalmhz/`
+- `/en/timkhz/`
+
+### Oscillators
+
+- `/en/timosc/`
+- `/en/timoscmhz/`
+- `/en/timosckhz/`
+
+### Timing IC
+
+- `/en/timic/`
+- `/en/timicnetsync/`
+- `/en/timicjittercleaner/`
+- `/en/timicbuffer/`
+
+### Chokes
+
+- `/en/emechchokes/`
+- `/en/emechchokecurrent/`
+- `/en/emechchokessuppres/`
+- `/en/emechchokesatur/`
+
+All imported products from these nested pages retain the canonical categories
+`Crystals`, `Oscillators`, `Timing IC`, and `Chokes`.
+
+## Deeper recursive discovery
+
+The normal catalog sync now permits up to three descendant category levels
+instead of only one. Safety guards remain in place:
+
+- same SE host only
+- product detail pages are excluded from category traversal
+- visited-page de-duplication
+- maximum 100 category/listing pages per canonical source
+- maximum 100 pagination pages per listing
+
+## Coverage visibility
+
+`GET /api/catalog/status` now also returns:
+
+- `category_counts`
+- `zero_categories`
+
+This makes missing/empty configured categories visible immediately after a
+catalog refresh.
+
+## Important deployment step
+
+This code patch changes what future crawls can reach. It does not magically add
+the missing products to an already-populated database.
+
+After deployment, run one full catalog refresh:
+
+`POST /api/catalog/sync`
+
+and monitor:
+
+`GET /api/catalog/sync-status`
+
+For local development:
+
+`python -m app.import_catalog --all`
+
+No database migration is required.

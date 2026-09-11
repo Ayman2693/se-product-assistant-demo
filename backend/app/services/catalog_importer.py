@@ -9,7 +9,7 @@ import httpx
 from bs4 import BeautifulSoup
 from sqlalchemy.orm import Session
 
-from app.catalog_sources import CATALOG_BASE, CATALOG_SOURCES
+from app.catalog_sources import CATALOG_BASE, CATALOG_SOURCES, source_seed_paths
 from app.models import Product, ProductFeature
 from app.services.feature_extractor import extract_features, feature_values_for_model
 
@@ -267,32 +267,53 @@ async def crawl_source(
     max_pages: int | None = None,
     *,
     discover_descendants: bool = True,
-    max_child_depth: int = 1,
-    max_listing_pages: int = 40,
+    max_child_depth: int = 3,
+    max_listing_pages: int = 100,
 ) -> list[ImportedProduct]:
     """
-    Crawl one configured SE product source.
+    Crawl one canonical SE product source, including explicit listing seeds.
 
-    Phase 4.6.1 intentionally keeps child discovery shallow.
+    Coverage strategy:
+      configured root + explicit extra listing roots
+      -> descendant category pages
+      -> pagination
+      -> product cards
 
-    Why:
-    - SE's category landing pages such as /en/sbc/ and /en/passivecap/
-      normally expose their shop sub-categories directly.
-    - recursively following descendants of descendants made a full sync
-      unnecessarily slow and could generate many avoidable requests.
+    Each seed keeps its own safe descendant prefix. This matters for shop trees
+    whose child URL does not share the parent's prefix, e.g.:
 
-    We therefore visit:
-      root listing -> directly linked child listings -> pagination
+      /en/timxtal/  -> /en/timkhz/
 
-    but do not recursively walk deeper category trees during normal sync.
+    /en/timkhz/ is therefore configured as an explicit seed for Crystals.
+
+    Safety:
+      - same SE host only
+      - product detail links are never queued as category pages
+      - visited URL de-duplication
+      - maximum descendant depth
+      - maximum listing/category-page budget
+      - pagination capped at 100 pages per listing
     """
-    base_url = _normalized_page_url(urljoin(CATALOG_BASE, source["path"]))
-    queue: list[tuple[str, int]] = [(base_url, 0)]
+    seeds = source_seed_paths(source)
+
+    # Queue: (listing URL, depth below its seed, seed root path).
+    queue: list[tuple[str, int, str]] = [
+        (
+            _normalized_page_url(urljoin(CATALOG_BASE, seed_path)),
+            0,
+            seed_path,
+        )
+        for seed_path in seeds
+    ]
+
     visited: set[str] = set()
+    queued: set[str] = {item[0] for item in queue}
     products: list[ImportedProduct] = []
 
     while queue and len(visited) < max_listing_pages:
-        current, depth = queue.pop(0)
+        current, depth, family_root_path = queue.pop(0)
+        queued.discard(current)
+
         normalized = _normalized_page_url(current)
         if normalized in visited:
             continue
@@ -310,20 +331,20 @@ async def crawl_source(
         )
         products.extend(first)
 
-        # Discover only direct children of the configured root.
         if discover_descendants and depth < max_child_depth:
             for child in discover_child_listing_urls(
                 response.text,
                 current_url=str(response.url),
-                root_path=source["path"],
+                root_path=family_root_path,
             ):
-                if child not in visited and all(child != item[0] for item in queue):
-                    queue.append((child, depth + 1))
+                if child not in visited and child not in queued:
+                    queue.append((child, depth + 1, family_root_path))
+                    queued.add(child)
 
         pages = detected_pages if max_pages is None else min(detected_pages, max_pages)
 
-        # Safety guard: a malformed/navigation page must never explode into
-        # hundreds of accidental page requests.
+        # A malformed/navigation page must never explode into an unbounded
+        # number of accidental pagination requests.
         pages = min(pages, 100)
 
         for page in range(2, pages + 1):
@@ -341,6 +362,7 @@ async def crawl_source(
     for item in products:
         dedup[item.part_number.upper()] = item
     return list(dedup.values())
+
 
 def upsert_product(db: Session, item: ImportedProduct) -> Product:
     product = db.query(Product).filter(Product.part_number == item.part_number).first()

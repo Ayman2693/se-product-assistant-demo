@@ -7,7 +7,7 @@ def test_wifi6_host_gateway_sentence():
 
     assert parsed["application"] == "industrial gateway"
     assert parsed["technologies"] == ["wifi"]
-    assert parsed["wifi_generation"] == "6"
+    assert parsed["wifi_generation"] == ["6"]
     assert parsed["architecture"] == "host"
     assert parsed["antenna"] == "external"
 

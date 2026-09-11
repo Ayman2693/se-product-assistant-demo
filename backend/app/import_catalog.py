@@ -12,7 +12,7 @@ def main():
     parser.add_argument(
         "--all",
         action="store_true",
-        help="Import all configured SE catalog sections including discovered child listings",
+        help="Import all configured SE catalog sections, explicit nested listing seeds, descendants and pagination",
     )
     parser.add_argument(
         "--no-discover-children",

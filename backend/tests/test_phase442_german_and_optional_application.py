@@ -17,7 +17,7 @@ def test_german_wifi_request():
     )["requirements"]
     assert result["product_domain"] == "connectivity"
     assert "wifi" in result["technologies"]
-    assert result["wifi_generation"] == "6"
+    assert result["wifi_generation"] == ["6"]
     assert result["architecture"] == "host"
     assert result["antenna"] == "external"
     assert result["region"] == "EMEA/APAC"
@@ -65,7 +65,7 @@ def test_german_inflected_wifi_module_sentence():
     )["requirements"]
     assert result["product_domain"] == "connectivity"
     assert result["technologies"] == ["wifi"]
-    assert result["wifi_generation"] == "6"
+    assert result["wifi_generation"] == ["6"]
     assert result["architecture"] == "host"
     assert result["antenna"] == "external"
     assert result["region"] == "EMEA/APAC"

@@ -190,6 +190,8 @@ class CatalogStatusResponse(BaseModel):
     structured_products: int
     live_imported_products: int
     catalog_sections_configured: int
+    category_counts: dict[str, int] = Field(default_factory=dict)
+    zero_categories: List[str] = Field(default_factory=list)
 
 class RootResponse(BaseModel):
     name: str

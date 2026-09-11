@@ -7,7 +7,7 @@ import time
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import func, or_
 
 from app.catalog_sources import CATALOG_SOURCES
 from app.db import SessionLocal, get_db
@@ -237,11 +237,31 @@ def catalog_status(db: Session = Depends(get_db)):
     total = db.query(Product).count()
     structured = db.query(ProductFeature).count()
     live = db.query(ProductFeature).filter(ProductFeature.imported_live.is_(True)).count()
+
+    rows = (
+        db.query(Product.category, func.count(Product.id))
+        .group_by(Product.category)
+        .all()
+    )
+    category_counts = {
+        str(category): int(count)
+        for category, count in rows
+        if category
+    }
+    configured_categories = [source["category"] for source in CATALOG_SOURCES]
+    zero_categories = [
+        category
+        for category in configured_categories
+        if category_counts.get(category, 0) == 0
+    ]
+
     return {
         "total_products": total,
         "structured_products": structured,
         "live_imported_products": live,
         "catalog_sections_configured": len(CATALOG_SOURCES),
+        "category_counts": category_counts,
+        "zero_categories": zero_categories,
     }
 
 @router.get("/products", response_model=list[ProductOut])
