@@ -451,7 +451,6 @@ const OPTION_DE: Record<string, string> = {
   "Within 3 months": "Innerhalb von 3 Monaten",
   "3–6 months": "3–6 Monate",
   "More than 6 months": "Mehr als 6 Monate",
-  "GNSS": "GNSS",
   "Wi-Fi / Bluetooth": "Wi-Fi / Bluetooth",
   "Cellular / LTE / 5G": "Mobilfunk / LTE / 5G",
   "ISM / LPWAN (433 / 868 / 915 MHz)": "ISM / LPWAN (433 / 868 / 915 MHz)",
@@ -736,7 +735,7 @@ function formatEngineeringRequirementValue(field: string, value: unknown) {
   }
 
   const number = Number(canonical);
-  if (!Number.isFinite(number)) return canonical.replaceAll("_", " ");
+  if (!Number.isFinite(number)) return canonical.replace(/_/g, " ");
 
   const compact = (v: number) => Number.isInteger(v) ? String(v) : Number(v.toPrecision(7)).toString();
   if (["frequency_hz", "test_frequency_hz", "cutoff_frequency_hz"].includes(field)) {
