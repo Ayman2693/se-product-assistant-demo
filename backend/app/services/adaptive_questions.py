@@ -11,6 +11,12 @@ from sqlalchemy.orm import Session
 from app.models import Product
 from app.schemas import MatchRequest
 from app.services.matching_engine import run_fast_technical_match
+from app.services.matcher import (
+    _antenna_connectors,
+    _antenna_count,
+    _footprint_mm2,
+    _host_interfaces,
+)
 
 
 def _haystack(product: Product) -> str:
@@ -87,6 +93,47 @@ def _low_power(product: Product):
     text = _haystack(product)
     if re.search(r"\bultra[- ]?low[- ]?power\b|\blow[- ]?power\b|\blpwa\b", text, re.I):
         return "yes"
+    return None
+
+
+
+def _host_interface_signal(product: Product):
+    values = _host_interfaces(_haystack(product))
+    if not values:
+        return None
+    if values == {"sdio"}:
+        return "SDIO"
+    if values == {"pcie"}:
+        return "PCIe"
+    if values == {"sdio", "pcie"}:
+        return "SDIO or PCIe"
+    return None
+
+
+def _antenna_connector_signal(product: Product):
+    values = _antenna_connectors(_haystack(product))
+    if not values:
+        return None
+    if values == {"ufl"}:
+        return "U.FL"
+    if values == {"antenna_pin"}:
+        return "Antenna pin / solder pad"
+    if values == {"ufl", "antenna_pin"}:
+        return "U.FL + antenna pin"
+    return None
+
+
+def _antenna_count_signal(product: Product):
+    return _antenna_count(_haystack(product))
+
+
+def _footprint_signal(product: Product):
+    return _footprint_mm2(_haystack(product))
+
+
+def _form_factor_signal(product: Product):
+    if product.features and product.features.form_factor:
+        return product.features.form_factor
     return None
 
 
@@ -192,6 +239,31 @@ def _fixed_options(key: str) -> list[dict]:
             ("Yes", True),
             ("No", False),
         ],
+        "hostInterface": [
+            ("SDIO", "SDIO"),
+            ("PCIe", "PCIe"),
+            ("SDIO or PCIe", "SDIO or PCIe"),
+            ("No preference / not sure", "No preference"),
+        ],
+        "antennaConnector": [
+            ("U.FL", "U.FL"),
+            ("Antenna pin / solder pad", "Antenna pin / solder pad"),
+            ("Either is acceptable", "No preference"),
+        ],
+        "antennaCount": [
+            ("1 antenna connection", "1"),
+            ("2 antenna connections", "2"),
+            ("3 antenna connections", "3"),
+            ("No preference / not sure", "No preference"),
+        ],
+        "formFactor": [
+            ("LGA", "LGA"),
+            ("Mini PCIe", "Mini PCIe"),
+            ("M.2", "M.2"),
+            ("LCC", "LCC"),
+            ("SMD", "SMD"),
+            ("No preference / not sure", "No preference"),
+        ],
     }
     return [
         {"label": label, "value": value}
@@ -215,12 +287,19 @@ QUESTION_TEXT = {
     "capacitorMounting": "What mounting style do you need?",
     "capacitorTolerance": "Do you have a capacitance tolerance requirement?",
     "lowPower": "Is long battery life / low power consumption a major requirement?",
+    "hostInterface": "Which host interface do you prefer for the remaining top candidates?",
+    "antennaConnector": "Which external antenna connection do you prefer?",
+    "antennaCount": "How many antenna connections do you need?",
+    "formFactor": "Do you have a preferred module form factor?",
+    "maxFootprint": "Do you want to set a maximum module footprint?",
 }
 
 
 def _question_specs(request: MatchRequest) -> list[dict]:
     tech = set(request.technologies or [])
     specs: list[dict] = []
+
+    open_fields = set(request.answered_open_fields or [])
 
     def add(
         key: str,
@@ -230,7 +309,10 @@ def _question_specs(request: MatchRequest) -> list[dict]:
         required: bool = True,
         priority: int = 50,
         multi_select: bool = False,
+        stage: str = "qualification",
     ):
+        if key in open_fields:
+            answered = True
         if not answered:
             specs.append({
                 "key": key,
@@ -238,6 +320,7 @@ def _question_specs(request: MatchRequest) -> list[dict]:
                 "required": required,
                 "priority": priority,
                 "multi_select": multi_select,
+                "stage": stage,
             })
 
     if request.product_domain == "connectivity" or tech.intersection({"wifi", "bluetooth", "cellular", "gnss"}):
@@ -363,6 +446,56 @@ def _question_specs(request: MatchRequest) -> list[dict]:
             priority=74,
         )
 
+
+    # Secondary discriminators are deliberately optional. They are considered
+    # only after all core qualification questions are answered, and only when
+    # they materially split the current top-ranked tie group.
+    if request.product_domain == "connectivity" or tech.intersection({"wifi", "bluetooth", "cellular", "gnss"}):
+        if request.architecture == "host":
+            add(
+                "hostInterface",
+                bool(request.host_interface),
+                _host_interface_signal,
+                required=False,
+                priority=92,
+                stage="tie_break",
+            )
+
+        if request.antenna == "external":
+            add(
+                "antennaConnector",
+                bool(request.antenna_connector),
+                _antenna_connector_signal,
+                required=False,
+                priority=96,
+                stage="tie_break",
+            )
+            add(
+                "antennaCount",
+                request.antenna_count is not None,
+                _antenna_count_signal,
+                required=False,
+                priority=72,
+                stage="tie_break",
+            )
+
+        add(
+            "formFactor",
+            bool(request.form_factor),
+            _form_factor_signal,
+            required=False,
+            priority=64,
+            stage="tie_break",
+        )
+        add(
+            "maxFootprint",
+            request.max_footprint_mm2 is not None,
+            _footprint_signal,
+            required=False,
+            priority=60,
+            stage="tie_break",
+        )
+
     return specs
 
 
@@ -437,84 +570,204 @@ def _dynamic_options(key: str, distribution: Counter) -> list[dict]:
             for value in values
         ]
 
+    if key == "maxFootprint":
+        values = []
+        for raw in distribution:
+            try:
+                values.append(float(raw))
+            except ValueError:
+                pass
+        values = sorted(set(values))
+        if len(values) > 3:
+            indexes = sorted({round(i * (len(values) - 1) / 2) for i in range(3)})
+            values = [values[i] for i in indexes]
+        options = [
+            {
+                "label": f"≤ {_format_number(value)} mm²",
+                "value": f"≤ {_format_number(value)} mm²",
+            }
+            for value in values
+        ]
+        options.append({"label": "No fixed limit / not sure", "value": "No fixed limit"})
+        return options
+
     return _fixed_options(key)
 
 
 def choose_adaptive_question(db: Session, request: MatchRequest) -> dict:
     """
-    Select the next engineering question using current candidate diversity.
+    Two-stage adaptive qualification.
 
-    The engine does not invent requirements. It only changes *question order*
-    according to which unanswered field can best discriminate the current
-    candidate set. Core engineering fields remain required even when catalog
-    data coverage is weak.
+    Stage 1 — qualification:
+      Ask unanswered core engineering requirements using the complete current
+      candidate set.
+
+    Stage 2 — deep tie discrimination:
+      When core qualification is complete, inspect only the products sharing
+      the best technical score AND solution-scope score. Ask an optional
+      discriminator only if catalog evidence gives it meaningful information
+      gain and sufficient coverage.
+
+    This prevents the assistant from declaring ten top products "equivalent"
+    when the catalog already exposes a useful difference such as U.FL versus
+    antenna pin.
     """
     run = run_fast_technical_match(db, request)
-    products = [product for product, _ in run.scored]
+    all_scored = run.scored
+    all_products = [product for product, _ in all_scored]
     specs = _question_specs(request)
 
-    if not products or not specs:
+    if not all_products or not specs:
         return {
-            "candidate_count": len(products),
+            "candidate_count": len(all_products),
             "evaluated_fields": len(specs),
             "question": None,
         }
 
-    ranked = []
-    for spec in specs:
-        distribution, known = _distribution(products, spec["getter"])
-        gain, coverage = _information_gain(distribution, known, len(products))
-        ranked.append({
-            **spec,
-            "distribution": distribution,
-            "known": known,
-            "information_gain": gain,
-            "coverage": coverage,
-        })
+    core_specs = [spec for spec in specs if spec["stage"] == "qualification"]
+    tie_specs = [spec for spec in specs if spec["stage"] == "tie_break"]
 
-    required = [item for item in ranked if item["required"]]
-    pool = required if required else [
-        item for item in ranked if item["information_gain"] >= 0.10
+    def rank_specs(products: list[Product], selected_specs: list[dict]) -> list[dict]:
+        ranked = []
+        for spec in selected_specs:
+            distribution, known = _distribution(products, spec["getter"])
+            gain, coverage = _information_gain(distribution, known, len(products))
+            ranked.append({
+                **spec,
+                "distribution": distribution,
+                "known": known,
+                "information_gain": gain,
+                "coverage": coverage,
+            })
+        return ranked
+
+    # Core questions are allowed even when current catalog coverage is weak,
+    # because they express the customer's actual technical requirement.
+    if core_specs:
+        ranked_core = rank_specs(all_products, core_specs)
+        required_core = [item for item in ranked_core if item["required"]]
+        pool = required_core if required_core else [
+            item
+            for item in ranked_core
+            if item["information_gain"] >= 0.10
+        ]
+
+        if pool:
+            best = max(
+                pool,
+                key=lambda item: (
+                    item["information_gain"],
+                    item["coverage"],
+                    item["priority"],
+                ),
+            )
+            options = _dynamic_options(best["key"], best["distribution"])
+            if not options:
+                options = _fixed_options(best["key"])
+
+            question = {
+                "key": best["key"],
+                "text": QUESTION_TEXT[best["key"]],
+                "options": options,
+                "multi_select": best["multi_select"],
+                "required": best["required"],
+                "information_gain": round(best["information_gain"], 3),
+                "known_coverage": round(best["coverage"], 3),
+                "candidate_count": len(all_products),
+                "distinct_known_values": len(best["distribution"]),
+                "mode": "qualification",
+                "top_tie_count": 0,
+            }
+            return {
+                "candidate_count": len(all_products),
+                "evaluated_fields": len(specs),
+                "question": question,
+            }
+
+    # No core question remains. Look only at the current best technical +
+    # solution-scope group. Evidence is intentionally not used here because
+    # the customer should discriminate engineering fit, not document quality.
+    if not all_scored:
+        return {
+            "candidate_count": 0,
+            "evaluated_fields": len(specs),
+            "question": None,
+        }
+
+    best_key = max(
+        (
+            score.get("match_percent", 0),
+            score.get("solution_scope_score", 100),
+        )
+        for _, score in all_scored
+    )
+    top_tied = [
+        product
+        for product, score in all_scored
+        if (
+            score.get("match_percent", 0),
+            score.get("solution_scope_score", 100),
+        ) == best_key
     ]
 
-    if not pool:
+    if len(top_tied) <= 1 or not tie_specs:
         return {
-            "candidate_count": len(products),
+            "candidate_count": len(all_products),
             "evaluated_fields": len(specs),
             "question": None,
         }
 
-    # Information gain drives the order. Engineering priority is only a
-    # deterministic tie-breaker / weak-data fallback.
+    ranked_ties = rank_specs(top_tied, tie_specs)
+
+    # Optional questions must genuinely help. Requiring both reasonable
+    # information gain and 40% catalog coverage avoids interrogation based on
+    # sparse/uncertain data.
+    useful = [
+        item
+        for item in ranked_ties
+        if (
+            item["information_gain"] >= 0.25
+            and item["coverage"] >= 0.40
+            and len(item["distribution"]) >= 2
+        )
+    ]
+
+    if not useful:
+        return {
+            "candidate_count": len(all_products),
+            "evaluated_fields": len(specs),
+            "question": None,
+        }
+
     best = max(
-        pool,
+        useful,
         key=lambda item: (
             item["information_gain"],
             item["coverage"],
             item["priority"],
         ),
     )
-
     options = _dynamic_options(best["key"], best["distribution"])
     if not options:
         options = _fixed_options(best["key"])
 
-    # If catalog-derived dynamic options are unavailable, the customer can
-    # always type a value in the free-text box.
     question = {
         "key": best["key"],
         "text": QUESTION_TEXT[best["key"]],
         "options": options,
         "multi_select": best["multi_select"],
-        "required": best["required"],
+        "required": False,
         "information_gain": round(best["information_gain"], 3),
         "known_coverage": round(best["coverage"], 3),
-        "candidate_count": len(products),
+        "candidate_count": len(top_tied),
         "distinct_known_values": len(best["distribution"]),
+        "mode": "tie_break",
+        "top_tie_count": len(top_tied),
     }
 
     return {
-        "candidate_count": len(products),
+        "candidate_count": len(all_products),
         "evaluated_fields": len(specs),
         "question": question,
     }
+

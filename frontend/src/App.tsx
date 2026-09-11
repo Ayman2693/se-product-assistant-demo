@@ -113,6 +113,8 @@ type AdaptiveQuestionResponse = {
     known_coverage: number;
     candidate_count: number;
     distinct_known_values: number;
+    mode: "qualification" | "tie_break";
+    top_tie_count: number;
   } | null;
 };
 
@@ -361,6 +363,7 @@ const OPTION_DE: Record<string, string> = {
   "Analog output": "Analogausgang",
   "Digital output": "Digitalausgang",
   "No preference / not sure": "Keine Präferenz / noch offen",
+  "Either is acceptable": "Beides ist geeignet",
   "Version open / not sure": "Version offen / noch unklar",
   "Yes — version open / not sure": "Ja — Version offen / noch unklar",
   "Not required": "Nicht erforderlich",
@@ -458,6 +461,16 @@ function localizeQuestion(
       "Soll Bluetooth LE ebenfalls in der Funklösung enthalten sein?",
     "Which GNSS frequency-band capability does your application need?":
       "Welche GNSS-Frequenzband-Fähigkeit benötigt Ihre Anwendung?",
+    "Which host interface do you prefer for the remaining top candidates?":
+      "Welche Host-Schnittstelle bevorzugen Sie für die verbleibenden Top-Kandidaten?",
+    "Which external antenna connection do you prefer?":
+      "Welchen externen Antennenanschluss bevorzugen Sie?",
+    "How many antenna connections do you need?":
+      "Wie viele Antennenanschlüsse benötigen Sie?",
+    "Do you have a preferred module form factor?":
+      "Bevorzugen Sie eine bestimmte Modulbauform?",
+    "Do you want to set a maximum module footprint?":
+      "Möchten Sie eine maximale Modulfläche festlegen?",
     "Would you like SE technical or commercial support for this project?":
       "Möchten Sie für dieses Projekt technische oder kaufmännische Unterstützung von SE?",
     "Is this a new design, or are you replacing an existing component?":
@@ -2257,6 +2270,13 @@ function buildMatchBody(req: Requirements) {
     capacitor_energy_min_j:
       req.capacitorEnergyMin ? parseSimpleNumber(req.capacitorEnergyMin) : null,
     mandatory: [],
+    answered_open_fields: [
+      ...(req.hostInterface === "No preference" ? ["hostInterface"] : []),
+      ...(req.antennaConnector === "No preference" ? ["antennaConnector"] : []),
+      ...(req.antennaCount === "No preference" ? ["antennaCount"] : []),
+      ...(req.formFactor === "No preference" ? ["formFactor"] : []),
+      ...(req.maxFootprint === "No fixed limit" ? ["maxFootprint"] : []),
+    ],
   };
 }
 
@@ -2386,18 +2406,25 @@ function App() {
 
       let text = q.text;
       if (adaptive && adaptive.candidate_count > 1) {
-        const customerHint = tr(
-          selectedLanguage,
-          `This is the most useful next detail for narrowing ${adaptive.candidate_count} remaining candidates.`,
-          `Diese Angabe hilft am besten, die ${adaptive.candidate_count} verbleibenden Kandidaten einzugrenzen.`
-        );
+        const customerHint =
+          adaptive.mode === "tie_break"
+            ? tr(
+                selectedLanguage,
+                `This detail can distinguish ${adaptive.top_tie_count} top-ranked candidates that are still technically tied.`,
+                `Diese Angabe kann ${adaptive.top_tie_count} weiterhin technisch gleichauf liegende Top-Kandidaten unterscheiden.`
+              )
+            : tr(
+                selectedLanguage,
+                `This is the most useful next detail for narrowing ${adaptive.candidate_count} remaining candidates.`,
+                `Diese Angabe hilft am besten, die ${adaptive.candidate_count} verbleibenden Kandidaten einzugrenzen.`
+              );
 
         const developerHint =
           viewMode === "developer"
             ? tr(
                 selectedLanguage,
-                ` Information gain: ${adaptive.information_gain.toFixed(2)} bits · catalog coverage: ${Math.round(adaptive.known_coverage * 100)}%.`,
-                ` Informationsgewinn: ${adaptive.information_gain.toFixed(2)} Bit · Katalogabdeckung: ${Math.round(adaptive.known_coverage * 100)} %.`
+                ` Information gain: ${adaptive.information_gain.toFixed(2)} bits · catalog coverage: ${Math.round(adaptive.known_coverage * 100)}% · mode: ${adaptive.mode}.`,
+                ` Informationsgewinn: ${adaptive.information_gain.toFixed(2)} Bit · Katalogabdeckung: ${Math.round(adaptive.known_coverage * 100)} % · Modus: ${adaptive.mode}.`
               )
             : "";
 

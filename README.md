@@ -1317,3 +1317,59 @@ products as indistinguishable from Bluetooth-focused ANNA/NORA solutions when
 all other collected requirements are equal.
 
 No database migration and no catalog sync are required.
+
+
+# Phase 5.0.2 — Deep Tie Discrimination
+
+The adaptive engine now has two stages.
+
+## 1. Core qualification
+
+Core technical questions still use the complete current candidate set and are
+asked even when catalog coverage is weak.
+
+## 2. Deep tie discrimination
+
+After core qualification is complete, the engine inspects only the products
+that share both:
+
+- the highest technical `match_percent`
+- the highest `solution_scope_score`
+
+It then looks for useful optional discriminators such as:
+
+- external antenna connector (`U.FL` vs antenna pin)
+- host interface (`SDIO` vs `PCIe`)
+- antenna connection count
+- form factor
+- module footprint
+
+An optional question is asked only when:
+
+- more than one top candidate remains
+- catalog coverage for that field is at least 40%
+- there are at least two known values
+- information gain is at least 0.25 bits
+
+This prevents sparse catalog metadata from causing unnecessary customer
+interrogation.
+
+Example:
+
+`Bluetooth -> Open CPU -> External antenna`
+
+If ten top candidates remain and five use U.FL while five use antenna pins, the
+assistant continues with:
+
+`Which external antenna connection do you prefer?`
+
+rather than immediately declaring all ten products technically equivalent.
+
+If the customer selects `Either is acceptable` / `No preference`, the frontend
+passes the field in `answered_open_fields`, preventing the same optional
+question from being repeated.
+
+Developer Mode exposes the adaptive mode (`qualification` or `tie_break`) in
+the information-gain hint.
+
+No database migration and no catalog sync are required.

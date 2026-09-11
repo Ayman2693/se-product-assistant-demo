@@ -87,6 +87,11 @@ class MatchRequest(BaseModel):
 
     mandatory: List[str] = Field(default_factory=list)
 
+    # Optional discriminator fields that the customer explicitly left open
+    # (for example "Either connector is acceptable"). This prevents the
+    # adaptive engine from asking the same optional question repeatedly.
+    answered_open_fields: List[str] = Field(default_factory=list)
+
 class MatchCriterionEvidence(BaseModel):
     key: str
     label: str
@@ -238,6 +243,8 @@ class AdaptiveQuestionOut(BaseModel):
     known_coverage: float = 0.0
     candidate_count: int = 0
     distinct_known_values: int = 0
+    mode: str = "qualification"
+    top_tie_count: int = 0
 
 
 class AdaptiveQuestionRequest(BaseModel):
