@@ -1455,3 +1455,55 @@ Normal startup seeding also refreshes catalog-derived evidence after structured
 feature extraction, while preserving datasheet/manual evidence.
 
 No database migration and no full catalog sync are required.
+
+
+# Phase 5.0.5 — Cleaner Customer UX & Actionable Handoff
+
+## Cleaner recommendation cards
+
+Customer cards now show only the essential hierarchy at the top:
+
+- `100% technical match`
+- `Verified` / `Catalog-supported` / `Needs verification`
+- `Focused` or `Includes <technology>`
+
+The duplicated top-level `Based on SE product data` badge and long provisional
+explanation were removed. Evidence remains available under Technical details.
+
+Evidence icons are now semantically strict:
+
+- `✓` manufacturer/document-verified
+- `~` inferred / SE catalog data
+- `?` not verified
+- `!` conflicting
+
+## Bluetooth wording
+
+The top-level connectivity selector now says `Bluetooth`, not only
+`Bluetooth LE`. The detailed minimum-version question remains Bluetooth LE
+because that field is specifically an LE-version requirement.
+
+## Better post-result flow
+
+The old generic `Yes, continue with project details` questionnaire is replaced
+with an action-oriented next step:
+
+- Technical review with an SE FAE
+- Price / availability / samples
+- No — the recommendation is enough
+
+Technical follow-up asks which result should be reviewed and what the FAE
+should focus on.
+
+Commercial follow-up asks which result, quantity, and when parts are needed.
+
+These handoff fields are explicitly separated from technical matching and the
+UI states that they do not change the ranking.
+
+## Greeting
+
+The opening message is now:
+
+`I am the SE Product Assistant. How can I help you?`
+
+No database migration and no catalog sync are required.

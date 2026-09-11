@@ -17,6 +17,9 @@ type Requirements = {
   catalogCategory?: string;
   genericInterface?: string;
   supportRequested?: boolean;
+  supportGoal?: string;
+  supportProduct?: string;
+  supportTopic?: string;
   designSituation?: string;
   existingComponent?: string;
   specialRequirements?: string;
@@ -61,6 +64,9 @@ type QuestionKey =
   | "genericInterface"
   | "application"
   | "supportRequested"
+  | "supportGoal"
+  | "supportProduct"
+  | "supportTopic"
   | "designSituation"
   | "existingComponent"
   | "specialRequirements"
@@ -275,6 +281,9 @@ const LABELS_DE: Record<string, string> = {
   genericInterface: "Schnittstelle",
   application: "Anwendung",
   supportRequested: "SE Unterstützung",
+  supportGoal: "Nächster Schritt",
+  supportProduct: "Produkt für Follow-up",
+  supportTopic: "FAE-Fokus",
   designSituation: "Projektsituation",
   existingComponent: "Bestehende Komponente",
   specialRequirements: "Besondere Anforderungen",
@@ -361,6 +370,7 @@ const OPTION_DE: Record<string, string> = {
 
   "Cellular": "Mobilfunk",
   "Bluetooth LE": "Bluetooth LE",
+  "Bluetooth": "Bluetooth",
   "Wi-Fi": "Wi-Fi",
   "GNSS": "GNSS",
   "Small size": "Kleine Baugröße",
@@ -402,6 +412,19 @@ const OPTION_DE: Record<string, string> = {
   "Not sure yet": "Noch offen",
   "Yes, continue with project details": "Ja, Projektdetails ergänzen",
   "No, the product recommendation is enough": "Nein, die Produktempfehlung reicht aus",
+  "Technical review with an SE FAE": "Technische Prüfung mit einem SE FAE",
+  "Price / availability / samples": "Preis / Verfügbarkeit / Muster",
+  "No — the recommendation is enough": "Nein — die Empfehlung reicht aus",
+  "Compare the top candidates": "Top-Kandidaten vergleichen",
+  "Validate the recommendation": "Empfehlung validieren",
+  "Hardware / interface integration": "Hardware- / Schnittstellenintegration",
+  "Antenna / RF": "Antenne / HF",
+  "Firmware / software": "Firmware / Software",
+  "Certification / regulatory": "Zertifizierung / Regulierung",
+  "Prototype / samples now": "Prototyp / Muster jetzt",
+  "Within 3 months": "Innerhalb von 3 Monaten",
+  "3–6 months": "3–6 Monate",
+  "More than 6 months": "Mehr als 6 Monate",
   "Development service provider": "Entwicklungsdienstleister",
   "Manufacturer / EMS": "Hersteller / EMS",
   "EMC laboratory": "EMV-Labor",
@@ -430,7 +453,7 @@ function localizeQuestion(
   if (language === "en") return question;
 
   const exact: Record<string, string> = {
-    "How can I help you?<br><span class='botHint'>Briefly describe the application, component, or technical requirement you are looking for.</span>":
+    "I am the SE Product Assistant. How can I help you?<br><span class='botHint'>Briefly describe the application, component, or technical requirement you are looking for.</span>":
       "Wie kann ich Ihnen helfen?<br><span class='botHint'>Beschreiben Sie kurz Ihre Anwendung, die gesuchte Komponente oder Ihre technische Anforderung.</span>",
     "Which product area best matches what you are looking for?":
       "Welcher Produktbereich passt am besten zu Ihrer Anforderung?",
@@ -478,6 +501,18 @@ function localizeQuestion(
       "Bevorzugen Sie eine bestimmte Modulbauform?",
     "Do you want to set a maximum module footprint?":
       "Möchten Sie eine maximale Modulfläche festlegen?",
+    "What would you like to do next?":
+      "Was möchten Sie als Nächstes tun?",
+    "Which result should the SE FAE review?":
+      "Welches Ergebnis soll ein SE FAE prüfen?",
+    "Which result should SE follow up on?":
+      "Zu welchem Ergebnis soll SE nachfassen?",
+    "What should the FAE focus on?":
+      "Worauf soll sich der FAE konzentrieren?",
+    "What quantity should SE use for the commercial check?":
+      "Welche Menge soll SE für die kaufmännische Prüfung verwenden?",
+    "When do you expect to need the parts?":
+      "Wann benötigen Sie voraussichtlich die Teile?",
     "Would you like SE technical or commercial support for this project?":
       "Möchten Sie für dieses Projekt technische oder kaufmännische Unterstützung von SE?",
     "Is this a new design, or are you replacing an existing component?":
@@ -562,6 +597,9 @@ const LABELS: Record<string, string> = {
   genericInterface: "Interface",
   application: "Application",
   supportRequested: "SE support",
+  supportGoal: "Next step",
+  supportProduct: "Product for follow-up",
+  supportTopic: "FAE focus",
   designSituation: "Project situation",
   existingComponent: "Existing component",
   specialRequirements: "Special requirements",
@@ -702,12 +740,12 @@ function domainSpecialRequirementOptions(domain?: string): Option[] {
 
 function recommendationConfidenceLabel(match: Match, language: Language) {
   if (match.recommendation_confidence === "verified_fit") {
-    return tr(language, "Verified fit", "Verifizierte Eignung");
+    return tr(language, "Verified", "Verifiziert");
   }
   if (match.recommendation_confidence === "fae_verification_required") {
-    return tr(language, "FAE verification required", "FAE-Prüfung erforderlich");
+    return tr(language, "Needs verification", "Prüfung erforderlich");
   }
-  return tr(language, "Provisional fit", "Vorläufige Eignung");
+  return tr(language, "Catalog-supported", "Katalog-gestützt");
 }
 
 function recommendationConfidenceClass(match: Match) {
@@ -1124,7 +1162,7 @@ function questionFor(req: Requirements): { key: QuestionKey; text: string; optio
   if (!req.initialNeed) {
     return {
       key: "initialNeed",
-      text: "How can I help you?<br><span class='botHint'>Briefly describe the application, component, or technical requirement you are looking for.</span>",
+      text: "I am the SE Product Assistant. How can I help you?<br><span class='botHint'>Briefly describe the application, component, or technical requirement you are looking for.</span>",
     };
   }
 
@@ -1154,7 +1192,7 @@ function questionFor(req: Requirements): { key: QuestionKey; text: string; optio
       text: "Which connectivity / positioning technologies are required? You can select more than one.",
       options: [
         { label: "Cellular", value: ["cellular"] },
-        { label: "Bluetooth LE", value: ["bluetooth"] },
+        { label: "Bluetooth", value: ["bluetooth"] },
         { label: "Wi-Fi", value: ["wifi"] },
         { label: "GNSS", value: ["gnss"] },
       ],
@@ -1409,78 +1447,94 @@ function questionFor(req: Requirements): { key: QuestionKey; text: string; optio
 
 
 
-function commercialQuestionFor(req: Requirements): { key: QuestionKey; text: string; options?: Option[] } | null {
-  if (req.supportRequested === undefined) {
+function commercialQuestionFor(
+  req: Requirements,
+  currentMatches: Match[]
+): { key: QuestionKey; text: string; options?: Option[] } | null {
+  if (!req.supportGoal) {
     return {
-      key: "supportRequested",
-      text: "Would you like SE technical or commercial support for this project?",
+      key: "supportGoal",
+      text: "What would you like to do next?",
       options: [
-        { label: "Yes, continue with project details", value: true },
-        { label: "No, the product recommendation is enough", value: false },
+        { label: "Technical review with an SE FAE", value: "technical" },
+        { label: "Price / availability / samples", value: "commercial" },
+        { label: "No — the recommendation is enough", value: "none" },
       ],
     };
   }
 
-  if (!req.supportRequested) return null;
+  if (req.supportGoal === "none") return null;
 
-  if (!req.designSituation) {
+  if (!req.supportProduct) {
+    const topProducts = uniqueSolutionMatches(currentMatches)
+      .slice(0, 3)
+      .map((match) => ({
+        label: match.product.part_number,
+        value: match.product.part_number,
+      }));
+
+    const options: Option[] = [
+      ...topProducts,
+      ...(topProducts.length > 1
+        ? [{ label: "Compare the top candidates", value: "Compare top candidates" }]
+        : []),
+    ];
+
+    if (options.length) {
+      return {
+        key: "supportProduct",
+        text:
+          req.supportGoal === "technical"
+            ? "Which result should the SE FAE review?"
+            : "Which result should SE follow up on?",
+        options,
+      };
+    }
+  }
+
+  if (req.supportGoal === "technical" && !req.supportTopic) {
     return {
-      key: "designSituation",
-      text: "Is this a new design, or are you replacing an existing component?",
+      key: "supportTopic",
+      text: "What should the FAE focus on?",
       options: [
-        { label: "New design", value: "New design" },
-        { label: "Replacement / redesign", value: "Replacement / redesign" },
-        { label: "Not sure yet", value: "Not sure yet" },
+        { label: "Validate the recommendation", value: "Validate recommendation" },
+        { label: "Compare the top candidates", value: "Compare top candidates" },
+        { label: "Hardware / interface integration", value: "Hardware / interface integration" },
+        { label: "Antenna / RF", value: "Antenna / RF" },
+        { label: "Firmware / software", value: "Firmware / software" },
+        { label: "Certification / regulatory", value: "Certification / regulatory" },
       ],
     };
   }
 
-  if (req.designSituation === "Replacement / redesign" && !req.existingComponent) {
-    return {
-      key: "existingComponent",
-      text: "Which existing component or part number are you replacing?",
-    };
-  }
+  if (req.supportGoal === "commercial") {
+    if (!req.targetVolume) {
+      return {
+        key: "targetVolume",
+        text: "What quantity should SE use for the commercial check?",
+        options: [
+          { label: "< 1,000 units/year", value: "< 1,000 units/year" },
+          { label: "1,000–10,000 units/year", value: "1,000–10,000 units/year" },
+          { label: "10,000–100,000 units/year", value: "10,000–100,000 units/year" },
+          { label: "> 100,000 units/year", value: "> 100,000 units/year" },
+          { label: "Still open", value: "Still open" },
+        ],
+      };
+    }
 
-  if (!req.targetVolume) {
-    return {
-      key: "targetVolume",
-      text: "What annual production volume is planned?",
-      options: [
-        { label: "< 1,000 units/year", value: "< 1,000 units/year" },
-        { label: "1,000–10,000 units/year", value: "1,000–10,000 units/year" },
-        { label: "10,000–100,000 units/year", value: "10,000–100,000 units/year" },
-        { label: "> 100,000 units/year", value: "> 100,000 units/year" },
-        { label: "Still open", value: "Still open" },
-      ],
-    };
-  }
-
-  if (!req.projectTimeline) {
-    return {
-      key: "projectTimeline",
-      text: "What is the current project phase / timeline?",
-      options: [
-        { label: "Development", value: "Development" },
-        { label: "Prototypes", value: "Prototypes" },
-        { label: "Pre-series", value: "Pre-series" },
-        { label: "Series production", value: "Series production" },
-        { label: "Not defined yet", value: "Not defined yet" },
-      ],
-    };
-  }
-
-  if (!req.projectPartners) {
-    return {
-      key: "projectPartners",
-      text: "Are any project partners involved? You can select more than one.",
-      options: [
-        { label: "Development service provider", value: "Development service provider" },
-        { label: "Manufacturer / EMS", value: "Manufacturer / EMS" },
-        { label: "EMC laboratory", value: "EMC laboratory" },
-        { label: "None yet", value: "None yet" },
-      ],
-    };
+    if (!req.projectTimeline) {
+      return {
+        key: "projectTimeline",
+        text: "When do you expect to need the parts?",
+        options: [
+          { label: "Prototype / samples now", value: "Prototype / samples now" },
+          { label: "Within 3 months", value: "Within 3 months" },
+          { label: "3–6 months", value: "3–6 months" },
+          { label: "More than 6 months", value: "More than 6 months" },
+          { label: "Still open", value: "Still open" },
+        ],
+      };
+    }
   }
 
   return null;
@@ -1489,6 +1543,9 @@ function commercialQuestionFor(req: Requirements): { key: QuestionKey; text: str
 function isCommercialKey(key: QuestionKey): boolean {
   return [
     "supportRequested",
+    "supportGoal",
+    "supportProduct",
+    "supportTopic",
     "designSituation",
     "existingComponent",
     "targetVolume",
@@ -1840,11 +1897,12 @@ function editableQuestionFor(
         { label: "No preference / not sure", value: "No preference" },
       ],
     },
-    supportRequested: {
-      text: "Update whether SE project support is requested:",
+    supportGoal: {
+      text: "Update the preferred next step:",
       options: [
-        { label: "Yes, continue with project details", value: true },
-        { label: "No, the product recommendation is enough", value: false },
+        { label: "Technical review with an SE FAE", value: "technical" },
+        { label: "Price / availability / samples", value: "commercial" },
+        { label: "No — the recommendation is enough", value: "none" },
       ],
     },
     designSituation: {
@@ -1904,7 +1962,7 @@ function editableQuestionFor(
       text: "Update the required technologies. You can select more than one:",
       options: [
         { label: "Cellular", value: ["cellular"] },
-        { label: "Bluetooth LE", value: ["bluetooth"] },
+        { label: "Bluetooth", value: ["bluetooth"] },
         { label: "Wi-Fi", value: ["wifi"] },
         { label: "GNSS", value: ["gnss"] },
       ],
@@ -2062,6 +2120,14 @@ function naturalReply(key: QuestionKey, value: Option["value"]) {
       value === true
         ? "Certainly — I’ll collect a few project details for an SE follow-up."
         : "No problem — I’ll keep the conversation focused on the product recommendation.",
+    supportGoal:
+      v === "technical"
+        ? "Good — I’ll prepare a focused technical handoff for an SE FAE."
+        : v === "commercial"
+          ? "Good — I’ll collect only the information needed for a price / availability follow-up."
+          : "Okay — we’ll keep this as a product recommendation only.",
+    supportProduct: `Understood — follow-up target: <strong>${htmlEscape(v)}</strong>.`,
+    supportTopic: `Understood — FAE focus: <strong>${htmlEscape(v)}</strong>.`,
     designSituation: `Thanks — project situation: <strong>${htmlEscape(v)}</strong>.`,
     existingComponent: `Understood — existing component: <strong>${htmlEscape(v)}</strong>.`,
     application: `Got it — <strong>${htmlEscape(v)}</strong>.`,
@@ -2160,6 +2226,13 @@ function localizedNaturalReply(key: QuestionKey, value: Option["value"], languag
     supportRequested: value === true
       ? "Gerne — ich erfasse noch einige Projektdaten für die SE-Unterstützung."
       : "Kein Problem — die Produktempfehlung bleibt im Fokus.",
+    supportGoal: v === "technical"
+      ? "Gut — ich bereite eine gezielte technische Übergabe an einen SE FAE vor."
+      : v === "commercial"
+        ? "Gut — ich erfasse nur die Angaben für Preis / Verfügbarkeit."
+        : "Okay — wir belassen es bei der Produktempfehlung.",
+    supportProduct: `Follow-up für: <strong>${htmlEscape(v)}</strong>.`,
+    supportTopic: `FAE-Fokus: <strong>${htmlEscape(v)}</strong>.`,
     designSituation: `Projektsituation: <strong>${htmlEscape(OPTION_DE[v] ?? v)}</strong>.`,
     existingComponent: `Bestehende Komponente: <strong>${htmlEscape(v)}</strong>.`,
     targetVolume: `Geplante Jahresmenge: <strong>${htmlEscape(v)}</strong>.`,
@@ -2511,18 +2584,37 @@ function App() {
 
 
   const askCommercialNext = (nextReq: Requirements, selectedLanguage: Language = language) => {
-    const q = localizeQuestion(commercialQuestionFor(nextReq), selectedLanguage);
+    const q = localizeQuestion(commercialQuestionFor(nextReq, matches), selectedLanguage);
     if (!q) {
       setActiveQuestion(null);
       setQuickOptions([]);
       setMultiSelected([]);
-      if (nextReq.supportRequested) {
+
+      if (nextReq.supportGoal === "technical") {
         addMessage(
           "bot",
           tr(
             selectedLanguage,
-            "Thanks — I’ve added the project context to the requirement profile. The next production step will be the SE FAE / sales handoff workflow.",
-            "Danke — ich habe den Projektkontext zum Anforderungsprofil hinzugefügt. Der nächste Schritt ist die Übergabe an SE FAE / Vertrieb."
+            `FAE handoff context is ready: <strong>${htmlEscape(nextReq.supportProduct ?? "top recommendation")}</strong>${nextReq.supportTopic ? ` · ${htmlEscape(nextReq.supportTopic)}` : ""}. These handoff details do <strong>not</strong> change the technical ranking. Use <strong>Ask an FAE</strong> on the preferred product card to continue.`,
+            `Der FAE-Übergabekontext ist vorbereitet: <strong>${htmlEscape(nextReq.supportProduct ?? "Top-Empfehlung")}</strong>${nextReq.supportTopic ? ` · ${htmlEscape(nextReq.supportTopic)}` : ""}. Diese Übergabeangaben ändern das technische Ranking <strong>nicht</strong>. Nutzen Sie <strong>Ask an FAE</strong> bei der gewünschten Produktkarte.`
+          )
+        );
+      } else if (nextReq.supportGoal === "commercial") {
+        addMessage(
+          "bot",
+          tr(
+            selectedLanguage,
+            `Commercial follow-up context is ready: <strong>${htmlEscape(nextReq.supportProduct ?? "top recommendation")}</strong>${nextReq.targetVolume ? ` · ${htmlEscape(nextReq.targetVolume)}` : ""}${nextReq.projectTimeline ? ` · ${htmlEscape(nextReq.projectTimeline)}` : ""}. These details do <strong>not</strong> change the technical ranking.`,
+            `Der kaufmännische Follow-up-Kontext ist vorbereitet: <strong>${htmlEscape(nextReq.supportProduct ?? "Top-Empfehlung")}</strong>${nextReq.targetVolume ? ` · ${htmlEscape(nextReq.targetVolume)}` : ""}${nextReq.projectTimeline ? ` · ${htmlEscape(nextReq.projectTimeline)}` : ""}. Diese Angaben ändern das technische Ranking <strong>nicht</strong>.`
+          )
+        );
+      } else if (nextReq.supportGoal === "none") {
+        addMessage(
+          "bot",
+          tr(
+            selectedLanguage,
+            "No problem. You can edit a technical requirement, inspect the sources, or start another request.",
+            "Kein Problem. Sie können eine technische Anforderung bearbeiten, die Quellen prüfen oder eine neue Anfrage starten."
           )
         );
       }
@@ -2536,7 +2628,7 @@ function App() {
   };
 
   const offerProjectSupport = (nextReq: Requirements) => {
-    if (nextReq.supportRequested !== undefined) return;
+    if (nextReq.supportGoal !== undefined) return;
     window.setTimeout(() => askCommercialNext(nextReq), 80);
   };
 
@@ -2979,13 +3071,29 @@ function App() {
       }
       case "supportRequested":
         next.supportRequested = Boolean(value);
-        if (!next.supportRequested) {
-          next.designSituation = undefined;
-          next.existingComponent = undefined;
+        break;
+      case "supportGoal":
+        next.supportGoal = String(value);
+        next.supportRequested = next.supportGoal !== "none";
+        if (next.supportGoal !== "technical") {
+          next.supportTopic = undefined;
+        }
+        if (next.supportGoal !== "commercial") {
           next.targetVolume = undefined;
           next.projectTimeline = undefined;
-          next.projectPartners = undefined;
         }
+        if (next.supportGoal === "none") {
+          next.supportProduct = undefined;
+          next.supportTopic = undefined;
+          next.targetVolume = undefined;
+          next.projectTimeline = undefined;
+        }
+        break;
+      case "supportProduct":
+        next.supportProduct = String(value);
+        break;
+      case "supportTopic":
+        next.supportTopic = String(value);
         break;
       case "designSituation":
         next.designSituation = String(value);
@@ -3097,7 +3205,7 @@ function App() {
     setActiveQuestion(null);
 
     if (isCommercialKey(key)) {
-      if (key === "supportRequested" && value === false) {
+      if (key === "supportGoal" && String(value) === "none") {
         setFinished(true);
       }
       window.setTimeout(() => askCommercialNext(next), 60);
@@ -3162,10 +3270,15 @@ function App() {
         return applyAnswer(activeQuestion, "No preference", q);
     }
 
-    if (activeQuestion === "supportRequested") {
-      if (/^(yes|y|ja)|support|contact|kontakt|unterstützung|unterstuetzung/i.test(q)) return applyAnswer(activeQuestion, true, q);
-      if (/^(no|n|nein)|enough|not now|reicht|nicht jetzt/i.test(q)) return applyAnswer(activeQuestion, false, q);
+    if (activeQuestion === "supportGoal") {
+      if (/technical|fae|engineer|technik|technisch/i.test(q)) return applyAnswer(activeQuestion, "technical", q);
+      if (/price|pricing|availability|sample|quote|preis|verfügbarkeit|verfuegbarkeit|muster/i.test(q))
+        return applyAnswer(activeQuestion, "commercial", q);
+      if (/^(no|n|nein)|enough|not now|reicht|nicht jetzt/i.test(q))
+        return applyAnswer(activeQuestion, "none", q);
     }
+    if (activeQuestion === "supportProduct") return applyAnswer(activeQuestion, q, q);
+    if (activeQuestion === "supportTopic") return applyAnswer(activeQuestion, q, q);
     if (activeQuestion === "designSituation") {
       if (/replacement|replace|redesign|existing|ersetzen|ersatz|bestehend/i.test(q)) return applyAnswer(activeQuestion, "Replacement / redesign", q);
       if (/new design|new project|new|neues design|neues projekt/i.test(q)) return applyAnswer(activeQuestion, "New design", q);
@@ -3341,10 +3454,23 @@ function App() {
     [matches]
   );
 
+  const handoffOnlyKeys = new Set([
+    "supportRequested",
+    "supportGoal",
+    "supportProduct",
+    "supportTopic",
+    "designSituation",
+    "existingComponent",
+    "targetVolume",
+    "projectTimeline",
+    "projectPartners",
+  ]);
+
   const visibleRequirements = Object.entries(requirements).filter(
     ([key, value]) =>
       key !== "initialNeed" &&
       key !== "newProject" &&
+      !handoffOnlyKeys.has(key) &&
       value !== undefined &&
       value !== null &&
       value !== ""
@@ -3532,7 +3658,7 @@ function App() {
                         )}
                       </div>
                       <div className="scoreStack customerScoreStack">
-                        <div className="score">{match.match_percent}% {tr(language, "match", "Übereinstimmung")}</div>
+                        <div className="score">{match.match_percent}% {tr(language, "technical match", "technische Übereinstimmung")}</div>
                         <div className={`fitConfidence ${recommendationConfidenceClass(match)}`}>
                           {recommendationConfidenceLabel(match, language)}
                         </div>
@@ -3541,33 +3667,17 @@ function App() {
                             {verificationIssueText(match, language)}
                           </div>
                         )}
-                        {!match.verification_required &&
-                          match.recommendation_confidence === "provisional_fit" &&
-                          match.verification_issues.length > 0 && (
-                            <div className="fitProvisionalNote">
-                              {tr(
-                                language,
-                                "Supported by current SE catalog / structured product data; manufacturer-document verification is not complete.",
-                                "Durch aktuelle SE-Katalog- bzw. strukturierte Produktdaten gestützt; die Verifikation anhand der Herstellerdokumentation ist noch nicht vollständig."
-                              )}
-                            </div>
-                          )}
                         {match.extra_technologies.length === 0 ? (
                           <div className="scopeBadge scopeFocused">
-                            {tr(language, "Focused solution", "Fokussierte Lösung")}
+                            {tr(language, "Focused", "Fokussiert")}
                           </div>
                         ) : (
                           <div className="scopeBadge">
                             {tr(
                               language,
-                              `Also includes ${match.extra_technologies.map((t) => t.toUpperCase()).join(", ")}`,
-                              `Zusätzlich: ${match.extra_technologies.map((t) => t.toUpperCase()).join(", ")}`
+                              `Includes ${match.extra_technologies.map((t) => t.toUpperCase()).join(", ")}`,
+                              `Enthält zusätzlich ${match.extra_technologies.map((t) => t.toUpperCase()).join(", ")}`
                             )}
-                          </div>
-                        )}
-                        {customerEvidenceBadge(match, language) && (
-                          <div className="documentationBadge">
-                            ✓ {customerEvidenceBadge(match, language)}
                           </div>
                         )}
                       </div>
@@ -3645,7 +3755,7 @@ function App() {
                               return (
                                 <div className={`criterionEvidence ${item.status}`} key={item.key}>
                                   <span className="evidenceIcon" aria-hidden="true">
-                                    {positive ? "✓" : item.status === "conflicting" ? "!" : "?"}
+                                    {evidenceStatusIcon(item.status)}
                                   </span>
                                   <div className="criterionEvidenceBody">
                                     <div className="criterionEvidenceTop">
