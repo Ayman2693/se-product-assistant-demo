@@ -203,6 +203,7 @@ def serialize_features(f: ProductFeature | None):
         "antenna_applications": raw.get("antenna_applications", []),
         "antenna_bands": raw.get("antenna_bands", []),
         "antenna_active": raw.get("antenna_active"),
+        "engineering": raw.get("engineering", {}),
         "temperature_min": f.temperature_min,
         "temperature_max": f.temperature_max,
         "certifications": _json(f.certifications_json, []),

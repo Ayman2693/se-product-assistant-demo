@@ -1620,3 +1620,110 @@ these raw features, and a catalog sync refreshes imported products/evidence.
 When several products are still genuinely equal on technical fit and solution
 scope, the customer UI says `Top technical match · tied` instead of implying
 an arbitrary #1 winner.
+
+# Phase 5.1 — Universal Engineering Qualification Engine
+
+Phase 5.1 replaces the pattern of adding one bespoke matcher per product type
+with a schema-driven engineering layer shared by the complete configured SE
+catalog.
+
+## Core architecture
+
+`catalog category -> engineering profile -> normalized product features -> adaptive question -> deterministic constraint -> ranking -> evidence`
+
+The implementation introduces:
+
+- `backend/app/services/engineering_profiles.py`
+  - one reusable field library;
+  - a category profile for every configured SE catalog category;
+  - 51 category profiles and 63 reusable engineering fields.
+- `backend/app/services/engineering_features.py`
+  - conservative extraction and unit normalization;
+  - deterministic comparison semantics;
+  - display formatting for normalized values.
+- `MatchRequest.engineering_requirements`
+  - carries category-specific requirements without expanding the API schema for
+    every future component family.
+- `MatchRequest.answered_engineering_fields`
+  - remembers `No preference / not sure` answers so the adaptive engine does
+    not ask the same question repeatedly.
+
+## Adaptive behavior
+
+The assistant does **not** ask every field in a category profile.
+
+For the current candidate set it evaluates catalog coverage and information
+gain and asks only a field that can materially discriminate the remaining
+products. Constant fields and poorly populated fields are skipped.
+
+A selected engineering value becomes a deterministic constraint:
+
+- known match -> positive technical fit;
+- known mismatch -> product is rejected;
+- missing value -> `Not verified`, never silently treated as a mismatch.
+
+An open answer is remembered but is not used as a hard filter.
+
+## Category coverage
+
+Profiles exist for all 51 configured categories, including:
+
+- Crystals: frequency, load capacitance, tolerance, stability, ESR, drive
+  level, mounting, package, temperature.
+- Oscillators: frequency, oscillator type, output standard, supply voltage,
+  stability, phase jitter, mounting, package, temperature.
+- Timing IC / RTC: timing function, frequency, interfaces, output, supply,
+  package and temperature.
+- Chokes: choke type, inductance, rated current, DCR, impedance, test
+  frequency, mounting and temperature.
+- Relays / contactors / switches / connectors: electrical ratings, contact
+  configuration, coil voltage, pitch, positions and mounting where relevant.
+- Sensors: category-specific measurement range, accuracy, interface, supply,
+  package and operating conditions.
+- Displays: diagonal, resolution, interface, touch and supply.
+- Flash storage / embedded computing: capacity, storage interface, CPU
+  architecture, RAM, on-board storage and Ethernet capability.
+- Audio / haptics, EMC filters, antennas and wireless categories also receive
+  reusable profile fields in addition to their existing specialized logic.
+
+## Natural-language support
+
+When the customer's first sentence already contains a category-specific value,
+the same normalization layer can capture it directly. Example:
+
+`32.768 kHz crystal, 9 pF, ±20 ppm`
+
+becomes normalized requirements for frequency, load capacitance and tolerance.
+
+Typed values with engineering units are normalized as well, e.g. MHz/kHz,
+mA/A, mΩ/Ω/kΩ, mH/µH, TB/GB and bar/kPa.
+
+## Evidence
+
+Extracted engineering values are added to the catalog evidence layer using
+`engineering:<field>` field names. This keeps technical fit and evidence
+confidence separate and preserves the existing `Verified / Catalog-supported /
+Needs verification` safety model.
+
+## Developer audit endpoints
+
+`GET /api/requirements/engineering-profiles`
+
+returns the configured category/field schema.
+
+`GET /api/requirements/engineering-coverage`
+
+reports, for the current database, how many products in each category have
+structured engineering data and the coverage percentage of every configured
+field. This is the primary audit tool for deciding which category extractor
+needs to be improved next.
+
+## Data model / deployment
+
+No database migration is required. Universal engineering features are stored
+inside the existing `ProductFeature.raw_features_json` structure.
+
+Normal application startup re-extracts structured features for every product
+and refreshes catalog-derived evidence, so deploying this version is enough to
+backfill the current database. A catalog sync is only needed when the website
+product data itself also needs refreshing.

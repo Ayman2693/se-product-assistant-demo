@@ -2,6 +2,12 @@ import json
 import re
 from app.models import Product, ProductFeature
 from app.schemas import MatchRequest
+from app.services.engineering_profiles import field_spec
+from app.services.engineering_features import (
+    compare_engineering_value,
+    engineering_reason,
+    raw_engineering_from_feature_json,
+)
 
 def _haystack(p: Product) -> str:
     return " ".join([
@@ -636,6 +642,19 @@ def score_product(p: Product, r: MatchRequest):
                     f"Theoretical stored energy ≥ {r.capacitor_energy_min_j:g} J",
                     False,
                 )
+
+        # Universal schema-driven engineering constraints. These requirements
+        # are category-specific but evaluated by one deterministic engine.
+        engineering_actual = raw_engineering_from_feature_json(
+            f.raw_features_json if f else None
+        )
+        for key, expected in (r.engineering_requirements or {}).items():
+            spec = field_spec(key)
+            if spec is None:
+                continue
+            actual = engineering_actual.get(key)
+            state = compare_engineering_value(spec, actual, expected)
+            criterion(spec.weight, state, engineering_reason(spec, expected), True)
 
         if r.generic_interface:
             actual_interfaces = _generic_interfaces(h)

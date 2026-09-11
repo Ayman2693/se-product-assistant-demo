@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import Any, List, Optional
 
 class HealthResponse(BaseModel):
     status: str
@@ -19,6 +19,7 @@ class ProductFeaturesOut(BaseModel):
     antenna_applications: List[str] = Field(default_factory=list)
     antenna_bands: List[str] = Field(default_factory=list)
     antenna_active: Optional[bool] = None
+    engineering: dict[str, Any] = Field(default_factory=dict)
     temperature_min: Optional[float] = None
     temperature_max: Optional[float] = None
     certifications: List[str] = Field(default_factory=list)
@@ -69,6 +70,11 @@ class MatchRequest(BaseModel):
     antenna_application: Optional[str] = None
     antenna_band: Optional[str] = None
     antenna_active: Optional[bool] = None
+
+    # Schema-driven engineering qualification shared by all product categories.
+    engineering_requirements: dict[str, Any] = Field(default_factory=dict)
+    answered_engineering_fields: List[str] = Field(default_factory=list)
+
     bluetooth_required: Optional[bool] = None
     bluetooth_version_min: Optional[str] = None
     max_footprint_mm2: Optional[float] = None
@@ -221,11 +227,17 @@ class RequirementState(BaseModel):
     host_interface: Optional[str] = None
     antenna_connector: Optional[str] = None
     antenna_count: Optional[int] = None
+    antenna_application: Optional[str] = None
+    antenna_band: Optional[str] = None
+    antenna_active: Optional[bool] = None
     bluetooth_required: Optional[bool] = None
     bluetooth_version_min: Optional[str] = None
     max_footprint_mm2: Optional[float] = None
     form_factor: Optional[str] = None
     gnss_dual_band: Optional[bool] = None
+
+    engineering_requirements: dict[str, Any] = Field(default_factory=dict)
+    answered_engineering_fields: List[str] = Field(default_factory=list)
 
     # Capacitor-domain requirement state.
     capacitance_uf: Optional[float] = None

@@ -1,6 +1,8 @@
 import re
 from typing import Any
 
+from app.services.engineering_features import parse_engineering_requirements
+
 def _uniq(values):
     return list(dict.fromkeys(values))
 
@@ -128,6 +130,9 @@ def interpret_text(text: str) -> dict[str, Any]:
         "max_footprint_mm2": None,
         "form_factor": None,
         "gnss_dual_band": None,
+
+        "engineering_requirements": {},
+        "answered_engineering_fields": [],
 
         # Capacitor-specific requirements.
         "capacitance_uf": None,
@@ -634,6 +639,14 @@ def interpret_text(text: str) -> dict[str, Any]:
         out["gnss_dual_band"] = True
         evidence.append("gnss_dual_band:true")
 
+    # Schema-driven engineering values for the selected catalog category.
+    # These are normalized to the same units used for catalog products.
+    engineering = parse_engineering_requirements(out.get("catalog_category"), raw)
+    if engineering:
+        out["engineering_requirements"] = engineering
+        for key, value in engineering.items():
+            evidence.append(f"engineering:{key}:{value}")
+
     return {
         "requirements": out,
         "evidence": evidence,
@@ -646,13 +659,19 @@ def merge_requirements(current: dict[str, Any] | None, extracted: dict[str, Any]
     for key, value in extracted.items():
         if value is None:
             continue
-        if key in {"technologies", "wifi_generation"}:
+        if key in {"technologies", "wifi_generation", "answered_engineering_fields"}:
             if value:
                 current[key] = _uniq([*(current.get(key) or []), *value])
+        elif key == "engineering_requirements":
+            merged_engineering = dict(current.get(key) or {})
+            merged_engineering.update(value or {})
+            current[key] = merged_engineering
         else:
             current[key] = value
     current.setdefault("technologies", [])
     current.setdefault("wifi_generation", [])
+    current.setdefault("engineering_requirements", {})
+    current.setdefault("answered_engineering_fields", [])
     return current
 
 

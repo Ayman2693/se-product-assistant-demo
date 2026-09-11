@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.db import get_db
+from app.models import Product
 from app.schemas import (
     AdaptiveQuestionRequest,
     AdaptiveQuestionResponse,
@@ -17,6 +18,8 @@ from app.services.matching_engine import (
     technical_evidence_pool,
 )
 from app.services.adaptive_questions import choose_adaptive_question
+from app.services.engineering_profiles import profile_status, profile_for_category
+from app.services.engineering_features import raw_engineering_from_feature_json
 from app.services.family_graph import annotate_results_with_families
 from app.services.evidence_matcher import (
     annotate_results_with_evidence,
@@ -90,6 +93,65 @@ def _match(db: Session, req_dict: dict):
         row.pop("_recommendation_safety_rank", None)
 
     return {"count": len(technical.scored), "matches": results[:10]}
+
+@router.get("/engineering-profiles")
+def engineering_profiles():
+    """Developer visibility into the universal category qualification schema."""
+    return profile_status()
+
+
+@router.get("/engineering-coverage")
+def engineering_coverage(db: Session = Depends(get_db)):
+    """
+    Developer audit of how much structured engineering data is currently
+    available per catalog category and field. This makes weak filters visible
+    instead of silently pretending that every category is equally complete.
+    """
+    products = (
+        db.query(Product)
+        .options(joinedload(Product.features))
+        .order_by(Product.category, Product.id)
+        .all()
+    )
+
+    result: dict[str, dict] = {}
+    for product in products:
+        category = product.category or "Uncategorized"
+        bucket = result.setdefault(category, {
+            "products": 0,
+            "products_with_engineering_data": 0,
+            "fields": {},
+        })
+        bucket["products"] += 1
+
+        engineering = raw_engineering_from_feature_json(
+            product.features.raw_features_json if product.features else None
+        )
+        if engineering:
+            bucket["products_with_engineering_data"] += 1
+        for key, value in engineering.items():
+            if value is None or value == "" or value == []:
+                continue
+            bucket["fields"][key] = bucket["fields"].get(key, 0) + 1
+
+    for category, bucket in result.items():
+        total = max(1, bucket["products"])
+        bucket["coverage_percent"] = round(
+            bucket["products_with_engineering_data"] / total * 100, 1
+        )
+        profile_keys = [spec.key for spec in profile_for_category(category)]
+        bucket["profile_fields"] = profile_keys
+        bucket["field_coverage_percent"] = {
+            key: round(bucket["fields"].get(key, 0) / total * 100, 1)
+            for key in profile_keys
+        }
+
+    return {
+        "categories": len(result),
+        "products": len(products),
+        "coverage": result,
+    }
+
 
 @router.post("/adaptive-question", response_model=AdaptiveQuestionResponse)
 def adaptive_question(

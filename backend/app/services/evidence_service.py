@@ -172,6 +172,19 @@ def seed_catalog_evidence_for_product(db: Session, product: Product) -> int:
                 normalized_value="true" if raw["antenna_active"] else "false",
             )
 
+        engineering = raw.get("engineering") or {}
+        if isinstance(engineering, dict):
+            for field_key, value in engineering.items():
+                values = value if isinstance(value, list) else [value]
+                for item in values:
+                    _add_catalog_evidence(
+                        db,
+                        product,
+                        field_name=f"engineering:{field_key}",
+                        value=item,
+                        normalized_value=str(item).lower() if isinstance(item, str) else str(item),
+                    )
+
         capacitor_mapping = {
             "capacitance_uf": raw.get("capacitance_uf"),
             "capacitor_voltage_v": raw.get("capacitor_voltage_v"),

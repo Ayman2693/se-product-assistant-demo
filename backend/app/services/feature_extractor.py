@@ -2,6 +2,8 @@ import json
 import re
 from typing import Any
 
+from app.services.engineering_features import extract_engineering_features
+
 def _norm(value: str | None) -> str:
     return (value or "").lower().replace("–", "-").replace("—", "-")
 
@@ -389,10 +391,15 @@ def extract_features(part_number: str, manufacturer: str, category: str, descrip
 
     raw = {
         "text_length": len(text),
-        "source": "deterministic_regex_v2.6-antenna-qualification",
+        "source": "deterministic_regex_v3.0-universal-engineering",
         "low_power_positive": low_power_positive,
         "low_power_negative": low_power_negative,
     }
+
+    engineering_text = " ".join([category or "", description or "", *tags])
+    engineering = extract_engineering_features(category, engineering_text)
+    if engineering:
+        raw["engineering"] = engineering
 
     antenna_applications, antenna_bands, antenna_active = _antenna_catalog_profile(text, category)
     if antenna_applications:

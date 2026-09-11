@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models import ProductEvidence
 from app.schemas import MatchRequest
+from app.services.engineering_profiles import field_spec
+from app.services.engineering_features import compare_engineering_value, format_engineering_value
 
 
 MULTI_VALUE_FIELDS = {"technology", "interface", "antenna_connector", "antenna_application", "antenna_band"}
@@ -304,6 +306,17 @@ def _request_criteria(r: MatchRequest) -> list[dict]:
                 "expected": r.capacitor_energy_min_j,
             })
 
+    for field_key, expected in (r.engineering_requirements or {}).items():
+        spec = field_spec(field_key)
+        if spec is None:
+            continue
+        criteria.append({
+            "key": f"engineering:{field_key}",
+            "label": spec.label,
+            "field": f"engineering:{field_key}",
+            "expected": expected,
+        })
+
     return criteria
 
 
@@ -312,6 +325,11 @@ def _supports(field: str, actual: Any, expected: Any) -> bool:
 
     if not a:
         return False
+
+    if field.startswith("engineering:"):
+        key = field.split(":", 1)[1]
+        spec = field_spec(key)
+        return bool(spec and compare_engineering_value(spec, actual, expected) == 1)
 
     if field == "wifi_generation":
         expected_values = expected if isinstance(expected, (list, tuple, set)) else [expected]
@@ -488,7 +506,7 @@ def _criterion_result(
         row for row in field_rows
         if row.verification_status == "verified"
     ]
-    if verified_values and field in EXCLUSIVE_FIELDS:
+    if verified_values and (field in EXCLUSIVE_FIELDS or field.startswith("engineering:")):
         row = _best(verified_values)
         return {
             "key": criterion["key"],
@@ -517,7 +535,7 @@ def _criterion_result(
         row for row in field_rows
         if row.verification_status == "inferred"
     ]
-    if inferred_values and field in EXCLUSIVE_FIELDS:
+    if inferred_values and (field in EXCLUSIVE_FIELDS or field.startswith("engineering:")):
         row = _best(inferred_values)
         return {
             "key": criterion["key"],
@@ -695,6 +713,17 @@ def _positive_match_reason_for_criterion(
         for reason in reasons:
             if str(reason).lower() == target:
                 return str(reason)
+        return None
+
+    if key.startswith("engineering:"):
+        label = str(criterion.get("label") or "")
+        prefix = f"Engineering: {label}"
+        for reason in reasons:
+            text = str(reason)
+            if text.startswith("Not verified:"):
+                continue
+            if text.lower().startswith(prefix.lower()):
+                return text
         return None
 
     prefix = _REASON_PREFIX_BY_CRITERION.get(key)

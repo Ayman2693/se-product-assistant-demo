@@ -11,6 +11,12 @@ from sqlalchemy.orm import Session
 from app.models import Product
 from app.schemas import MatchRequest
 from app.services.matching_engine import run_fast_technical_match
+from app.services.engineering_profiles import profile_for_category, EngineeringFieldSpec
+from app.services.engineering_features import (
+    engineering_signal,
+    format_engineering_value,
+    raw_engineering_from_feature_json,
+)
 from app.services.matcher import (
     _antenna_connectors,
     _antenna_count,
@@ -351,6 +357,13 @@ QUESTION_TEXT = {
 }
 
 
+def _engineering_field_signal(product: Product, key: str):
+    raw = raw_engineering_from_feature_json(
+        product.features.raw_features_json if product.features else None
+    )
+    return engineering_signal(raw, key)
+
+
 def _question_specs(request: MatchRequest) -> list[dict]:
     tech = set(request.technologies or [])
     specs: list[dict] = []
@@ -366,6 +379,8 @@ def _question_specs(request: MatchRequest) -> list[dict]:
         priority: int = 50,
         multi_select: bool = False,
         stage: str = "qualification",
+        text: str | None = None,
+        engineering_spec: EngineeringFieldSpec | None = None,
     ):
         if key in open_fields:
             answered = True
@@ -377,6 +392,8 @@ def _question_specs(request: MatchRequest) -> list[dict]:
                 "priority": priority,
                 "multi_select": multi_select,
                 "stage": stage,
+                "text": text,
+                "engineering_spec": engineering_spec,
             })
 
     if request.product_domain == "connectivity" or tech.intersection({"wifi", "bluetooth", "cellular", "gnss"}):
@@ -549,6 +566,32 @@ def _question_specs(request: MatchRequest) -> list[dict]:
         )
 
 
+    # Universal category profile. Only fields that actually discriminate the
+    # current catalog are asked; sparse or constant fields are automatically
+    # ignored by the information-gain stage below.
+    answered_engineering = set(request.answered_engineering_fields or [])
+    explicit_engineering = set((request.engineering_requirements or {}).keys())
+    for eng_spec in profile_for_category(request.catalog_category):
+        # Avoid asking the same concept twice when an older dedicated field
+        # already captured it.
+        if eng_spec.key == "interface" and (request.generic_interface or request.host_interface):
+            continue
+        if eng_spec.key == "package" and request.form_factor:
+            continue
+
+        key = f"engineering:{eng_spec.key}"
+        add(
+            key,
+            eng_spec.key in explicit_engineering or eng_spec.key in answered_engineering,
+            lambda product, field_key=eng_spec.key: _engineering_field_signal(product, field_key),
+            required=False,
+            priority=eng_spec.priority,
+            stage="qualification",
+            text=eng_spec.question,
+            engineering_spec=eng_spec,
+        )
+
+
     # Secondary discriminators are deliberately optional. They are considered
     # only after all core qualification questions are answered, and only when
     # they materially split the current top-ranked tie group.
@@ -638,7 +681,49 @@ def _information_gain(distribution: Counter, known: int, total: int) -> tuple[fl
     return min(entropy, 3.0) * coverage, coverage
 
 
-def _dynamic_options(key: str, distribution: Counter) -> list[dict]:
+def _dynamic_options(key: str, distribution: Counter, engineering_spec: EngineeringFieldSpec | None = None) -> list[dict]:
+    if key.startswith("engineering:") and engineering_spec is not None:
+        raw_values = list(distribution.keys())
+        options: list[dict] = []
+
+        if engineering_spec.kind == "number":
+            numeric: list[float] = []
+            for raw in raw_values:
+                try:
+                    numeric.append(float(raw))
+                except (TypeError, ValueError):
+                    continue
+            numeric = sorted(set(numeric))
+            if len(numeric) > 6:
+                indexes = sorted({round(i * (len(numeric) - 1) / 5) for i in range(6)})
+                numeric = [numeric[i] for i in indexes]
+            options = [
+                {
+                    "label": format_engineering_value(engineering_spec, value),
+                    "value": str(value),
+                }
+                for value in numeric
+            ]
+        elif engineering_spec.kind == "bool":
+            observed = {str(value).lower() for value in raw_values}
+            for value in (True, False):
+                if str(value).lower() in observed:
+                    options.append({
+                        "label": format_engineering_value(engineering_spec, value),
+                        "value": "true" if value else "false",
+                    })
+        else:
+            for raw in raw_values[:8]:
+                options.append({
+                    "label": format_engineering_value(engineering_spec, raw),
+                    "value": raw,
+                })
+
+        # An open answer is remembered separately and never becomes a hard
+        # matcher constraint.
+        options.append({"label": "No preference / not sure", "value": "__open__"})
+        return options
+
     if key == "capacitorCapacitance":
         values = []
         for raw in distribution:
@@ -763,13 +848,17 @@ def choose_adaptive_question(db: Session, request: MatchRequest) -> dict:
                     item["priority"],
                 ),
             )
-            options = _dynamic_options(best["key"], best["distribution"])
+            options = _dynamic_options(
+                best["key"],
+                best["distribution"],
+                best.get("engineering_spec"),
+            )
             if not options:
                 options = _fixed_options(best["key"])
 
             question = {
                 "key": best["key"],
-                "text": QUESTION_TEXT[best["key"]],
+                "text": best.get("text") or QUESTION_TEXT[best["key"]],
                 "options": options,
                 "multi_select": best["multi_select"],
                 "required": best["required"],
@@ -849,13 +938,17 @@ def choose_adaptive_question(db: Session, request: MatchRequest) -> dict:
             item["priority"],
         ),
     )
-    options = _dynamic_options(best["key"], best["distribution"])
+    options = _dynamic_options(
+        best["key"],
+        best["distribution"],
+        best.get("engineering_spec"),
+    )
     if not options:
         options = _fixed_options(best["key"])
 
     question = {
         "key": best["key"],
-        "text": QUESTION_TEXT[best["key"]],
+        "text": best.get("text") or QUESTION_TEXT[best["key"]],
         "options": options,
         "multi_select": best["multi_select"],
         "required": False,

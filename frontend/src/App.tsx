@@ -46,6 +46,10 @@ type Requirements = {
   formFactor?: string;
   gnssDualBand?: string;
 
+  // Universal schema-driven engineering requirements.
+  engineering?: Record<string, string | number | boolean>;
+  answeredEngineering?: string[];
+
   // Capacitor-specific engineering requirements.
   capacitorCapacitance?: string;
   capacitorVoltage?: string;
@@ -106,7 +110,8 @@ type QuestionKey =
   | "capacitorRippleMin"
   | "capacitorLifetimeMin"
   | "capacitorTemperatureRange"
-  | "capacitorEnergyMin";
+  | "capacitorEnergyMin"
+  | `engineering:${string}`;
 
 type Option = {
   label: string;
@@ -145,6 +150,7 @@ type ProductFeatures = {
   antenna_applications?: string[];
   antenna_bands?: string[];
   antenna_active?: boolean | null;
+  engineering?: Record<string, string | number | boolean | string[]>;
   temperature_min?: number | null;
   temperature_max?: number | null;
   certifications: string[];
@@ -250,11 +256,16 @@ type RequirementInterpretResponse = {
     host_interface?: string | null;
     antenna_connector?: string | null;
     antenna_count?: number | null;
+    antenna_application?: string | null;
+    antenna_band?: string | null;
+    antenna_active?: boolean | null;
     bluetooth_required?: boolean | null;
     bluetooth_version_min?: string | null;
     max_footprint_mm2?: number | null;
     form_factor?: string | null;
     gnss_dual_band?: boolean | null;
+    engineering_requirements?: Record<string, string | number | boolean>;
+    answered_engineering_fields?: string[];
     capacitance_uf?: number | null;
     capacitor_voltage_v?: number | null;
     capacitor_tolerance_pct?: number | null;
@@ -598,8 +609,155 @@ function localizeQuestion(
   };
 }
 
+const ENGINEERING_LABELS_DE: Record<string, string> = {
+  frequency_hz: "Frequenz",
+  supply_voltage_v: "Versorgungsspannung",
+  rated_voltage_v: "Nennspannung",
+  rated_current_a: "Nennstrom",
+  current_rating_a: "Strombelastbarkeit",
+  interface: "Schnittstelle",
+  mounting: "Montage",
+  package: "Bauform / Gehäuse",
+  temperature_min_c: "Minimale Betriebstemperatur",
+  temperature_max_c: "Maximale Betriebstemperatur",
+  load_capacitance_pf: "Lastkapazität",
+  frequency_tolerance_ppm: "Frequenztoleranz",
+  frequency_stability_ppm: "Frequenzstabilität",
+  esr_ohm: "ESR",
+  drive_level_uw: "Ansteuerleistung",
+  oscillator_type: "Oszillatortyp",
+  output_type: "Taktausgang",
+  phase_jitter_ps: "Phasenjitter",
+  timing_function: "Timing-Funktion",
+  choke_type: "Drosseltyp",
+  inductance_uh: "Induktivität",
+  dc_resistance_ohm: "Gleichstromwiderstand",
+  impedance_ohm: "Impedanz",
+  test_frequency_hz: "Prüffrequenz",
+  relay_type: "Relaistyp",
+  contact_form: "Kontaktform",
+  coil_voltage_v: "Spulenspannung",
+  contact_current_a: "Kontaktstrom",
+  contact_voltage_v: "Kontaktspannung",
+  switch_type: "Schaltertyp",
+  poles: "Pole",
+  positions: "Positionen / Kontakte",
+  connector_type: "Steckverbindertyp",
+  pitch_mm: "Raster",
+  display_size_in: "Displaygröße",
+  resolution: "Auflösung",
+  touch: "Touch",
+  storage_capacity_gb: "Speicherkapazität",
+  storage_interface: "Speicherschnittstelle",
+  cpu_arch: "CPU-Architektur",
+  ram_gb: "Arbeitsspeicher",
+  onboard_storage_gb: "Onboard-Speicher",
+  ethernet_speed_mbps: "Ethernet-Geschwindigkeit",
+  pressure_range_kpa: "Druckbereich",
+  accuracy_pct: "Genauigkeit",
+  force_range_n: "Kraftbereich",
+  airflow_range_lpm: "Luftstrombereich",
+  humidity_max_pct: "Feuchtebereich",
+  measurement_temp_min_c: "Messbereich Minimum",
+  measurement_temp_max_c: "Messbereich Maximum",
+  temperature_accuracy_c: "Temperaturgenauigkeit",
+  axes: "Achsen",
+  accel_range_g: "Beschleunigungsbereich",
+  gyro_range_dps: "Gyroskopbereich",
+  gas_type: "Gas / Luftqualitätsziel",
+  audio_interface: "Audio-Schnittstelle",
+  sample_rate_khz: "Abtastrate",
+  vibration_type: "Haptik-Aktuatortyp",
+};
+
+function humanizeEngineeringKey(key: string) {
+  const suffixes = [
+    "_frequency_hz", "_voltage_v", "_current_a", "_resistance_ohm", "_impedance_ohm",
+    "_capacitance_pf", "_tolerance_ppm", "_stability_ppm", "_jitter_ps", "_level_uw",
+    "_capacity_gb", "_storage_gb", "_speed_mbps", "_range_kpa", "_range_lpm",
+    "_accuracy_c", "_accuracy_pct", "_range_dps", "_range_g", "_mm", "_hz", "_gb", "_a", "_v", "_c"
+  ];
+  let cleaned = key;
+  for (const suffix of suffixes) {
+    if (cleaned.endsWith(suffix) && cleaned.length > suffix.length) {
+      cleaned = cleaned.slice(0, -suffix.length) + suffix.replace(/^_/, " ");
+      break;
+    }
+  }
+  const words = cleaned.split("_").filter(Boolean).map((word) => {
+    const upper: Record<string, string> = {
+      dc: "DC", esr: "ESR", cpu: "CPU", ram: "RAM", rf: "RF", emi: "EMI",
+      emc: "EMC", rtc: "RTC", gnss: "GNSS", usb: "USB", pcie: "PCIe",
+    };
+    return upper[word] ?? word;
+  });
+  const value = words.join(" ");
+  return value ? value.charAt(0).toUpperCase() + value.slice(1) : key;
+}
+
+function engineeringRequirementLabel(key: string, language: Language) {
+  if (language === "de" && ENGINEERING_LABELS_DE[key]) return ENGINEERING_LABELS_DE[key];
+  return humanizeEngineeringKey(key);
+}
+
 function requirementLabel(key: string, language: Language) {
+  if (key.startsWith("engineering:")) {
+    return engineeringRequirementLabel(key.slice("engineering:".length), language);
+  }
   return language === "de" ? (LABELS_DE[key] ?? LABELS[key] ?? key) : (LABELS[key] ?? key);
+}
+
+const ENGINEERING_VALUE_LABELS: Record<string, string> = {
+  i2c: "I²C", spi: "SPI", uart: "UART", usb: "USB", pcie: "PCIe", sdio: "SDIO",
+  can: "CAN", ethernet: "Ethernet", sata: "SATA", nvme: "NVMe", mipi: "MIPI", lvds: "LVDS", rgb: "RGB",
+  smd: "SMD / SMT", tht: "Through-hole / THT",
+  xo: "XO", tcxo: "TCXO", vcxo: "VCXO", ocxo: "OCXO", lvcmos: "LVCMOS / CMOS", hcsl: "HCSL",
+  clipped_sine: "Clipped sine", sine: "Sine wave",
+  common_mode: "Common-mode", power: "Power", suppression: "EMI suppression", saturation: "Saturation",
+  network_sync: "Network synchronizer", jitter_cleaner: "Jitter cleaner", clock_buffer: "Clock buffer", clock_generator: "Clock generator", rtc: "RTC",
+  solid_state: "Solid-state", reed: "Reed", latching: "Latching", signal: "Signal",
+  spst: "SPST", spdt: "SPDT", dpst: "DPST", dpdt: "DPDT", "1a": "1 Form A", "1c": "1 Form C", "2c": "2 Form C",
+  tactile: "Tactile", toggle: "Toggle", slide: "Slide", dip: "DIP", rotary: "Rotary", rocker: "Rocker", pushbutton: "Pushbutton",
+  board_to_board: "Board-to-board", wire_to_board: "Wire-to-board", fpc: "FPC / FFC", rj45: "RJ45", terminal: "Terminal block", circular: "Circular",
+  msata: "mSATA", emmc: "eMMC", sd: "SD / microSD", arm: "ARM", x86: "x86 / x86-64", riscv: "RISC-V",
+  imu: "IMU", accelerometer: "Accelerometer", gyroscope: "Gyroscope", magnetometer: "Magnetometer", hall: "Hall sensor",
+  co2: "CO₂", co: "CO", voc: "VOC", no2: "NO₂", o2: "O₂", air_quality: "Air quality / multi-gas",
+  i2s: "I²S", tdm: "TDM", pcm: "PCM", analog: "Analog", digital: "Digital",
+  erm: "ERM", lra: "LRA", piezo: "Piezo", feedthrough: "Feed-through", lc_pi: "LC / pi", line: "Mains / line",
+};
+
+function formatEngineeringRequirementValue(field: string, value: unknown) {
+  if (value === true || String(value).toLowerCase() === "true") return "Yes";
+  if (value === false || String(value).toLowerCase() === "false") return "No";
+
+  const canonical = String(value ?? "");
+  if (ENGINEERING_VALUE_LABELS[canonical.toLowerCase()]) {
+    return ENGINEERING_VALUE_LABELS[canonical.toLowerCase()];
+  }
+
+  const number = Number(canonical);
+  if (!Number.isFinite(number)) return canonical.replaceAll("_", " ");
+
+  const compact = (v: number) => Number.isInteger(v) ? String(v) : Number(v.toPrecision(7)).toString();
+  if (["frequency_hz", "test_frequency_hz", "cutoff_frequency_hz"].includes(field)) {
+    if (Math.abs(number) >= 1e9) return `${compact(number / 1e9)} GHz`;
+    if (Math.abs(number) >= 1e6) return `${compact(number / 1e6)} MHz`;
+    if (Math.abs(number) >= 1e3) return `${compact(number / 1e3)} kHz`;
+    return `${compact(number)} Hz`;
+  }
+
+  const units: Record<string, string> = {
+    supply_voltage_v: "V", rated_voltage_v: "V", coil_voltage_v: "V", contact_voltage_v: "V",
+    rated_current_a: "A", current_rating_a: "A", contact_current_a: "A",
+    load_capacitance_pf: "pF", frequency_tolerance_ppm: "ppm", frequency_stability_ppm: "ppm",
+    esr_ohm: "Ω", dc_resistance_ohm: "Ω", impedance_ohm: "Ω", drive_level_uw: "µW", phase_jitter_ps: "ps",
+    inductance_uh: "µH", attenuation_db: "dB", rated_power_w: "W", pitch_mm: "mm", display_size_in: "in",
+    storage_capacity_gb: "GB", onboard_storage_gb: "GB", ram_gb: "GB", ethernet_speed_mbps: "Mbit/s",
+    pressure_range_kpa: "kPa", accuracy_pct: "%", force_range_n: "N", airflow_range_lpm: "L/min", humidity_max_pct: "%RH",
+    temperature_min_c: "°C", temperature_max_c: "°C", measurement_temp_min_c: "°C", measurement_temp_max_c: "°C", temperature_accuracy_c: "°C",
+    accel_range_g: "g", gyro_range_dps: "°/s", sample_rate_khz: "kHz",
+  };
+  return `${compact(number)}${units[field] ? ` ${units[field]}` : ""}`;
 }
 
 function localizeValue(value: unknown, language: Language) {
@@ -1206,6 +1364,8 @@ async function interpretWithBackend(text: string): Promise<Partial<Requirements>
     maxFootprint: r.max_footprint_mm2 ? `≤ ${r.max_footprint_mm2} mm²` : undefined,
     formFactor: r.form_factor ?? undefined,
     gnssDualBand: r.gnss_dual_band ? "L1 + L5 required" : undefined,
+    engineering: r.engineering_requirements ?? undefined,
+    answeredEngineering: r.answered_engineering_fields ?? undefined,
     capacitorCapacitance:
       r.capacitance_uf != null ? formatCapacitanceUf(r.capacitance_uf) : undefined,
     capacitorVoltage:
@@ -2510,6 +2670,11 @@ function buildMatchBody(req: Requirements) {
       req.gnssDualBand === "L1 sufficient" ? false :
       null,
 
+    engineering_requirements: Object.fromEntries(
+      Object.entries(req.engineering ?? {}).filter(([, value]) => value !== "__open__")
+    ),
+    answered_engineering_fields: req.answeredEngineering ?? [],
+
     capacitance_uf:
       req.capacitorCapacitance ? parseCapacitanceUf(req.capacitorCapacitance) : null,
     capacitor_voltage_v:
@@ -3147,6 +3312,46 @@ function App() {
       return;
     }
 
+    if (key.startsWith("engineering:")) {
+      const field = key.slice("engineering:".length);
+      const next: Requirements = {
+        ...requirements,
+        engineering: { ...(requirements.engineering ?? {}) },
+        answeredEngineering: [...(requirements.answeredEngineering ?? [])],
+      };
+
+      if (String(value) === "__open__") {
+        delete next.engineering?.[field];
+        next.answeredEngineering = [...new Set([...(next.answeredEngineering ?? []), field])];
+        addMessage(
+          "bot",
+          tr(
+            language,
+            `Okay — <strong>${htmlEscape(engineeringRequirementLabel(field, language))}</strong> remains open and will not be used as a hard filter.`,
+            `Okay — <strong>${htmlEscape(engineeringRequirementLabel(field, language))}</strong> bleibt offen und wird nicht als harter Filter verwendet.`
+          )
+        );
+      } else {
+        if (next.engineering) next.engineering[field] = value as string | number | boolean;
+        next.answeredEngineering = (next.answeredEngineering ?? []).filter((item) => item !== field);
+        addMessage(
+          "bot",
+          tr(
+            language,
+            `Good — <strong>${htmlEscape(engineeringRequirementLabel(field, language))}</strong>: <strong>${htmlEscape(shown)}</strong>.`,
+            `Gut — <strong>${htmlEscape(engineeringRequirementLabel(field, language))}</strong>: <strong>${htmlEscape(shown)}</strong>.`
+          )
+        );
+      }
+
+      setRequirements(next);
+      setQuickOptions([]);
+      setMultiSelected([]);
+      setActiveQuestion(null);
+      window.setTimeout(() => void askNext(next), 60);
+      return;
+    }
+
     const next: Requirements = { ...requirements };
 
     switch (key) {
@@ -3169,6 +3374,8 @@ function App() {
         next.antennaApplication = undefined;
         next.antennaBand = undefined;
         next.antennaActive = undefined;
+        next.engineering = undefined;
+        next.answeredEngineering = undefined;
 
         if (next.productDomain !== "connectivity") {
           next.cellularClass = undefined;
@@ -3189,6 +3396,8 @@ function App() {
       }
       case "catalogCategory":
         next.catalogCategory = String(value);
+        next.engineering = undefined;
+        next.answeredEngineering = undefined;
         if (next.catalogCategory !== "Capacitors") {
           next.capacitorCapacitance = undefined;
           next.capacitorVoltage = undefined;
@@ -3437,6 +3646,13 @@ function App() {
       return;
     }
 
+    if (activeQuestion.startsWith("engineering:")) {
+      if (/no preference|not sure|open|egal|keine präferenz|keine praeferenz/i.test(q)) {
+        return applyAnswer(activeQuestion, "__open__", q);
+      }
+      return applyAnswer(activeQuestion, q, q);
+    }
+
     const inferred = inferFromText(q);
 
     if (activeQuestion === "productDomain") {
@@ -3646,6 +3862,24 @@ function App() {
   }
 
   function editRequirement(rawKey: string) {
+    if (rawKey.startsWith("engineering:")) {
+      const field = rawKey.slice("engineering:".length);
+      setFinished(false);
+      setShowAllResults(false);
+      setActiveQuestion(rawKey as QuestionKey);
+      setQuickOptions([]);
+      setMultiSelected([]);
+      addMessage(
+        "bot",
+        tr(
+          language,
+          `Editing <strong>${htmlEscape(engineeringRequirementLabel(field, language))}</strong>. Enter the new requirement, or type <strong>No preference</strong> to leave it open.`,
+          `Bearbeiten: <strong>${htmlEscape(engineeringRequirementLabel(field, language))}</strong>. Geben Sie die neue Anforderung ein oder <strong>Keine Präferenz</strong>, um sie offen zu lassen.`
+        )
+      );
+      return;
+    }
+
     const mappedKey =
       rawKey === "antennaBand"
         ? (requirements.antennaApplication === "gnss" ? "antennaGnssBand" : "antennaWifiBand")
@@ -3707,15 +3941,22 @@ function App() {
     "projectPartners",
   ]);
 
-  const visibleRequirements = Object.entries(requirements).filter(
-    ([key, value]) =>
-      key !== "initialNeed" &&
-      key !== "newProject" &&
-      !handoffOnlyKeys.has(key) &&
-      value !== undefined &&
-      value !== null &&
-      value !== ""
-  );
+  const visibleRequirements = [
+    ...Object.entries(requirements).filter(
+      ([key, value]) =>
+        key !== "initialNeed" &&
+        key !== "newProject" &&
+        key !== "engineering" &&
+        key !== "answeredEngineering" &&
+        !handoffOnlyKeys.has(key) &&
+        value !== undefined &&
+        value !== null &&
+        value !== ""
+    ),
+    ...Object.entries(requirements.engineering ?? {}).map(
+      ([key, value]) => [`engineering:${key}`, value] as [string, string | number | boolean]
+    ),
+  ];
 
   return (
     <div className="appShell">
@@ -3831,7 +4072,11 @@ function App() {
                         {tr(language, "Edit", "Bearbeiten")}
                       </button>
                     </div>
-                    <strong>{localizeValue(value, language)}</strong>
+                    <strong>
+                      {key.startsWith("engineering:")
+                        ? formatEngineeringRequirementValue(key.slice("engineering:".length), value)
+                        : localizeValue(value, language)}
+                    </strong>
                   </div>
                 ))
               ) : (
