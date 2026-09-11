@@ -1258,3 +1258,62 @@ new tables on deployment. The normal Render startup seed then rebuilds the
 derived family graph automatically.
 
 No full web catalog sync is required solely for Phase 5.0.
+
+
+# Phase 5.0.1 — Adaptive Flow & Bluetooth Ranking Fix
+
+This patch fixes issues discovered in a real Bluetooth-only customer flow.
+
+## Adaptive flow
+
+Technical answers no longer bypass the adaptive engine through the legacy
+`tiebreaker` shortcut.
+
+Every technical answer now returns to `askNext()`:
+
+`answer -> adaptive question engine -> next useful question OR match`
+
+Selecting `Bluetooth required, version open` is treated as a completed
+Bluetooth-version qualification, so the assistant does not ask the same
+version question again.
+
+## Bluetooth criterion deduplication
+
+When `technologies=["bluetooth"]` already exists, `bluetooth_required=true`
+does not add a second Bluetooth-capability scoring criterion.
+
+A product now gets one Bluetooth capability reason, not both:
+
+- `BLUETOOTH capability`
+- `Bluetooth capability`
+
+## Connectivity solution-scope ranking
+
+When technical match percentage is equal, the matcher prefers a solution that
+does not add unrequested connectivity technologies.
+
+Example for a Bluetooth-only request:
+
+- Bluetooth-only module: `solution_scope_score = 100`
+- Wi-Fi + Bluetooth module: `solution_scope_score = 85`
+
+Important: this is a tie-break only.
+
+- Extra technologies do not eliminate the product.
+- They do not lower the technical `match_percent`.
+- A higher technical match always beats a lower one.
+- Scope is evaluated before evidence only when technical fit is tied.
+
+The API returns:
+
+- `solution_scope_score`
+- `extra_technologies`
+
+The frontend displays `Focused solution` for exact-scope products or
+`Also includes WI-FI` for broader multiradio alternatives.
+
+This prevents a Bluetooth-only request from presenting MAYA/JODY multiradio
+products as indistinguishable from Bluetooth-focused ANNA/NORA solutions when
+all other collected requirements are equal.
+
+No database migration and no catalog sync are required.

@@ -275,7 +275,7 @@ def _question_specs(request: MatchRequest) -> list[dict]:
         if "bluetooth" in tech:
             add(
                 "bluetoothRequirement",
-                bool(request.bluetooth_version_min),
+                request.bluetooth_required is True or bool(request.bluetooth_version_min),
                 _bluetooth_version,
                 priority=86,
             )

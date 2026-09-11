@@ -163,6 +163,8 @@ class MatchResult(BaseModel):
     product: ProductOut
     family: Optional[ProductFamilySummaryOut] = None
     match_percent: int
+    solution_scope_score: int = 100
+    extra_technologies: List[str] = Field(default_factory=list)
     reasons: List[str] = Field(default_factory=list)
     evidence_score: int = 0
     evidence_summary: MatchEvidenceSummary = Field(default_factory=MatchEvidenceSummary)

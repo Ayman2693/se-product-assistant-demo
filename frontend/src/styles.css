@@ -899,3 +899,26 @@ a.evidenceSource:hover {
   color: #18764b;
   white-space: nowrap;
 }
+
+
+/* Phase 5.0.1 — solution-scope ranking */
+.scopeBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 220px;
+  padding: 5px 8px;
+  border: 1px solid #dde3e8;
+  border-radius: 999px;
+  background: #f8fafb;
+  color: #64717d;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.scopeBadge.scopeFocused {
+  color: #18764b;
+  border-color: #cfe5da;
+  background: #f3faf6;
+}

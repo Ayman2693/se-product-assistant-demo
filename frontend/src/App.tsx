@@ -195,6 +195,8 @@ type Match = {
   product: Product;
   family?: ProductFamilySummary | null;
   match_percent: number;
+  solution_scope_score: number;
+  extra_technologies: string[];
   reasons: string[];
   evidence_score: number;
   evidence_summary: MatchEvidenceSummary;
@@ -1706,19 +1708,6 @@ function tieBreakerFor(
   return null;
 }
 
-function isTieBreakerKey(key: QuestionKey): boolean {
-  return [
-    "hostInterface",
-    "antennaConnector",
-    "antennaCount",
-    "bluetoothRequirement",
-    "maxFootprint",
-    "formFactor",
-    "gnssDualBand",
-  ].includes(key);
-}
-
-
 function isMultiSelectKey(key: QuestionKey | null): boolean {
   return (
     key === "specialRequirements" ||
@@ -2325,7 +2314,13 @@ function groupMatchesByVerifiedFamily(matches: Match[]): MatchGroup[] {
       match.match_percent > current.primary.match_percent ||
       (
         match.match_percent === current.primary.match_percent &&
-        match.evidence_score > current.primary.evidence_score
+        (
+          match.solution_scope_score > current.primary.solution_scope_score ||
+          (
+            match.solution_scope_score === current.primary.solution_scope_score &&
+            match.evidence_score > current.primary.evidence_score
+          )
+        )
       )
     ) {
       current.primary = match;
@@ -2628,7 +2623,9 @@ function App() {
         const solutionMatches = uniqueSolutionMatches(data.matches);
         const best = solutionMatches[0];
         const topMatches = solutionMatches.filter(
-          (m) => m.match_percent === best.match_percent
+          (m) =>
+            m.match_percent === best.match_percent &&
+            m.solution_scope_score === best.solution_scope_score
         );
 
         if (topMatches.length === 1) {
@@ -3015,14 +3012,15 @@ function App() {
     setMultiSelected([]);
     setActiveQuestion(null);
 
-    if (isTieBreakerKey(key)) {
-      window.setTimeout(() => void runMatch(next, true), 60);
-    } else if (isCommercialKey(key)) {
+    if (isCommercialKey(key)) {
       if (key === "supportRequested" && value === false) {
         setFinished(true);
       }
       window.setTimeout(() => askCommercialNext(next), 60);
     } else {
+      // Every technical answer goes back through the adaptive engine.
+      // If another useful requirement can separate the remaining candidates,
+      // ask it; otherwise askNext() starts matching automatically.
       window.setTimeout(() => void askNext(next), 60);
     }
   }
@@ -3451,6 +3449,19 @@ function App() {
                       </div>
                       <div className="scoreStack customerScoreStack">
                         <div className="score">{match.match_percent}% {tr(language, "match", "Übereinstimmung")}</div>
+                        {match.extra_technologies.length === 0 ? (
+                          <div className="scopeBadge scopeFocused">
+                            {tr(language, "Focused solution", "Fokussierte Lösung")}
+                          </div>
+                        ) : (
+                          <div className="scopeBadge">
+                            {tr(
+                              language,
+                              `Also includes ${match.extra_technologies.map((t) => t.toUpperCase()).join(", ")}`,
+                              `Zusätzlich: ${match.extra_technologies.map((t) => t.toUpperCase()).join(", ")}`
+                            )}
+                          </div>
+                        )}
                         {customerEvidenceBadge(match, language) && (
                           <div className="documentationBadge">
                             ✓ {customerEvidenceBadge(match, language)}
@@ -3461,7 +3472,7 @@ function App() {
 
                     {viewMode === "developer" && (
                       <div className="developerEvidence">
-                        Evidence {match.evidence_score}% · {match.evidence_summary.verified} verified · {match.evidence_summary.inferred} inferred · {match.evidence_summary.not_verified} unknown · {match.evidence_summary.conflicting} conflicts
+                        Scope {match.solution_scope_score}% · Evidence {match.evidence_score}% · {match.evidence_summary.verified} verified · {match.evidence_summary.inferred} inferred · {match.evidence_summary.not_verified} unknown · {match.evidence_summary.conflicting} conflicts
                       </div>
                     )}
 

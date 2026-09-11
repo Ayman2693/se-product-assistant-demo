@@ -598,6 +598,7 @@ def evidence_sort_key(result: dict) -> tuple:
     summary = result.get("evidence_summary") or {}
     return (
         result.get("match_percent", 0),
+        result.get("solution_scope_score", 100),
         result.get("evidence_score", 0),
         summary.get("verified", 0),
         -summary.get("conflicting", 0),

@@ -250,6 +250,74 @@ def _wifi_generation_from_text(h: str):
         return "4"
     return None
 
+
+_CONNECTIVITY_TECHNOLOGIES = {"wifi", "bluetooth", "cellular", "gnss"}
+
+
+def _product_connectivity_technologies(p: Product) -> set[str]:
+    """
+    Return connectivity capabilities visible in structured catalog data or
+    explicit product text. Used only as a ranking tie-break, never to turn an
+    otherwise valid product into a hard mismatch.
+    """
+    techs = {
+        str(value).lower()
+        for value in _feature_tech(p.features)
+        if str(value).lower() in _CONNECTIVITY_TECHNOLOGIES
+    }
+
+    h = _haystack(p)
+
+    if re.search(r"wi-?fi|wlan|802\.11", h, re.I):
+        techs.add("wifi")
+    if re.search(r"bluetooth|\bble\b|\bbt\s*/\s*ble\b|\bbt\s*\d", h, re.I):
+        techs.add("bluetooth")
+    if re.search(r"\bgnss\b|\bgps\b|\brtk\b|galileo|glonass|beidou", h, re.I):
+        techs.add("gnss")
+    if re.search(r"lte-?m|nb-?iot|cat\.?\s*(?:1bis|1|4)|5g\s*redcap|cellular modem", h, re.I):
+        techs.add("cellular")
+
+    return techs
+
+
+def _solution_scope_fit(p: Product, r: MatchRequest) -> tuple[int, list[str]]:
+    """
+    Prefer the simplest connectivity solution when technical fit is tied.
+
+    Example:
+      request = Bluetooth only
+      Bluetooth-only module   -> scope 100
+      Wi-Fi + Bluetooth       -> scope 85
+
+    Extra capabilities never eliminate a product and never override a higher
+    technical match percentage. They only order technically equal products.
+    """
+    requested = {
+        str(value).lower()
+        for value in (r.technologies or [])
+        if str(value).lower() in _CONNECTIVITY_TECHNOLOGIES
+    }
+
+    # Direct API clients can express Bluetooth via bluetooth_required without
+    # repeating it in technologies.
+    if r.bluetooth_required:
+        requested.add("bluetooth")
+
+    if not requested:
+        return 100, []
+
+    actual = _product_connectivity_technologies(p)
+
+    # If the matcher could verify the requested technology only through a
+    # path not represented here, do not penalize uncertainty.
+    if not requested.issubset(actual):
+        return 100, []
+
+    extra = sorted(actual - requested)
+    score = max(0, 100 - 15 * len(extra))
+    return score, extra
+
+
 def _product_role(p: Product) -> str:
     category = (p.category or "").lower()
     pn = (p.part_number or "").lower()
@@ -564,7 +632,10 @@ def score_product(p: Product, r: MatchRequest):
                 state = 1 if actual_count == r.antenna_count else -1
             criterion(8, state, f"Antenna connections: {r.antenna_count}", True)
 
-        if r.bluetooth_required:
+        # Do not score Bluetooth capability twice when it is already present
+        # in technologies. bluetooth_required exists for direct API callers
+        # that may request Bluetooth without populating technologies.
+        if r.bluetooth_required and "bluetooth" not in set(r.technologies or []):
             bt_capable = "bluetooth" in techs or bool(
                 re.search(r"bluetooth|\bble\b|\bbt\s*/\s*ble\b|\bbt\s*\d", h, re.I)
             )
@@ -633,8 +704,12 @@ def score_product(p: Product, r: MatchRequest):
     if warnings:
         score = min(score, 94)
 
+    solution_scope_score, extra_technologies = _solution_scope_fit(p, r)
+
     return {
         "match_percent": max(0, min(100, score)),
         "reasons": (reasons + warnings)[:8],
+        "solution_scope_score": solution_scope_score,
+        "extra_technologies": extra_technologies,
         "_evidence_completeness": _evidence_completeness(p),
     }
