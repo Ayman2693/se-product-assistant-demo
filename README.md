@@ -1426,3 +1426,32 @@ solution scope only, the tie order is:
 and then normal evidence quality is used.
 
 No database migration and no catalog sync are required.
+
+
+# Phase 5.0.4 — Evidence Safety Calibration
+
+Live testing showed that Phase 5.0.3 could over-escalate normal catalog matches
+to `FAE verification required` when the evidence table lagged behind the current
+structured product features.
+
+The safety policy is now:
+
+- Positive deterministic structured/catalog match + missing evidence row
+  → `Provisional fit`
+- Explicit deterministic `Not verified:` warning
+  → `FAE verification required`
+- Conflicting evidence
+  → `FAE verification required`
+- Fully manufacturer-verified requested criteria
+  → `Verified fit`
+
+A missing evidence row by itself is no longer a hard engineering escalation.
+
+When structured matching positively confirms a criterion, stale/missing
+ProductEvidence is reconciled as `structured_catalog_fallback` with status
+`inferred`. It is never promoted to `verified`.
+
+Normal startup seeding also refreshes catalog-derived evidence after structured
+feature extraction, while preserving datasheet/manual evidence.
+
+No database migration and no full catalog sync are required.

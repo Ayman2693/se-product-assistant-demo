@@ -4,6 +4,7 @@ from app.db import Base, engine, SessionLocal
 from app.models import Product, ProductFeature
 from app.services.feature_extractor import extract_features, feature_values_for_model
 from app.services.family_graph import rebuild_family_graph
+from app.services.evidence_service import seed_catalog_evidence
 
 DATA = Path(__file__).resolve().parents[1] / "data" / "products_seed.json"
 
@@ -54,10 +55,16 @@ def seed():
                 setattr(feature, key, value)
             feature.source_category = product.category
             feature.source_url = product.product_url
+        # Keep catalog-derived evidence synchronized with the structured
+        # features refreshed above. Datasheet/manual evidence is preserved.
+        db.flush()
+        evidence_stats = seed_catalog_evidence(db)
+
         family_stats = rebuild_family_graph(db)
         db.commit()
         print(
             f"Seeded {db.query(Product).count()} products with structured features. "
+            f"Catalog evidence: {evidence_stats['catalog_evidence_records']} records. "
             f"Family graph: {family_stats['families']} explicit families, "
             f"{family_stats['verified_memberships']} verified memberships, "
             f"{family_stats['multi_sku_families']} multi-SKU families."

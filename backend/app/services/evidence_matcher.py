@@ -564,40 +564,49 @@ def recommendation_safety(result: dict) -> dict:
     """
     Keep recommendation confidence separate from technical match percentage.
 
-    A result can have a high match score yet still require verification when an
-    explicit requested specification is unknown or conflicting.
+    Escalation:
+      - conflicting evidence -> FAE verification required
+      - deterministic matcher warning "Not verified:" -> FAE verification required
+      - missing evidence row alone -> provisional fit
+      - inferred/catalog-derived support -> provisional fit
+      - fully verified requested criteria -> verified fit
     """
     evidence_items = result.get("criterion_evidence") or []
-    unresolved: list[str] = []
-    inferred: list[str] = []
+
+    hard_issues: list[str] = []
+    provisional_issues: list[str] = []
 
     for item in evidence_items:
         status = item.get("status")
         label = str(item.get("label") or item.get("key") or "Requirement")
-        if status in {"not_verified", "conflicting"}:
-            unresolved.append(label)
-        elif status == "inferred":
-            inferred.append(label)
 
+        if status == "conflicting":
+            hard_issues.append(label)
+        elif status in {"inferred", "not_verified"}:
+            provisional_issues.append(label)
+
+    # The deterministic matcher is authoritative about requested values that
+    # could not be established from current structured product data.
     for reason in result.get("reasons") or []:
         label = _warning_label(reason)
         if label:
-            unresolved.append(label)
+            hard_issues.append(label)
 
-    unresolved = list(dict.fromkeys(unresolved))
-    inferred = [
-        item for item in dict.fromkeys(inferred)
-        if item not in unresolved
+    hard_issues = list(dict.fromkeys(hard_issues))
+    provisional_issues = [
+        item
+        for item in dict.fromkeys(provisional_issues)
+        if item not in hard_issues
     ]
 
-    if unresolved:
+    if hard_issues:
         status = "fae_verification_required"
         rank = 0
-        issues = unresolved
-    elif inferred or not evidence_items:
+        issues = hard_issues
+    elif provisional_issues or not evidence_items:
         status = "provisional_fit"
         rank = 1
-        issues = inferred
+        issues = provisional_issues
     else:
         status = "verified_fit"
         rank = 2
@@ -609,6 +618,106 @@ def recommendation_safety(result: dict) -> dict:
         "verification_required": status == "fae_verification_required",
         "verification_issues": issues,
         "_recommendation_safety_rank": rank,
+    }
+
+
+
+_REASON_PREFIX_BY_CRITERION = {
+    "catalog_category": "Product type:",
+    "generic_interface": "Interface:",
+    "cellular_class": None,
+    "region": "Deployment region:",
+    "architecture": "Architecture:",
+    "antenna": "Antenna:",
+    "wifi_generation": "Acceptable generation:",
+    "gnss_precision": "GNSS precision:",
+    "host_interface": "Host interface:",
+    "antenna_connector": "Antenna connector:",
+    "antenna_count": "Antenna connections:",
+    "bluetooth_required": "Bluetooth capability",
+    "bluetooth_version_min": "Bluetooth >=",
+    "max_footprint_mm2": "Footprint <=",
+    "form_factor": "Form factor:",
+    "gnss_dual_band": "Dual-band GNSS",
+    "low_power": "Low-power characteristics",
+    "capacitance_uf": "Capacitance:",
+    "capacitor_voltage_v": "Voltage rating:",
+    "capacitor_tolerance_pct": "Tolerance:",
+    "capacitor_technology": "Capacitor technology:",
+    "capacitor_mounting": "Mounting:",
+    "capacitor_case_size": "Case size:",
+    "capacitor_esr_max_ohm": "ESR <=",
+    "capacitor_ripple_current_min_a": "Ripple current >=",
+    "capacitor_lifetime_min_h": "Lifetime >=",
+    "capacitor_temperature_min_c": "Minimum temperature:",
+    "capacitor_temperature_max_c": "Maximum temperature:",
+    "capacitor_energy_min_j": "Theoretical stored energy >=",
+}
+
+
+def _positive_match_reason_for_criterion(
+    criterion: dict,
+    reasons: list[str],
+) -> str | None:
+    key = str(criterion.get("key") or "")
+
+    if key.startswith("technology:"):
+        technology = key.split(":", 1)[1].upper()
+        target = f"{technology} capability".lower()
+        for reason in reasons:
+            if str(reason).lower() == target:
+                return str(reason)
+        return None
+
+    prefix = _REASON_PREFIX_BY_CRITERION.get(key)
+    if prefix is None:
+        if key == "cellular_class":
+            expected = str(criterion.get("expected") or "")
+            target = f"{expected} matches".lower()
+            for reason in reasons:
+                if str(reason).lower() == target:
+                    return str(reason)
+        return None
+
+    for reason in reasons:
+        text = str(reason)
+        if text.startswith("Not verified:"):
+            continue
+        if text.lower().startswith(prefix.lower()):
+            return text
+
+    return None
+
+
+def _catalog_match_fallback(
+    criterion: dict,
+    evidence_item: dict,
+    result: dict,
+) -> dict:
+    """
+    If deterministic matching positively confirmed a criterion from current
+    structured/catalog product data but ProductEvidence is missing/stale,
+    classify it as inferred catalog support, never as manufacturer-verified.
+    """
+    if evidence_item.get("status") != "not_verified":
+        return evidence_item
+
+    reason = _positive_match_reason_for_criterion(
+        criterion,
+        result.get("reasons") or [],
+    )
+    if not reason:
+        return evidence_item
+
+    return {
+        **evidence_item,
+        "status": "inferred",
+        "evidence_value": reason,
+        "source_type": "structured_catalog_fallback",
+        "source_title": "Current structured SE product data",
+        "source_url": result.get("product", {}).get("product_url") or None,
+        "page_number": None,
+        "confidence": 0.75,
     }
 
 
@@ -649,10 +758,15 @@ def annotate_results_with_evidence(
         by_product[row.product_id].append(row)
 
     for result in results:
-        evidence_items = [
-            _criterion_result(criterion, by_product.get(result["product"]["id"], []))
-            for criterion in criteria
-        ]
+        evidence_items = []
+        for criterion in criteria:
+            item = _criterion_result(
+                criterion,
+                by_product.get(result["product"]["id"], []),
+            )
+            item = _catalog_match_fallback(criterion, item, result)
+            evidence_items.append(item)
+
         summary = _summary(evidence_items)
 
         result["criterion_evidence"] = evidence_items

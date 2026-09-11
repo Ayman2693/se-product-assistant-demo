@@ -96,7 +96,7 @@ def test_unknown_explicit_requirement_requires_fae_verification():
 
     assert safety["recommendation_confidence"] == "fae_verification_required"
     assert safety["verification_required"] is True
-    assert "Maximum footprint" in safety["verification_issues"]
+    assert "Footprint <= 100 mm²" in safety["verification_issues"]
 
 
 def test_inferred_only_fit_is_provisional():

@@ -2706,10 +2706,10 @@ function App() {
               language === "de"
                 ? `Auf Basis der erfassten Anforderungen ist <strong>${htmlEscape(best.product.part_number)}</strong> von <strong>${htmlEscape(
                     best.product.manufacturer
-                  )}</strong> aktuell der stärkste <strong>vorläufige</strong> technische Treffer mit <strong>${best.match_percent}%</strong>. Die Eignung basiert teilweise auf Katalog- bzw. abgeleiteten Daten und sollte vor dem Design-in anhand der technischen Dokumentation bestätigt werden.`
+                  )}</strong> aktuell der stärkste <strong>vorläufige</strong> technische Treffer mit <strong>${best.match_percent}%</strong>. Die aktuellen SE-Katalog- bzw. strukturierten Produktdaten stützen die Eignung; die Verifikation anhand der Herstellerdokumentation ist noch nicht vollständig.`
                 : `Based on the collected requirements, <strong>${htmlEscape(best.product.part_number)}</strong> from <strong>${htmlEscape(
                     best.product.manufacturer
-                  )}</strong> is currently the strongest <strong>provisional</strong> technical match at <strong>${best.match_percent}%</strong>. The fit relies partly on catalog-derived or inferred data and should be confirmed against the technical documentation before design-in.`
+                  )}</strong> is currently the strongest <strong>provisional</strong> technical match at <strong>${best.match_percent}%</strong>. The current SE catalog / structured product data supports the fit; manufacturer-document verification is not yet complete.`
             );
           } else {
             addMessage(
@@ -3541,6 +3541,17 @@ function App() {
                             {verificationIssueText(match, language)}
                           </div>
                         )}
+                        {!match.verification_required &&
+                          match.recommendation_confidence === "provisional_fit" &&
+                          match.verification_issues.length > 0 && (
+                            <div className="fitProvisionalNote">
+                              {tr(
+                                language,
+                                "Supported by current SE catalog / structured product data; manufacturer-document verification is not complete.",
+                                "Durch aktuelle SE-Katalog- bzw. strukturierte Produktdaten gestützt; die Verifikation anhand der Herstellerdokumentation ist noch nicht vollständig."
+                              )}
+                            </div>
+                          )}
                         {match.extra_technologies.length === 0 ? (
                           <div className="scopeBadge scopeFocused">
                             {tr(language, "Focused solution", "Fokussierte Lösung")}
