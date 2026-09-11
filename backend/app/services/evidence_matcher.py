@@ -544,6 +544,74 @@ def _summary(items: list[dict]) -> dict:
     }
 
 
+
+_SAFETY_LABELS = {
+    "verified_fit": "Verified fit",
+    "provisional_fit": "Provisional fit",
+    "fae_verification_required": "FAE verification required",
+}
+
+
+def _warning_label(reason: str) -> str | None:
+    prefix = "Not verified:"
+    if not str(reason).startswith(prefix):
+        return None
+    value = str(reason)[len(prefix):].strip()
+    return value or None
+
+
+def recommendation_safety(result: dict) -> dict:
+    """
+    Keep recommendation confidence separate from technical match percentage.
+
+    A result can have a high match score yet still require verification when an
+    explicit requested specification is unknown or conflicting.
+    """
+    evidence_items = result.get("criterion_evidence") or []
+    unresolved: list[str] = []
+    inferred: list[str] = []
+
+    for item in evidence_items:
+        status = item.get("status")
+        label = str(item.get("label") or item.get("key") or "Requirement")
+        if status in {"not_verified", "conflicting"}:
+            unresolved.append(label)
+        elif status == "inferred":
+            inferred.append(label)
+
+    for reason in result.get("reasons") or []:
+        label = _warning_label(reason)
+        if label:
+            unresolved.append(label)
+
+    unresolved = list(dict.fromkeys(unresolved))
+    inferred = [
+        item for item in dict.fromkeys(inferred)
+        if item not in unresolved
+    ]
+
+    if unresolved:
+        status = "fae_verification_required"
+        rank = 0
+        issues = unresolved
+    elif inferred or not evidence_items:
+        status = "provisional_fit"
+        rank = 1
+        issues = inferred
+    else:
+        status = "verified_fit"
+        rank = 2
+        issues = []
+
+    return {
+        "recommendation_confidence": status,
+        "recommendation_confidence_label": _SAFETY_LABELS[status],
+        "verification_required": status == "fae_verification_required",
+        "verification_issues": issues,
+        "_recommendation_safety_rank": rank,
+    }
+
+
 def annotate_results_with_evidence(
     db: Session,
     request: MatchRequest,
@@ -590,6 +658,7 @@ def annotate_results_with_evidence(
         result["criterion_evidence"] = evidence_items
         result["evidence_summary"] = summary
         result["evidence_score"] = summary["evidence_score"]
+        result.update(recommendation_safety(result))
 
     return results
 
@@ -599,6 +668,7 @@ def evidence_sort_key(result: dict) -> tuple:
     return (
         result.get("match_percent", 0),
         result.get("solution_scope_score", 100),
+        result.get("_recommendation_safety_rank", 0),
         result.get("evidence_score", 0),
         summary.get("verified", 0),
         -summary.get("conflicting", 0),

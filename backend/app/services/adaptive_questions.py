@@ -287,7 +287,7 @@ QUESTION_TEXT = {
     "capacitorMounting": "What mounting style do you need?",
     "capacitorTolerance": "Do you have a capacitance tolerance requirement?",
     "lowPower": "Is long battery life / low power consumption a major requirement?",
-    "hostInterface": "Which host interface do you prefer for the remaining top candidates?",
+    "hostInterface": "Which host interface does your system support?",
     "antennaConnector": "Which external antenna connection do you prefer?",
     "antennaCount": "How many antenna connections do you need?",
     "formFactor": "Do you have a preferred module form factor?",
@@ -345,6 +345,18 @@ def _question_specs(request: MatchRequest) -> list[dict]:
                 lambda p: p.features.architecture if p.features else None,
                 priority=94,
             )
+
+            # Host-based wireless modules depend on a host-side transport.
+            # This is core engineering qualification, not only a tie-breaker.
+            if request.architecture == "host":
+                add(
+                    "hostInterface",
+                    bool(request.host_interface),
+                    _host_interface_signal,
+                    required=True,
+                    priority=93,
+                    stage="qualification",
+                )
 
         if "wifi" in tech:
             add(
@@ -451,16 +463,6 @@ def _question_specs(request: MatchRequest) -> list[dict]:
     # only after all core qualification questions are answered, and only when
     # they materially split the current top-ranked tie group.
     if request.product_domain == "connectivity" or tech.intersection({"wifi", "bluetooth", "cellular", "gnss"}):
-        if request.architecture == "host":
-            add(
-                "hostInterface",
-                bool(request.host_interface),
-                _host_interface_signal,
-                required=False,
-                priority=92,
-                stage="tie_break",
-            )
-
         if request.antenna == "external":
             add(
                 "antennaConnector",

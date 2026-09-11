@@ -300,6 +300,7 @@ def match_products(
 
     for row in results:
         row.pop("_evidence_completeness", None)
+        row.pop("_recommendation_safety_rank", None)
 
     elapsed_ms = (time.perf_counter() - started) * 1000.0
     logger.info(

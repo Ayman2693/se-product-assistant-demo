@@ -87,6 +87,7 @@ def _match(db: Session, req_dict: dict):
 
     for row in results:
         row.pop("_evidence_completeness", None)
+        row.pop("_recommendation_safety_rank", None)
 
     return {"count": len(technical.scored), "matches": results[:10]}
 

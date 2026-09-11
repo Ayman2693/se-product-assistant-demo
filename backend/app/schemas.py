@@ -170,6 +170,12 @@ class MatchResult(BaseModel):
     match_percent: int
     solution_scope_score: int = 100
     extra_technologies: List[str] = Field(default_factory=list)
+
+    recommendation_confidence: str = "provisional_fit"
+    recommendation_confidence_label: str = "Provisional fit"
+    verification_required: bool = False
+    verification_issues: List[str] = Field(default_factory=list)
+
     reasons: List[str] = Field(default_factory=list)
     evidence_score: int = 0
     evidence_summary: MatchEvidenceSummary = Field(default_factory=MatchEvidenceSummary)

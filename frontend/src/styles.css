@@ -922,3 +922,43 @@ a.evidenceSource:hover {
   border-color: #cfe5da;
   background: #f3faf6;
 }
+
+
+/* Phase 5.0.3 — engineering qualification safety */
+.fitConfidence {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 230px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 850;
+  text-align: center;
+}
+
+.fitVerified {
+  border: 1px solid #cfe5da;
+  background: #f3faf6;
+  color: #18764b;
+}
+
+.fitProvisional {
+  border: 1px solid #e4dfbf;
+  background: #fffdf2;
+  color: #765f12;
+}
+
+.fitReview {
+  border: 1px solid #eccdcd;
+  background: #fff7f7;
+  color: #9a2630;
+}
+
+.fitIssue {
+  max-width: 250px;
+  color: #8a4a4a;
+  font-size: 11px;
+  line-height: 1.35;
+  text-align: right;
+}

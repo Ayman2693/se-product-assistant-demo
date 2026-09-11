@@ -146,6 +146,7 @@ def test_answered_field_is_not_asked_again():
             technologies=["wifi"],
             architecture="host",
             wifi_generation=["5", "6"],
+            answered_open_fields=["hostInterface"],
         ),
     )
 

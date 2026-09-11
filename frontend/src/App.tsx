@@ -199,6 +199,13 @@ type Match = {
   match_percent: number;
   solution_scope_score: number;
   extra_technologies: string[];
+  recommendation_confidence:
+    | "verified_fit"
+    | "provisional_fit"
+    | "fae_verification_required";
+  recommendation_confidence_label: string;
+  verification_required: boolean;
+  verification_issues: string[];
   reasons: string[];
   evidence_score: number;
   evidence_summary: MatchEvidenceSummary;
@@ -461,8 +468,8 @@ function localizeQuestion(
       "Soll Bluetooth LE ebenfalls in der Funklösung enthalten sein?",
     "Which GNSS frequency-band capability does your application need?":
       "Welche GNSS-Frequenzband-Fähigkeit benötigt Ihre Anwendung?",
-    "Which host interface do you prefer for the remaining top candidates?":
-      "Welche Host-Schnittstelle bevorzugen Sie für die verbleibenden Top-Kandidaten?",
+    "Which host interface does your system support?":
+      "Welche Host-Schnittstelle unterstützt Ihr System?",
     "Which external antenna connection do you prefer?":
       "Welchen externen Antennenanschluss bevorzugen Sie?",
     "How many antenna connections do you need?":
@@ -691,6 +698,28 @@ function domainSpecialRequirementOptions(domain?: string): Option[] {
 
   common.push({ label: "No special requirements", value: "No special requirements" });
   return common;
+}
+
+function recommendationConfidenceLabel(match: Match, language: Language) {
+  if (match.recommendation_confidence === "verified_fit") {
+    return tr(language, "Verified fit", "Verifizierte Eignung");
+  }
+  if (match.recommendation_confidence === "fae_verification_required") {
+    return tr(language, "FAE verification required", "FAE-Prüfung erforderlich");
+  }
+  return tr(language, "Provisional fit", "Vorläufige Eignung");
+}
+
+function recommendationConfidenceClass(match: Match) {
+  if (match.recommendation_confidence === "verified_fit") return "fitVerified";
+  if (match.recommendation_confidence === "fae_verification_required") return "fitReview";
+  return "fitProvisional";
+}
+
+function verificationIssueText(match: Match, language: Language) {
+  if (!match.verification_issues.length) return "";
+  const issues = match.verification_issues.join(", ");
+  return tr(language, `Verification needed: ${issues}`, `Zu prüfen: ${issues}`);
 }
 
 function customerEvidenceBadge(match: Match, language: Language): string | null {
@@ -2656,16 +2685,44 @@ function App() {
         );
 
         if (topMatches.length === 1) {
-          addMessage(
-            "bot",
-            language === "de"
-              ? `Auf Basis der erfassten Anforderungen ist <strong>${htmlEscape(best.product.part_number)}</strong> von <strong>${htmlEscape(
-                  best.product.manufacturer
-                )}</strong> aktuell die technisch passendste Empfehlung mit <strong>${best.match_percent}%</strong>.`
-              : `Based on the collected requirements, <strong>${htmlEscape(best.product.part_number)}</strong> from <strong>${htmlEscape(
-                  best.product.manufacturer
-                )}</strong> is currently the strongest technical match at <strong>${best.match_percent}%</strong>.`
-          );
+          if (best.recommendation_confidence === "fae_verification_required") {
+            const issueText = best.verification_issues.length
+              ? best.verification_issues.map((item) => htmlEscape(item)).join(", ")
+              : tr(language, "one or more requested specifications", "eine oder mehrere angefragte Spezifikationen");
+
+            addMessage(
+              "bot",
+              language === "de"
+                ? `<strong>${htmlEscape(best.product.part_number)}</strong> von <strong>${htmlEscape(
+                    best.product.manufacturer
+                  )}</strong> ist mit <strong>${best.match_percent}%</strong> aktuell der stärkste <strong>vorläufige</strong> Treffer. Mindestens eine angefragte Eigenschaft konnte jedoch noch nicht sicher bestätigt werden: <strong>${issueText}</strong>. Eine Prüfung anhand der technischen Dokumentation bzw. durch einen SE FAE wird vor dem Design-in empfohlen.`
+                : `<strong>${htmlEscape(best.product.part_number)}</strong> from <strong>${htmlEscape(
+                    best.product.manufacturer
+                  )}</strong> is currently the strongest <strong>provisional</strong> match at <strong>${best.match_percent}%</strong>. However, at least one requested specification is not yet confirmed: <strong>${issueText}</strong>. Datasheet / SE FAE verification is recommended before design-in.`
+            );
+          } else if (best.recommendation_confidence === "provisional_fit") {
+            addMessage(
+              "bot",
+              language === "de"
+                ? `Auf Basis der erfassten Anforderungen ist <strong>${htmlEscape(best.product.part_number)}</strong> von <strong>${htmlEscape(
+                    best.product.manufacturer
+                  )}</strong> aktuell der stärkste <strong>vorläufige</strong> technische Treffer mit <strong>${best.match_percent}%</strong>. Die Eignung basiert teilweise auf Katalog- bzw. abgeleiteten Daten und sollte vor dem Design-in anhand der technischen Dokumentation bestätigt werden.`
+                : `Based on the collected requirements, <strong>${htmlEscape(best.product.part_number)}</strong> from <strong>${htmlEscape(
+                    best.product.manufacturer
+                  )}</strong> is currently the strongest <strong>provisional</strong> technical match at <strong>${best.match_percent}%</strong>. The fit relies partly on catalog-derived or inferred data and should be confirmed against the technical documentation before design-in.`
+            );
+          } else {
+            addMessage(
+              "bot",
+              language === "de"
+                ? `Auf Basis der erfassten Anforderungen ist <strong>${htmlEscape(best.product.part_number)}</strong> von <strong>${htmlEscape(
+                    best.product.manufacturer
+                  )}</strong> aktuell die technisch passendste <strong>verifizierte</strong> Empfehlung mit <strong>${best.match_percent}%</strong>.`
+                : `Based on the collected requirements, <strong>${htmlEscape(best.product.part_number)}</strong> from <strong>${htmlEscape(
+                    best.product.manufacturer
+                  )}</strong> is currently the strongest <strong>verified</strong> technical match at <strong>${best.match_percent}%</strong>.`
+            );
+          }
           offerProjectSupport(req);
         } else {
           addMessage(
@@ -3476,6 +3533,14 @@ function App() {
                       </div>
                       <div className="scoreStack customerScoreStack">
                         <div className="score">{match.match_percent}% {tr(language, "match", "Übereinstimmung")}</div>
+                        <div className={`fitConfidence ${recommendationConfidenceClass(match)}`}>
+                          {recommendationConfidenceLabel(match, language)}
+                        </div>
+                        {match.verification_required && match.verification_issues.length > 0 && (
+                          <div className="fitIssue">
+                            {verificationIssueText(match, language)}
+                          </div>
+                        )}
                         {match.extra_technologies.length === 0 ? (
                           <div className="scopeBadge scopeFocused">
                             {tr(language, "Focused solution", "Fokussierte Lösung")}
@@ -3499,7 +3564,7 @@ function App() {
 
                     {viewMode === "developer" && (
                       <div className="developerEvidence">
-                        Scope {match.solution_scope_score}% · Evidence {match.evidence_score}% · {match.evidence_summary.verified} verified · {match.evidence_summary.inferred} inferred · {match.evidence_summary.not_verified} unknown · {match.evidence_summary.conflicting} conflicts
+                        Confidence {match.recommendation_confidence} · Scope {match.solution_scope_score}% · Evidence {match.evidence_score}% · {match.evidence_summary.verified} verified · {match.evidence_summary.inferred} inferred · {match.evidence_summary.not_verified} unknown · {match.evidence_summary.conflicting} conflicts
                       </div>
                     )}
 

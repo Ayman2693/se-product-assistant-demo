@@ -1373,3 +1373,56 @@ Developer Mode exposes the adaptive mode (`qualification` or `tie_break`) in
 the information-gain hint.
 
 No database migration and no catalog sync are required.
+
+
+# Phase 5.0.3 — Engineering Qualification Safety
+
+This patch separates **technical match percentage** from **recommendation
+confidence** so a high score is never presented as fully confirmed when an
+explicit customer requirement is still unknown.
+
+## Host interface becomes core qualification
+
+When `architecture = host`, the assistant now asks:
+
+`Which host interface does your system support?`
+
+Options remain SDIO, PCIe, SDIO or PCIe, and No preference / not sure.
+
+This question runs in `qualification` mode. It is not merely a tie-breaker,
+because an SDIO-only host cannot use a PCIe-only module.
+
+## Recommendation confidence
+
+Every match now returns:
+
+- `recommendation_confidence`
+- `recommendation_confidence_label`
+- `verification_required`
+- `verification_issues`
+
+The three states are:
+
+- `verified_fit` — all represented requested criteria are verified and there
+  are no unresolved matcher warnings.
+- `provisional_fit` — no explicit requirement is unresolved, but some fit is
+  based on inferred/catalog-derived evidence or manufacturer verification is
+  incomplete.
+- `fae_verification_required` — at least one explicit requested requirement is
+  unknown/conflicting, or the deterministic matcher emitted `Not verified:`.
+
+Example: if the customer requires `footprint <= 100 mm²` and the catalog cannot
+confirm the footprint, a product can still be returned as a candidate, but the
+assistant calls it the strongest **provisional** match and explicitly states
+that datasheet / SE FAE verification is required before design-in.
+
+## Ranking safety
+
+Technical score remains authoritative. For equal technical score and equal
+solution scope only, the tie order is:
+
+`Verified fit > Provisional fit > FAE verification required`
+
+and then normal evidence quality is used.
+
+No database migration and no catalog sync are required.
