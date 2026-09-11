@@ -14,6 +14,9 @@ from app.services.matching_engine import run_fast_technical_match
 from app.services.matcher import (
     _antenna_connectors,
     _antenna_count,
+    _antenna_applications,
+    _antenna_band_capabilities,
+    _antenna_active_value,
     _footprint_mm2,
     _host_interfaces,
 )
@@ -96,6 +99,32 @@ def _low_power(product: Product):
     return None
 
 
+
+
+def _antenna_application_signal(product: Product):
+    values = _antenna_applications(product)
+    if not values:
+        return None
+    return "multi" if len(values) >= 2 else next(iter(values))
+
+
+def _antenna_band_signal(product: Product):
+    values = _antenna_band_capabilities(product)
+    if not values:
+        return None
+    for value in ("wifi_6e", "wifi_245", "wifi_24", "gnss_multiband", "gnss_l1"):
+        if value in values:
+            return value
+    return None
+
+
+def _antenna_active_signal(product: Product):
+    value = _antenna_active_value(product)
+    if value is True:
+        return "active"
+    if value is False:
+        return "passive"
+    return None
 
 def _host_interface_signal(product: Product):
     values = _host_interfaces(_haystack(product))
@@ -181,6 +210,29 @@ def _fixed_options(key: str) -> list[dict]:
         "antenna": [
             ("Integrated / PCB antenna", "internal"),
             ("External antenna / antenna pin", "external"),
+        ],
+        "antennaApplication": [
+            ("GNSS", "gnss"),
+            ("Wi-Fi / Bluetooth", "wifi_bt"),
+            ("Cellular / LTE / 5G", "cellular"),
+            ("ISM / LPWAN (433 / 868 / 915 MHz)", "ism"),
+            ("Multi-radio / combination", "multi"),
+        ],
+        "antennaGnssBand": [
+            ("GNSS L1", "gnss_l1"),
+            ("GNSS multi-band (L1 + L2/L5)", "gnss_multiband"),
+            ("No fixed band / not sure", "No preference"),
+        ],
+        "antennaWifiBand": [
+            ("2.4 GHz", "wifi_24"),
+            ("2.4 + 5 GHz", "wifi_245"),
+            ("6 GHz / Wi-Fi 6E capable", "wifi_6e"),
+            ("No fixed band / not sure", "No preference"),
+        ],
+        "antennaActive": [
+            ("Active antenna", "active"),
+            ("Passive antenna", "passive"),
+            ("No preference / not sure", "No preference"),
         ],
         "wifiGeneration": [
             ("Wi-Fi 4", "4"),
@@ -276,6 +328,10 @@ QUESTION_TEXT = {
     "region": "Where will the product be deployed?",
     "architecture": "How should the wireless solution be controlled?",
     "antenna": "Which module antenna approach do you prefer?",
+    "antennaApplication": "Which radio system must the antenna support?",
+    "antennaGnssBand": "Which GNSS band capability do you need?",
+    "antennaWifiBand": "Which Wi-Fi / Bluetooth frequency coverage do you need?",
+    "antennaActive": "Do you need an active or passive GNSS antenna?",
     "wifiGeneration": "Which Wi-Fi generations are acceptable? You can select more than one.",
     "bluetoothRequirement": "What minimum Bluetooth LE version does your application require?",
     "gnssPrecision": "What positioning performance does your application need?",
@@ -426,6 +482,40 @@ def _question_specs(request: MatchRequest) -> list[dict]:
             priority=90,
         )
 
+    if request.product_domain == "antenna":
+        add(
+            "antennaApplication",
+            bool(request.antenna_application),
+            _antenna_application_signal,
+            required=True,
+            priority=100,
+        )
+
+        if request.antenna_application == "gnss":
+            add(
+                "antennaGnssBand",
+                bool(request.antenna_band),
+                _antenna_band_signal,
+                required=True,
+                priority=98,
+            )
+            add(
+                "antennaActive",
+                request.antenna_active is not None,
+                _antenna_active_signal,
+                required=True,
+                priority=90,
+            )
+
+        if request.antenna_application == "wifi_bt":
+            add(
+                "antennaWifiBand",
+                bool(request.antenna_band),
+                _antenna_band_signal,
+                required=True,
+                priority=98,
+            )
+
     if request.catalog_category == "Capacitors":
         add(
             "capacitorCapacitance",
@@ -495,6 +585,16 @@ def _question_specs(request: MatchRequest) -> list[dict]:
             _footprint_signal,
             required=False,
             priority=60,
+            stage="tie_break",
+        )
+
+    if request.product_domain == "antenna":
+        add(
+            "maxFootprint",
+            request.max_footprint_mm2 is not None,
+            _footprint_signal,
+            required=False,
+            priority=92,
             stage="tie_break",
         )
 

@@ -38,6 +38,9 @@ type Requirements = {
   hostInterface?: string;
   antennaConnector?: string;
   antennaCount?: string;
+  antennaApplication?: string;
+  antennaBand?: string;
+  antennaActive?: string;
   bluetoothRequirement?: string;
   maxFootprint?: string;
   formFactor?: string;
@@ -85,6 +88,10 @@ type QuestionKey =
   | "hostInterface"
   | "antennaConnector"
   | "antennaCount"
+  | "antennaApplication"
+  | "antennaGnssBand"
+  | "antennaWifiBand"
+  | "antennaActive"
   | "bluetoothRequirement"
   | "maxFootprint"
   | "formFactor"
@@ -135,6 +142,9 @@ type ProductFeatures = {
   architecture?: string | null;
   antenna?: string | null;
   form_factor?: string | null;
+  antenna_applications?: string[];
+  antenna_bands?: string[];
+  antenna_active?: boolean | null;
   temperature_min?: number | null;
   temperature_max?: number | null;
   certifications: string[];
@@ -302,6 +312,11 @@ const LABELS_DE: Record<string, string> = {
   hostInterface: "Host-Schnittstelle",
   antennaConnector: "Antennenanschluss",
   antennaCount: "Antennenanschlüsse",
+  antennaApplication: "Antennenanwendung",
+  antennaGnssBand: "GNSS-Antennenband",
+  antennaWifiBand: "Wi-Fi- / Bluetooth-Band",
+  antennaBand: "Antennenband",
+  antennaActive: "GNSS-Antennentyp",
   bluetoothRequirement: "Bluetooth-Anforderung",
   maxFootprint: "Maximale Fläche",
   formFactor: "Bauform",
@@ -425,6 +440,19 @@ const OPTION_DE: Record<string, string> = {
   "Within 3 months": "Innerhalb von 3 Monaten",
   "3–6 months": "3–6 Monate",
   "More than 6 months": "Mehr als 6 Monate",
+  "GNSS": "GNSS",
+  "Wi-Fi / Bluetooth": "Wi-Fi / Bluetooth",
+  "Cellular / LTE / 5G": "Mobilfunk / LTE / 5G",
+  "ISM / LPWAN (433 / 868 / 915 MHz)": "ISM / LPWAN (433 / 868 / 915 MHz)",
+  "Multi-radio / combination": "Multi-Radio / Kombination",
+  "GNSS L1": "GNSS L1",
+  "GNSS multi-band (L1 + L2/L5)": "GNSS Multi-Band (L1 + L2/L5)",
+  "No fixed band / not sure": "Kein festes Band / noch offen",
+  "2.4 GHz": "2,4 GHz",
+  "2.4 + 5 GHz": "2,4 + 5 GHz",
+  "6 GHz / Wi-Fi 6E capable": "6 GHz / Wi-Fi 6E-fähig",
+  "Active antenna": "Aktive Antenne",
+  "Passive antenna": "Passive Antenne",
   "Development service provider": "Entwicklungsdienstleister",
   "Manufacturer / EMS": "Hersteller / EMS",
   "EMC laboratory": "EMV-Labor",
@@ -477,6 +505,14 @@ function localizeQuestion(
       "Wie soll das Bluetooth-Modul in der Anwendung eingesetzt werden?",
     "Which module antenna approach do you prefer?":
       "Welche Antennenvariante des Moduls bevorzugen Sie?",
+    "Which radio system must the antenna support?":
+      "Welches Funksystem muss die Antenne unterstützen?",
+    "Which GNSS band capability do you need?":
+      "Welche GNSS-Bandunterstützung benötigen Sie?",
+    "Which Wi-Fi / Bluetooth frequency coverage do you need?":
+      "Welche Frequenzabdeckung für Wi-Fi / Bluetooth benötigen Sie?",
+    "Do you need an active or passive GNSS antenna?":
+      "Benötigen Sie eine aktive oder passive GNSS-Antenne?",
     "Which Wi-Fi generation is required?":
       "Welche Wi-Fi-Generation wird benötigt?",
     "Which Wi-Fi generations are acceptable? You can select more than one.":
@@ -585,6 +621,9 @@ function localizeReason(reason: string, language: Language) {
     .replace(/^Region:/, "Region:")
     .replace(/^Architecture:/, "Architektur:")
     .replace(/^Antenna:/, "Antenne:")
+    .replace(/^Antenna application:/, "Antennenanwendung:")
+    .replace(/^Antenna band:/, "Antennenband:")
+    .replace(/^Antenna type:/, "Antennentyp:")
     .replace(/^Cellular class:/, "Mobilfunkklasse:")
     .replace(/^GNSS precision:/, "GNSS-Genauigkeit:")
     .replace(/^Not verified:/, "Noch zu bestätigen:");
@@ -618,6 +657,11 @@ const LABELS: Record<string, string> = {
   hostInterface: "Host interface",
   antennaConnector: "Antenna connector",
   antennaCount: "Antenna connections",
+  antennaApplication: "Antenna application",
+  antennaGnssBand: "GNSS antenna band",
+  antennaWifiBand: "Wi-Fi / Bluetooth band",
+  antennaBand: "Antenna band",
+  antennaActive: "GNSS antenna type",
   bluetoothRequirement: "Bluetooth requirement",
   maxFootprint: "Maximum footprint",
   formFactor: "Form factor",
@@ -961,6 +1005,30 @@ function inferFromText(text: string): Partial<Requirements> {
 
 
   // Capacitor-specific values can be supplied directly in the first sentence.
+  if (out.productDomain === "antenna") {
+    const antennaApps: string[] = [];
+    if (/\bgnss\b|\bgps\b|\bgalileo\b|\bglonass\b|\bbeidou\b/.test(t)) antennaApps.push("gnss");
+    if (/wi-?fi|\bwlan\b|bluetooth|\bble\b/.test(t)) antennaApps.push("wifi_bt");
+    if (/\bcellular\b|\blte\b|\b5g\b|\b4g\b|\bgsm\b|\bumts\b|\blte-?m\b|\bnb-?iot\b/.test(t)) antennaApps.push("cellular");
+    if (/\blora\b|\bsigfox\b|\bism\b|\bsub[- ]?ghz\b|\b433\s*mhz\b|\b868\s*mhz\b|\b915\s*mhz\b/.test(t)) antennaApps.push("ism");
+
+    const uniqueApps = [...new Set(antennaApps)];
+    if (uniqueApps.length >= 2) out.antennaApplication = "multi";
+    else if (uniqueApps.length === 1) out.antennaApplication = uniqueApps[0];
+
+    if (out.antennaApplication === "gnss") {
+      if (/dual[- ]band|multi[- ]band|\bl2\b|\bl5\b|\bl1\s*[/+]\s*l(?:2|5)\b/.test(t)) out.antennaBand = "gnss_multiband";
+      else if (/\bl1\b|1559\s*[-–]\s*1609/.test(t)) out.antennaBand = "gnss_l1";
+
+      if (/\bactive\b[^.;]{0,24}\b(?:gnss\s+)?(?:patch\s+)?antenna\b|\bactive\s+gnss\b/.test(t)) out.antennaActive = "active";
+      else if (/\bpassive\b[^.;]{0,24}\b(?:gnss\s+)?(?:patch\s+)?antenna\b|\bpassive\s+gnss\b/.test(t)) out.antennaActive = "passive";
+    } else if (out.antennaApplication === "wifi_bt") {
+      if (/wi-?fi\s*6e|\b6e\b|\b6\s*ghz\b/.test(t)) out.antennaBand = "wifi_6e";
+      else if (/2[.,]4\s*(?:\+|\/|and)\s*5\s*ghz|dual[- ]band\s+wi-?fi/.test(t)) out.antennaBand = "wifi_245";
+      else if (/\b2[.,]4\s*ghz\b/.test(t)) out.antennaBand = "wifi_24";
+    }
+  }
+
   if (out.catalogCategory === "Capacitors") {
     const c = parseCapacitanceUf(text);
     if (c != null) out.capacitorCapacitance = formatCapacitanceUf(c);
@@ -1127,6 +1195,11 @@ async function interpretWithBackend(text: string): Promise<Partial<Requirements>
       r.antenna_connector === "ufl" ? "U.FL" :
       r.antenna_connector === "antenna_pin" ? "Antenna pin / solder pad" : undefined,
     antennaCount: r.antenna_count ? String(r.antenna_count) : undefined,
+    antennaApplication: r.antenna_application ?? undefined,
+    antennaBand: r.antenna_band ?? undefined,
+    antennaActive:
+      r.antenna_active === true ? "active" :
+      r.antenna_active === false ? "passive" : undefined,
     bluetoothRequirement:
       r.bluetooth_version_min ? `Bluetooth ${r.bluetooth_version_min}+` :
       r.bluetooth_required ? "Bluetooth required, version open" : undefined,
@@ -1197,6 +1270,59 @@ function questionFor(req: Requirements): { key: QuestionKey; text: string; optio
         { label: "GNSS", value: ["gnss"] },
       ],
     };
+  }
+
+  if (req.productDomain === "antenna") {
+    if (!req.antennaApplication) {
+      return {
+        key: "antennaApplication",
+        text: "Which radio system must the antenna support?",
+        options: [
+          { label: "GNSS", value: "gnss" },
+          { label: "Wi-Fi / Bluetooth", value: "wifi_bt" },
+          { label: "Cellular / LTE / 5G", value: "cellular" },
+          { label: "ISM / LPWAN (433 / 868 / 915 MHz)", value: "ism" },
+          { label: "Multi-radio / combination", value: "multi" },
+        ],
+      };
+    }
+
+    if (req.antennaApplication === "gnss" && !req.antennaBand) {
+      return {
+        key: "antennaGnssBand",
+        text: "Which GNSS band capability do you need?",
+        options: [
+          { label: "GNSS L1", value: "gnss_l1" },
+          { label: "GNSS multi-band (L1 + L2/L5)", value: "gnss_multiband" },
+          { label: "No fixed band / not sure", value: "No preference" },
+        ],
+      };
+    }
+
+    if (req.antennaApplication === "wifi_bt" && !req.antennaBand) {
+      return {
+        key: "antennaWifiBand",
+        text: "Which Wi-Fi / Bluetooth frequency coverage do you need?",
+        options: [
+          { label: "2.4 GHz", value: "wifi_24" },
+          { label: "2.4 + 5 GHz", value: "wifi_245" },
+          { label: "6 GHz / Wi-Fi 6E capable", value: "wifi_6e" },
+          { label: "No fixed band / not sure", value: "No preference" },
+        ],
+      };
+    }
+
+    if (req.antennaApplication === "gnss" && !req.antennaActive) {
+      return {
+        key: "antennaActive",
+        text: "Do you need an active or passive GNSS antenna?",
+        options: [
+          { label: "Active antenna", value: "active" },
+          { label: "Passive antenna", value: "passive" },
+          { label: "No preference / not sure", value: "No preference" },
+        ],
+      };
+    }
   }
 
   if (
@@ -2006,6 +2132,41 @@ function editableQuestionFor(
         { label: "Host-based", value: "host" },
       ],
     },
+    antennaApplication: {
+      text: "Update the antenna application:",
+      options: [
+        { label: "GNSS", value: "gnss" },
+        { label: "Wi-Fi / Bluetooth", value: "wifi_bt" },
+        { label: "Cellular / LTE / 5G", value: "cellular" },
+        { label: "ISM / LPWAN (433 / 868 / 915 MHz)", value: "ism" },
+        { label: "Multi-radio / combination", value: "multi" },
+      ],
+    },
+    antennaGnssBand: {
+      text: "Update the GNSS antenna band:",
+      options: [
+        { label: "GNSS L1", value: "gnss_l1" },
+        { label: "GNSS multi-band (L1 + L2/L5)", value: "gnss_multiband" },
+        { label: "No fixed band / not sure", value: "No preference" },
+      ],
+    },
+    antennaWifiBand: {
+      text: "Update the Wi-Fi / Bluetooth antenna band:",
+      options: [
+        { label: "2.4 GHz", value: "wifi_24" },
+        { label: "2.4 + 5 GHz", value: "wifi_245" },
+        { label: "6 GHz / Wi-Fi 6E capable", value: "wifi_6e" },
+        { label: "No fixed band / not sure", value: "No preference" },
+      ],
+    },
+    antennaActive: {
+      text: "Update the GNSS antenna type:",
+      options: [
+        { label: "Active antenna", value: "active" },
+        { label: "Passive antenna", value: "passive" },
+        { label: "No preference / not sure", value: "No preference" },
+      ],
+    },
     antenna: {
       text: "Update the antenna approach:",
       options: [
@@ -2162,6 +2323,13 @@ function naturalReply(key: QuestionKey, value: Option["value"]) {
     hostInterface: `Good — I’ll use <strong>${htmlEscape(v)}</strong> as the host-interface requirement.`,
     antennaConnector: `Understood — antenna connection: <strong>${htmlEscape(v)}</strong>.`,
     antennaCount: `Understood — antenna connection count: <strong>${htmlEscape(v)}</strong>.`,
+    antennaApplication: `Good — antenna application: <strong>${htmlEscape(v)}</strong>.`,
+    antennaGnssBand: `Understood — GNSS antenna band: <strong>${htmlEscape(v)}</strong>.`,
+    antennaWifiBand: `Understood — RF coverage: <strong>${htmlEscape(v)}</strong>.`,
+    antennaActive:
+      v === "No preference"
+        ? "Okay — active/passive remains open."
+        : `Understood — GNSS antenna type: <strong>${htmlEscape(v)}</strong>.`,
     bluetoothRequirement:
       v === "Bluetooth required, version open"
         ? "Okay — Bluetooth LE is required, but the minimum version remains open."
@@ -2241,6 +2409,12 @@ function localizedNaturalReply(key: QuestionKey, value: Option["value"], languag
     hostInterface: `Host-Schnittstelle: <strong>${htmlEscape(v)}</strong>.`,
     antennaConnector: `Antennenanschluss: <strong>${htmlEscape(v)}</strong>.`,
     antennaCount: `Antennenanschlüsse: <strong>${htmlEscape(v)}</strong>.`,
+    antennaApplication: `Antennenanwendung: <strong>${htmlEscape(v)}</strong>.`,
+    antennaGnssBand: `GNSS-Antennenband: <strong>${htmlEscape(v)}</strong>.`,
+    antennaWifiBand: `HF-Abdeckung: <strong>${htmlEscape(v)}</strong>.`,
+    antennaActive: v === "No preference"
+      ? "Okay — aktiv/passiv bleibt offen."
+      : `GNSS-Antennentyp: <strong>${htmlEscape(v)}</strong>.`,
     bluetoothRequirement: `Bluetooth-Anforderung: <strong>${htmlEscape(v)}</strong>.`,
     maxFootprint: `Maximale Fläche: <strong>${htmlEscape(v)}</strong>.`,
     formFactor: `Bauform: <strong>${htmlEscape(v)}</strong>.`,
@@ -2315,6 +2489,15 @@ function buildMatchBody(req: Requirements) {
       req.antennaCount && req.antennaCount !== "No preference"
         ? Number(req.antennaCount)
         : null,
+    antenna_application: req.antennaApplication ?? null,
+    antenna_band:
+      req.antennaBand && req.antennaBand !== "No preference"
+        ? req.antennaBand
+        : null,
+    antenna_active:
+      req.antennaActive === "active" ? true :
+      req.antennaActive === "passive" ? false :
+      null,
     bluetooth_required: bluetoothRequired,
     bluetooth_version_min: btMin,
     max_footprint_mm2: maxFootprint,
@@ -2376,6 +2559,10 @@ function buildMatchBody(req: Requirements) {
       ...(req.hostInterface === "No preference" ? ["hostInterface"] : []),
       ...(req.antennaConnector === "No preference" ? ["antennaConnector"] : []),
       ...(req.antennaCount === "No preference" ? ["antennaCount"] : []),
+      ...(req.antennaBand === "No preference"
+        ? [req.antennaApplication === "gnss" ? "antennaGnssBand" : "antennaWifiBand"]
+        : []),
+      ...(req.antennaActive === "No preference" ? ["antennaActive"] : []),
       ...(req.formFactor === "No preference" ? ["formFactor"] : []),
       ...(req.maxFootprint === "No fixed limit" ? ["maxFootprint"] : []),
     ],
@@ -2719,6 +2906,14 @@ function App() {
         expected.push("gnssPrecision", "gnssDualBand");
     } else if (requirements.productDomain === "positioning") {
       expected.push("gnssPrecision", "gnssDualBand");
+    } else if (requirements.productDomain === "antenna") {
+      expected.push("catalogCategory", "antennaApplication");
+      if (requirements.antennaApplication === "gnss") {
+        expected.push("antennaBand", "antennaActive");
+      }
+      if (requirements.antennaApplication === "wifi_bt") {
+        expected.push("antennaBand");
+      }
     } else if (DOMAIN_CATEGORY_OPTIONS[requirements.productDomain ?? ""]?.length) {
       expected.push("catalogCategory");
       if (requirements.productDomain === "sensors") expected.push("genericInterface");
@@ -2971,6 +3166,9 @@ function App() {
         next.capacitorLifetimeMin = undefined;
         next.capacitorTemperatureRange = undefined;
         next.capacitorEnergyMin = undefined;
+        next.antennaApplication = undefined;
+        next.antennaBand = undefined;
+        next.antennaActive = undefined;
 
         if (next.productDomain !== "connectivity") {
           next.cellularClass = undefined;
@@ -3181,6 +3379,18 @@ function App() {
       case "antennaCount":
         next.antennaCount = String(value);
         break;
+      case "antennaApplication":
+        next.antennaApplication = String(value);
+        next.antennaBand = undefined;
+        next.antennaActive = undefined;
+        break;
+      case "antennaGnssBand":
+      case "antennaWifiBand":
+        next.antennaBand = String(value);
+        break;
+      case "antennaActive":
+        next.antennaActive = String(value);
+        break;
       case "bluetoothRequirement":
         next.bluetoothRequirement = String(value);
         if (String(value) !== "No requirement") {
@@ -3338,6 +3548,33 @@ function App() {
       if (/no preference|not sure/i.test(q)) return applyAnswer(activeQuestion, "No preference", q);
     }
 
+    if (activeQuestion === "antennaApplication") {
+      if (/gnss|gps|galileo|glonass|beidou/i.test(q)) return applyAnswer(activeQuestion, "gnss", q);
+      if (/wi-?fi|wlan|bluetooth|ble/i.test(q)) return applyAnswer(activeQuestion, "wifi_bt", q);
+      if (/cellular|lte|5g|4g|gsm|umts|nb-?iot|lte-?m/i.test(q)) return applyAnswer(activeQuestion, "cellular", q);
+      if (/lora|sigfox|ism|433|868|915|sub[- ]?ghz/i.test(q)) return applyAnswer(activeQuestion, "ism", q);
+      if (/multi|combination|combined/i.test(q)) return applyAnswer(activeQuestion, "multi", q);
+    }
+
+    if (activeQuestion === "antennaGnssBand") {
+      if (/l2|l5|dual|multi/i.test(q)) return applyAnswer(activeQuestion, "gnss_multiband", q);
+      if (/\bl1\b/i.test(q)) return applyAnswer(activeQuestion, "gnss_l1", q);
+      if (/no preference|not sure|open/i.test(q)) return applyAnswer(activeQuestion, "No preference", q);
+    }
+
+    if (activeQuestion === "antennaWifiBand") {
+      if (/6e|6\s*ghz/i.test(q)) return applyAnswer(activeQuestion, "wifi_6e", q);
+      if (/2[.,]4.*5|dual/i.test(q)) return applyAnswer(activeQuestion, "wifi_245", q);
+      if (/2[.,]4/i.test(q)) return applyAnswer(activeQuestion, "wifi_24", q);
+      if (/no preference|not sure|open/i.test(q)) return applyAnswer(activeQuestion, "No preference", q);
+    }
+
+    if (activeQuestion === "antennaActive") {
+      if (/\bactive\b|aktiv/i.test(q)) return applyAnswer(activeQuestion, "active", q);
+      if (/\bpassive\b|passiv/i.test(q)) return applyAnswer(activeQuestion, "passive", q);
+      if (/no preference|not sure|open/i.test(q)) return applyAnswer(activeQuestion, "No preference", q);
+    }
+
     if (activeQuestion === "bluetoothRequirement") {
       const m = q.match(/(?:bluetooth|ble|bt)?\s*([4-6](?:\.\d+)?)/i);
       if (m) return applyAnswer(activeQuestion, `Bluetooth ${m[1]}+`, q);
@@ -3409,7 +3646,11 @@ function App() {
   }
 
   function editRequirement(rawKey: string) {
-    const key = rawKey as QuestionKey;
+    const mappedKey =
+      rawKey === "antennaBand"
+        ? (requirements.antennaApplication === "gnss" ? "antennaGnssBand" : "antennaWifiBand")
+        : rawKey;
+    const key = mappedKey as QuestionKey;
 
     if (key === "existingComponent") {
       setFinished(false);
@@ -3630,6 +3871,19 @@ function App() {
               {matches.length ? (
                 (showAllResults ? matchGroups : matchGroups.slice(0, 3)).map((group, index) => {
                   const match = group.primary;
+                  const bestPrimary = matchGroups[0]?.primary;
+                  const topTechnicalTieCount = bestPrimary
+                    ? matchGroups.filter((candidate) =>
+                        candidate.primary.match_percent === bestPrimary.match_percent &&
+                        candidate.primary.solution_scope_score === bestPrimary.solution_scope_score
+                      ).length
+                    : 0;
+                  const isTopTechnicalTie = Boolean(
+                    bestPrimary &&
+                    topTechnicalTieCount > 1 &&
+                    match.match_percent === bestPrimary.match_percent &&
+                    match.solution_scope_score === bestPrimary.solution_scope_score
+                  );
                   return (
                   <article
                     className="productCard"
@@ -3638,7 +3892,11 @@ function App() {
                   >
                     <div className="productTop">
                       <div>
-                        <div className="rank">#{index + 1} {tr(language, "recommendation", "Empfehlung")}</div>
+                        <div className="rank">
+                          {isTopTechnicalTie
+                            ? tr(language, "Top technical match · tied", "Technischer Top-Treffer · gleichauf")
+                            : `#${index + 1} ${tr(language, "recommendation", "Empfehlung")}`}
+                        </div>
                         <h3>{match.product.part_number}</h3>
                         <div className="productMeta">
                           {match.product.manufacturer} · {match.product.category}
@@ -3704,6 +3962,27 @@ function App() {
                         {match.product.features.gnss_precision && <span>GNSS: {match.product.features.gnss_precision}</span>}
                         {match.product.features.wifi_generation && <span>Wi-Fi {match.product.features.wifi_generation}</span>}
                         {match.product.features.form_factor && <span>{match.product.features.form_factor}</span>}
+                        {match.product.features.antenna_applications?.length ? (
+                          <span>
+                            {match.product.features.antenna_applications.map((value) =>
+                              value === "gnss" ? "GNSS" :
+                              value === "wifi_bt" ? "Wi-Fi / Bluetooth" :
+                              value === "cellular" ? "Cellular" :
+                              value === "ism" ? "ISM / LPWAN" : value
+                            ).join(" + ")}
+                          </span>
+                        ) : null}
+                        {match.product.features.antenna_bands?.length ? (
+                          <span>
+                            {match.product.features.antenna_bands.includes("gnss_multiband") ? "GNSS multi-band" :
+                             match.product.features.antenna_bands.includes("gnss_l1") ? "GNSS L1" :
+                             match.product.features.antenna_bands.includes("wifi_6e") ? "Wi-Fi 6E / 6 GHz" :
+                             match.product.features.antenna_bands.includes("wifi_245") ? "2.4 + 5 GHz" :
+                             match.product.features.antenna_bands.includes("wifi_24") ? "2.4 GHz" : ""}
+                          </span>
+                        ) : null}
+                        {match.product.features.antenna_active === true && <span>Active antenna</span>}
+                        {match.product.features.antenna_active === false && <span>Passive antenna</span>}
                         {match.product.features.capacitance_uf != null && (
                           <span>C: {formatCapacitanceUf(match.product.features.capacitance_uf)}</span>
                         )}

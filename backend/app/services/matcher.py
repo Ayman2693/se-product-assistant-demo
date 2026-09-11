@@ -197,6 +197,89 @@ def _antenna_count(h: str) -> int | None:
             return int(m.group(1))
     return None
 
+
+def _antenna_applications(p: Product) -> set[str]:
+    raw = _raw_features(p.features)
+    values = {str(v).lower() for v in (raw.get("antenna_applications") or []) if v}
+    if values:
+        return values
+
+    h = _haystack(p)
+    if re.search(r"\bgnss\b|\bgps\b|\bgalileo\b|\bglonass\b|\bbeidou\b|\bl1\b|\bl2\b|\bl5\b", h, re.I):
+        values.add("gnss")
+    if re.search(r"wi-?fi|\bwlan\b|bluetooth|\bble\b|\b2[.,]4\s*ghz\b", h, re.I):
+        values.add("wifi_bt")
+    if re.search(r"\bcellular\b|\blte\b|\b5g\b|\b4g\b|\bgsm\b|\bumts\b|\blte-?m\b|\bnb-?iot\b", h, re.I):
+        values.add("cellular")
+    if re.search(r"\blora\b|\bsigfox\b|\bism\b|\bsub[- ]?ghz\b|\b433\s*mhz\b|\b868\s*mhz\b|\b915\s*mhz\b", h, re.I):
+        values.add("ism")
+    return values
+
+
+def _antenna_band_capabilities(p: Product) -> set[str]:
+    raw = _raw_features(p.features)
+    values = {str(v).lower() for v in (raw.get("antenna_bands") or []) if v}
+    if values:
+        return values
+
+    h = _haystack(p)
+    l1 = bool(re.search(r"\bl1\b|1559\s*[-–]\s*1609|155[0-9]\s*[-–]\s*16[0-1][0-9]\s*mhz", h, re.I))
+    multiband = bool(re.search(
+        r"dual[- ]band\s+gnss|multi[- ]band\s+gnss|"
+        r"\bl1\s*[/+]\s*l2\b|\bl1\s*[/+]\s*l5\b|"
+        r"\bl1\s*[/+]\s*l2\s*[/+]\s*l5\b|\bl2\b|\bl5\b|"
+        r"11(?:6[0-9]|7[0-9]|8[0-9]|9[0-9])\s*[-–]\s*12[0-9]{2}",
+        h,
+        re.I,
+    ))
+    if l1:
+        values.add("gnss_l1")
+    if multiband:
+        values.add("gnss_multiband")
+        if l1:
+            values.add("gnss_l1")
+
+    wifi_6e = bool(re.search(r"wi-?fi\s*6e|\b6e\b|\b6\s*ghz\b|59[2-9][0-9]\s*mhz|6[0-9]{3}\s*mhz", h, re.I))
+    wifi_5 = bool(re.search(r"\b5\s*ghz\b|49[0-9]{2}\s*mhz|5[0-8][0-9]{2}\s*mhz", h, re.I))
+    wifi_24 = bool(re.search(r"\b2[.,]4\s*ghz\b|24[0-9]{2}\s*mhz|bluetooth|\bble\b", h, re.I))
+    if wifi_24:
+        values.add("wifi_24")
+    if wifi_24 and wifi_5:
+        values.add("wifi_245")
+    if wifi_6e:
+        values.add("wifi_6e")
+    return values
+
+
+def _antenna_active_value(p: Product) -> bool | None:
+    raw = _raw_features(p.features)
+    if isinstance(raw.get("antenna_active"), bool):
+        return raw["antenna_active"]
+
+    h = _haystack(p)
+    if re.search(r"\bpassive\b[^.;]{0,24}\b(?:gnss\s+)?(?:patch\s+)?antenna\b|\bpassive\s+gnss\b", h, re.I):
+        return False
+    if re.search(r"\bactive\b[^.;]{0,24}\b(?:gnss\s+)?(?:patch\s+)?antenna\b|\bactive\s+gnss\b", h, re.I):
+        return True
+    return None
+
+
+def _antenna_application_state(p: Product, wanted: str) -> int:
+    actual = _antenna_applications(p)
+    wanted = (wanted or "").lower()
+    if not actual:
+        return 0
+    if wanted == "multi":
+        return 1 if len(actual) >= 2 else -1
+    return 1 if wanted in actual else -1
+
+
+def _antenna_band_state(p: Product, wanted: str) -> int:
+    actual = _antenna_band_capabilities(p)
+    if not actual:
+        return 0
+    return 1 if (wanted or "").lower() in actual else -1
+
 def _bluetooth_version(h: str) -> float | None:
     patterns = [
         r"bluetooth\s*([4-6](?:\.\d+)?)",
@@ -396,6 +479,49 @@ def score_product(p: Product, r: MatchRequest):
         if r.catalog_category:
             state = 1 if _catalog_category_matches(p.category, r.catalog_category) else -1
             criterion(40, state, f"Product type: {r.catalog_category}", True)
+
+        # Standalone antenna qualification: category alone is not sufficient
+        # to call GNSS, Wi-Fi and cellular antennas equally suitable.
+        if r.product_domain == "antenna" or (r.catalog_category and "Antenna" in r.catalog_category):
+            if r.antenna_application:
+                app_labels = {
+                    "gnss": "GNSS",
+                    "wifi_bt": "Wi-Fi / Bluetooth",
+                    "cellular": "Cellular / LTE / 5G",
+                    "ism": "ISM / LPWAN",
+                    "multi": "Multi-radio / combination",
+                }
+                criterion(
+                    34,
+                    _antenna_application_state(p, r.antenna_application),
+                    f"Antenna application: {app_labels.get(r.antenna_application, r.antenna_application)}",
+                    True,
+                )
+
+            if r.antenna_band:
+                band_labels = {
+                    "gnss_l1": "GNSS L1",
+                    "gnss_multiband": "GNSS multi-band (L1 + L2/L5)",
+                    "wifi_24": "2.4 GHz",
+                    "wifi_245": "2.4 + 5 GHz",
+                    "wifi_6e": "6 GHz / Wi-Fi 6E capable",
+                }
+                criterion(
+                    26,
+                    _antenna_band_state(p, r.antenna_band),
+                    f"Antenna band: {band_labels.get(r.antenna_band, r.antenna_band)}",
+                    True,
+                )
+
+            if r.antenna_active is not None:
+                actual_active = _antenna_active_value(p)
+                state = 0 if actual_active is None else (1 if actual_active == r.antenna_active else -1)
+                criterion(
+                    16,
+                    state,
+                    f"Antenna type: {'Active' if r.antenna_active else 'Passive'}",
+                    True,
+                )
 
         # Capacitor-domain engineering qualification. Known hard mismatches
         # eliminate a part; missing catalog data remains "Not verified" so we

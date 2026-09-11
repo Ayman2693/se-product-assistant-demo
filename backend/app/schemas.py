@@ -16,6 +16,9 @@ class ProductFeaturesOut(BaseModel):
     architecture: Optional[str] = None
     antenna: Optional[str] = None
     form_factor: Optional[str] = None
+    antenna_applications: List[str] = Field(default_factory=list)
+    antenna_bands: List[str] = Field(default_factory=list)
+    antenna_active: Optional[bool] = None
     temperature_min: Optional[float] = None
     temperature_max: Optional[float] = None
     certifications: List[str] = Field(default_factory=list)
@@ -63,6 +66,9 @@ class MatchRequest(BaseModel):
     host_interface: Optional[str] = None
     antenna_connector: Optional[str] = None
     antenna_count: Optional[int] = None
+    antenna_application: Optional[str] = None
+    antenna_band: Optional[str] = None
+    antenna_active: Optional[bool] = None
     bluetooth_required: Optional[bool] = None
     bluetooth_version_min: Optional[str] = None
     max_footprint_mm2: Optional[float] = None

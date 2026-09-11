@@ -145,6 +145,33 @@ def seed_catalog_evidence_for_product(db: Session, product: Product) -> int:
             )
 
         raw = _json(f.raw_features_json, {})
+        for antenna_application in raw.get("antenna_applications", []) or []:
+            _add_catalog_evidence(
+                db,
+                product,
+                field_name="antenna_application",
+                value=antenna_application,
+                normalized_value=str(antenna_application).lower(),
+            )
+
+        for antenna_band in raw.get("antenna_bands", []) or []:
+            _add_catalog_evidence(
+                db,
+                product,
+                field_name="antenna_band",
+                value=antenna_band,
+                normalized_value=str(antenna_band).lower(),
+            )
+
+        if isinstance(raw.get("antenna_active"), bool):
+            _add_catalog_evidence(
+                db,
+                product,
+                field_name="antenna_active",
+                value=raw["antenna_active"],
+                normalized_value="true" if raw["antenna_active"] else "false",
+            )
+
         capacitor_mapping = {
             "capacitance_uf": raw.get("capacitance_uf"),
             "capacitor_voltage_v": raw.get("capacitor_voltage_v"),

@@ -188,6 +188,62 @@ def _wifi_generation(text: str):
         return "4"
     return None
 
+
+def _antenna_catalog_profile(text: str, category: str) -> tuple[list[str], list[str], bool | None]:
+    """Extract conservative standalone-antenna qualifiers from SE catalog text."""
+    t = _norm(text)
+    category_l = _norm(category)
+    if "antenna" not in category_l and "antenna" not in t and "ant." not in t:
+        return [], [], None
+
+    apps: list[str] = []
+    bands: list[str] = []
+
+    if re.search(r"\bgnss\b|\bgps\b|\bgalileo\b|\bglonass\b|\bbeidou\b|\bl1\b|\bl2\b|\bl5\b", t, re.I):
+        apps.append("gnss")
+    if re.search(r"wi-?fi|\bwlan\b|bluetooth|\bble\b|\b2[.,]4\s*ghz\b", t, re.I):
+        apps.append("wifi_bt")
+    if re.search(r"\bcellular\b|\blte\b|\b5g\b|\b4g\b|\bgsm\b|\bumts\b|\blte-?m\b|\bnb-?iot\b", t, re.I):
+        apps.append("cellular")
+    if re.search(r"\blora\b|\bsigfox\b|\bism\b|\bsub[- ]?ghz\b|\b433\s*mhz\b|\b868\s*mhz\b|\b915\s*mhz\b", t, re.I):
+        apps.append("ism")
+
+    if "gnss" in apps:
+        l1 = bool(re.search(r"\bl1\b|1559\s*[-–]\s*1609|155[0-9]\s*[-–]\s*16[0-1][0-9]\s*mhz", t, re.I))
+        multiband = bool(re.search(
+            r"dual[- ]band\s+gnss|multi[- ]band\s+gnss|"
+            r"\bl1\s*[/+]\s*l2\b|\bl1\s*[/+]\s*l5\b|"
+            r"\bl1\s*[/+]\s*l2\s*[/+]\s*l5\b|\bl2\b|\bl5\b|"
+            r"11(?:6[0-9]|7[0-9]|8[0-9]|9[0-9])\s*[-–]\s*12[0-9]{2}",
+            t,
+            re.I,
+        ))
+        if l1:
+            bands.append("gnss_l1")
+        if multiband:
+            bands.append("gnss_multiband")
+            if l1:
+                bands.append("gnss_l1")
+
+    if "wifi_bt" in apps:
+        wifi_6e = bool(re.search(r"wi-?fi\s*6e|\b6e\b|\b6\s*ghz\b|59[2-9][0-9]\s*mhz|6[0-9]{3}\s*mhz", t, re.I))
+        wifi_5 = bool(re.search(r"\b5\s*ghz\b|49[0-9]{2}\s*mhz|5[0-8][0-9]{2}\s*mhz", t, re.I))
+        wifi_24 = bool(re.search(r"\b2[.,]4\s*ghz\b|24[0-9]{2}\s*mhz|bluetooth|\bble\b", t, re.I))
+        if wifi_24:
+            bands.append("wifi_24")
+        if wifi_24 and wifi_5:
+            bands.append("wifi_245")
+        if wifi_6e:
+            bands.append("wifi_6e")
+
+    active: bool | None = None
+    if re.search(r"\bpassive\b[^.;]{0,24}\b(?:gnss\s+)?(?:patch\s+)?antenna\b|\bpassive\s+gnss\b", t, re.I):
+        active = False
+    elif re.search(r"\bactive\b[^.;]{0,24}\b(?:gnss\s+)?(?:patch\s+)?antenna\b|\bactive\s+gnss\b", t, re.I):
+        active = True
+
+    return sorted(set(apps)), sorted(set(bands)), active
+
 def extract_features(part_number: str, manufacturer: str, category: str, description: str, tags=None) -> dict[str, Any]:
     tags = tags or []
     text = " ".join([part_number or "", manufacturer or "", category or "", description or "", *tags])
@@ -333,10 +389,18 @@ def extract_features(part_number: str, manufacturer: str, category: str, descrip
 
     raw = {
         "text_length": len(text),
-        "source": "deterministic_regex_v2.5-capacitors",
+        "source": "deterministic_regex_v2.6-antenna-qualification",
         "low_power_positive": low_power_positive,
         "low_power_negative": low_power_negative,
     }
+
+    antenna_applications, antenna_bands, antenna_active = _antenna_catalog_profile(text, category)
+    if antenna_applications:
+        raw["antenna_applications"] = antenna_applications
+    if antenna_bands:
+        raw["antenna_bands"] = antenna_bands
+    if antenna_active is not None:
+        raw["antenna_active"] = antenna_active
 
     # Capacitor-specific extraction is deliberately scoped to capacitor
     # products to prevent values such as 5 V or 100 nF from unrelated boards

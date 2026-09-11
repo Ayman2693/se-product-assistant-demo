@@ -120,6 +120,9 @@ def interpret_text(text: str) -> dict[str, Any]:
         "host_interface": None,
         "antenna_connector": None,
         "antenna_count": None,
+        "antenna_application": None,
+        "antenna_band": None,
+        "antenna_active": None,
         "bluetooth_required": None,
         "bluetooth_version_min": None,
         "max_footprint_mm2": None,
@@ -236,6 +239,51 @@ def interpret_text(text: str) -> dict[str, Any]:
             re.I,
         ):
             out["product_domain"] = "components"
+
+    # Standalone antenna requirements.
+    if out["product_domain"] == "antenna":
+        app_hits = []
+        if re.search(r"\bgnss\b|\bgps\b|\bgalileo\b|\bglonass\b|\bbeidou\b", t, re.I):
+            app_hits.append("gnss")
+        if re.search(r"wi-?fi|\bwlan\b|bluetooth|\bble\b", t, re.I):
+            app_hits.append("wifi_bt")
+        if re.search(r"\bcellular\b|\blte\b|\b5g\b|\b4g\b|\bgsm\b|\bumts\b|\blte-?m\b|\bnb-?iot\b", t, re.I):
+            app_hits.append("cellular")
+        if re.search(r"\blora\b|\bsigfox\b|\bism\b|\bsub[- ]?ghz\b|\b433\s*mhz\b|\b868\s*mhz\b|\b915\s*mhz\b", t, re.I):
+            app_hits.append("ism")
+
+        app_hits = _uniq(app_hits)
+        if len(app_hits) >= 2:
+            out["antenna_application"] = "multi"
+        elif app_hits:
+            out["antenna_application"] = app_hits[0]
+
+        if out["antenna_application"]:
+            evidence.append(f"antenna_application:{out['antenna_application']}")
+
+        if out["antenna_application"] == "gnss":
+            if re.search(r"dual[- ]band|multi[- ]band|\bl2\b|\bl5\b|\bl1\s*[/+]\s*l(?:2|5)\b", t, re.I):
+                out["antenna_band"] = "gnss_multiband"
+            elif re.search(r"\bl1\b|1559\s*[-–]\s*1609", t, re.I):
+                out["antenna_band"] = "gnss_l1"
+
+            if re.search(r"\bactive\b[^.;]{0,24}\b(?:gnss\s+)?(?:patch\s+)?antenna\b|\bactive\s+gnss\b", t, re.I):
+                out["antenna_active"] = True
+            elif re.search(r"\bpassive\b[^.;]{0,24}\b(?:gnss\s+)?(?:patch\s+)?antenna\b|\bpassive\s+gnss\b", t, re.I):
+                out["antenna_active"] = False
+
+        elif out["antenna_application"] == "wifi_bt":
+            if re.search(r"wi-?fi\s*6e|\b6e\b|\b6\s*ghz\b", t, re.I):
+                out["antenna_band"] = "wifi_6e"
+            elif re.search(r"2[.,]4\s*(?:\+|/|and)\s*5\s*ghz|dual[- ]band\s+wi-?fi", t, re.I):
+                out["antenna_band"] = "wifi_245"
+            elif re.search(r"\b2[.,]4\s*ghz\b", t, re.I):
+                out["antenna_band"] = "wifi_24"
+
+        if out["antenna_band"]:
+            evidence.append(f"antenna_band:{out['antenna_band']}")
+        if out["antenna_active"] is not None:
+            evidence.append(f"antenna_active:{out['antenna_active']}")
 
     # Generic electrical / host interface. This can be useful outside
     # connectivity as well, for example for digital sensors.
@@ -659,6 +707,14 @@ def missing_requirements(req: dict[str, Any]) -> list[str]:
         # A capacitor cannot be meaningfully selected from category alone.
         # Ask the high-value electrical questions first; advanced constraints
         # remain optional and are parsed when the customer supplies them.
+        if domain == "antenna":
+            if not req.get("antenna_application"):
+                missing.append("antenna_application")
+            if req.get("antenna_application") in {"gnss", "wifi_bt"} and not req.get("antenna_band"):
+                missing.append("antenna_band")
+            if req.get("antenna_application") == "gnss" and req.get("antenna_active") is None:
+                missing.append("antenna_active")
+
         if req.get("catalog_category") == "Capacitors":
             if req.get("capacitance_uf") is None:
                 missing.append("capacitance_uf")

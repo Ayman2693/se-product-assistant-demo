@@ -9,7 +9,7 @@ from app.models import ProductEvidence
 from app.schemas import MatchRequest
 
 
-MULTI_VALUE_FIELDS = {"technology", "interface", "antenna_connector"}
+MULTI_VALUE_FIELDS = {"technology", "interface", "antenna_connector", "antenna_application", "antenna_band"}
 EXCLUSIVE_FIELDS = {
     "category",
     "cellular_class",
@@ -24,6 +24,7 @@ EXCLUSIVE_FIELDS = {
     "low_power",
     "footprint_mm2",
     "antenna_count",
+    "antenna_active",
     "capacitance_uf",
     "capacitor_voltage_v",
     "capacitor_tolerance_pct",
@@ -102,6 +103,30 @@ def _request_criteria(r: MatchRequest) -> list[dict]:
             "label": "Antenna",
             "field": "antenna",
             "expected": r.antenna,
+        })
+
+    if r.antenna_application:
+        criteria.append({
+            "key": "antenna_application",
+            "label": "Antenna application",
+            "field": "antenna_application",
+            "expected": r.antenna_application,
+        })
+
+    if r.antenna_band:
+        criteria.append({
+            "key": "antenna_band",
+            "label": "Antenna band",
+            "field": "antenna_band",
+            "expected": r.antenna_band,
+        })
+
+    if r.antenna_active is not None:
+        criteria.append({
+            "key": "antenna_active",
+            "label": "Antenna type",
+            "field": "antenna_active",
+            "expected": r.antenna_active,
         })
 
     if r.wifi_generation:
@@ -342,7 +367,7 @@ def _supports(field: str, actual: Any, expected: Any) -> bool:
         except (TypeError, ValueError):
             return False
 
-    if field in {"gnss_dual_band", "low_power"}:
+    if field in {"gnss_dual_band", "low_power", "antenna_active"}:
         return a in {"true", "1", "yes"} if bool(expected) else a in {"false", "0", "no"}
 
     if field == "antenna_count":
@@ -629,6 +654,9 @@ _REASON_PREFIX_BY_CRITERION = {
     "region": "Deployment region:",
     "architecture": "Architecture:",
     "antenna": "Antenna:",
+    "antenna_application": "Antenna application:",
+    "antenna_band": "Antenna band:",
+    "antenna_active": "Antenna type:",
     "wifi_generation": "Acceptable generation:",
     "gnss_precision": "GNSS precision:",
     "host_interface": "Host interface:",

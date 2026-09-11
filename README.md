@@ -1597,3 +1597,26 @@ For local development:
 `python -m app.import_catalog --all`
 
 No database migration is required.
+
+
+# Phase 5.0.7 — Antenna Engineering Qualification
+
+Standalone antenna searches are now qualified by engineering requirements
+instead of assigning every product in one antenna category the same 100% fit.
+
+The assistant asks for the target radio system, then the relevant band
+capability, and for GNSS whether the antenna must be active or passive.
+Physical footprint remains an adaptive tie-breaker when dimensions can
+separate otherwise equivalent top candidates.
+
+Known mismatches are hard mismatches. Missing catalog data remains
+`Not verified`; absence is never invented.
+
+The feature extractor now derives catalog-supported antenna application,
+band capability and active/passive status into `raw_features_json`.
+No database migration is required. Normal startup re-extraction refreshes
+these raw features, and a catalog sync refreshes imported products/evidence.
+
+When several products are still genuinely equal on technical fit and solution
+scope, the customer UI says `Top technical match · tied` instead of implying
+an arbitrary #1 winner.
