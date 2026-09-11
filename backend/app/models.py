@@ -36,6 +36,76 @@ class Product(Base):
         cascade="all, delete-orphan",
     )
 
+    family_memberships = relationship(
+        "ProductFamilyMember",
+        back_populates="product",
+        cascade="all, delete-orphan",
+    )
+
+
+class ProductFamily(Base):
+    __tablename__ = "product_families"
+    __table_args__ = (
+        UniqueConstraint(
+            "manufacturer",
+            "normalized_name",
+            name="uq_product_family_manufacturer_name",
+        ),
+    )
+
+    id = Column(Integer, primary_key=True)
+    manufacturer = Column(String(120), index=True, nullable=False)
+    name = Column(String(180), nullable=False)
+    normalized_name = Column(String(180), index=True, nullable=False)
+    category = Column(String(180), default="")
+    verification_status = Column(String(40), default="verified", index=True, nullable=False)
+    source_type = Column(String(80), default="catalog_explicit", index=True, nullable=False)
+    source_text = Column(Text, default="")
+    confidence = Column(Float, default=0.0, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    memberships = relationship(
+        "ProductFamilyMember",
+        back_populates="family",
+        cascade="all, delete-orphan",
+    )
+
+
+class ProductFamilyMember(Base):
+    __tablename__ = "product_family_members"
+    __table_args__ = (
+        UniqueConstraint(
+            "family_id",
+            "product_id",
+            name="uq_product_family_member",
+        ),
+    )
+
+    id = Column(Integer, primary_key=True)
+    family_id = Column(
+        Integer,
+        ForeignKey("product_families.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    )
+    product_id = Column(
+        Integer,
+        ForeignKey("products.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    )
+    verification_status = Column(String(40), default="verified", index=True, nullable=False)
+    source_type = Column(String(80), default="catalog_explicit", index=True, nullable=False)
+    source_text = Column(Text, default="")
+    confidence = Column(Float, default=0.0, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    family = relationship("ProductFamily", back_populates="memberships")
+    product = relationship("Product", back_populates="family_memberships")
+
+
 class ProductFeature(Base):
     __tablename__ = "product_features"
 

@@ -822,3 +822,80 @@ a.evidenceSource:hover {
     display: none;
   }
 }
+
+
+/* Phase 5.0 — verified product-family grouping */
+.familyBadge {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 8px;
+  margin-top: 7px;
+  padding: 6px 9px;
+  border: 1px solid #dce4e9;
+  border-radius: 9px;
+  background: #f8fafb;
+  font-size: 12px;
+}
+
+.familyBadge span,
+.familyBadge small {
+  color: #64717d;
+}
+
+.familyBadge strong {
+  color: #17212b;
+}
+
+.familyBadge small {
+  width: 100%;
+}
+
+.familyVariants {
+  margin-top: 11px;
+  border: 1px solid #dde3e8;
+  border-radius: 10px;
+  background: #fbfcfd;
+}
+
+.familyVariants summary {
+  cursor: pointer;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #25313b;
+}
+
+.familyVariantList {
+  border-top: 1px solid #e3e8eb;
+}
+
+.familyVariantRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 9px 12px;
+  border-bottom: 1px solid #edf0f2;
+  font-size: 13px;
+}
+
+.familyVariantRow:last-child {
+  border-bottom: 0;
+}
+
+.familyVariantRow > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.familyVariantRow span {
+  color: #64717d;
+  font-size: 12px;
+}
+
+.familyVariantRow > b {
+  color: #18764b;
+  white-space: nowrap;
+}

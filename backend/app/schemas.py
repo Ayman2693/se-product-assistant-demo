@@ -100,6 +100,56 @@ class MatchCriterionEvidence(BaseModel):
     confidence: Optional[float] = None
 
 
+class ProductFamilySummaryOut(BaseModel):
+    id: int
+    name: str
+    manufacturer: str
+    category: str = ""
+    verification_status: str
+    source_type: str
+    confidence: float
+    member_count: int = 0
+
+
+class ProductFamilyMemberOut(BaseModel):
+    product: ProductOut
+    verification_status: str
+    source_type: str
+    source_text: str = ""
+    confidence: float
+
+
+class ProductFamilyDetailOut(ProductFamilySummaryOut):
+    members: List[ProductFamilyMemberOut] = Field(default_factory=list)
+
+
+class FamilyStatusOut(BaseModel):
+    families: int = 0
+    verified_memberships: int = 0
+    multi_sku_families: int = 0
+
+
+class KnowledgeNodeOut(BaseModel):
+    id: str
+    type: str
+    label: str
+    data: dict = Field(default_factory=dict)
+
+
+class KnowledgeEdgeOut(BaseModel):
+    source: str
+    target: str
+    type: str
+    verification_status: str
+    source_type: str
+
+
+class ProductKnowledgeGraphOut(BaseModel):
+    product_id: int
+    nodes: List[KnowledgeNodeOut] = Field(default_factory=list)
+    edges: List[KnowledgeEdgeOut] = Field(default_factory=list)
+
+
 class MatchEvidenceSummary(BaseModel):
     total: int = 0
     verified: int = 0
@@ -111,6 +161,7 @@ class MatchEvidenceSummary(BaseModel):
 
 class MatchResult(BaseModel):
     product: ProductOut
+    family: Optional[ProductFamilySummaryOut] = None
     match_percent: int
     reasons: List[str] = Field(default_factory=list)
     evidence_score: int = 0

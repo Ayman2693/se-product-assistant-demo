@@ -17,6 +17,7 @@ from app.services.matching_engine import (
     technical_evidence_pool,
 )
 from app.services.adaptive_questions import choose_adaptive_question
+from app.services.family_graph import annotate_results_with_families
 from app.services.evidence_matcher import (
     annotate_results_with_evidence,
     evidence_sort_key,
@@ -82,6 +83,7 @@ def _match(db: Session, req_dict: dict):
 
     annotate_results_with_evidence(db, request, results)
     results.sort(key=evidence_sort_key, reverse=True)
+    annotate_results_with_families(db, results)
 
     for row in results:
         row.pop("_evidence_completeness", None)

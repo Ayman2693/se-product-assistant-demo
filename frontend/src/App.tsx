@@ -180,8 +180,20 @@ type MatchEvidenceSummary = {
   evidence_score: number;
 };
 
+type ProductFamilySummary = {
+  id: number;
+  name: string;
+  manufacturer: string;
+  category: string;
+  verification_status: string;
+  source_type: string;
+  confidence: number;
+  member_count: number;
+};
+
 type Match = {
   product: Product;
+  family?: ProductFamilySummary | null;
   match_percent: number;
   reasons: string[];
   evidence_score: number;
@@ -2277,6 +2289,57 @@ async function adaptiveQuestionWithBackend(
 }
 
 
+type MatchGroup = {
+  key: string;
+  primary: Match;
+  variants: Match[];
+};
+
+function groupMatchesByVerifiedFamily(matches: Match[]): MatchGroup[] {
+  const groups = new Map<string, MatchGroup>();
+
+  for (const match of matches) {
+    const familyUsable =
+      match.family &&
+      match.family.verification_status === "verified" &&
+      match.family.member_count >= 2;
+
+    const key = familyUsable
+      ? `family:${match.family!.id}`
+      : `product:${match.product.id}`;
+
+    const current = groups.get(key);
+    if (!current) {
+      groups.set(key, {
+        key,
+        primary: match,
+        variants: [match],
+      });
+      continue;
+    }
+
+    current.variants.push(match);
+
+    // Backend is already ranked, but keep this helper safe for reused data.
+    if (
+      match.match_percent > current.primary.match_percent ||
+      (
+        match.match_percent === current.primary.match_percent &&
+        match.evidence_score > current.primary.evidence_score
+      )
+    ) {
+      current.primary = match;
+    }
+  }
+
+  return [...groups.values()];
+}
+
+function uniqueSolutionMatches(matches: Match[]): Match[] {
+  return groupMatchesByVerifiedFamily(matches).map((group) => group.primary);
+}
+
+
 function App() {
   const [language, setLanguage] = useState<Language>("en");
   const [viewMode, setViewMode] = useState<ViewMode>("customer");
@@ -2562,8 +2625,11 @@ function App() {
       setFinished(true);
 
       if (data.matches.length) {
-        const best = data.matches[0];
-        const topMatches = data.matches.filter((m) => m.match_percent === best.match_percent);
+        const solutionMatches = uniqueSolutionMatches(data.matches);
+        const best = solutionMatches[0];
+        const topMatches = solutionMatches.filter(
+          (m) => m.match_percent === best.match_percent
+        );
 
         if (topMatches.length === 1) {
           addMessage(
@@ -3188,6 +3254,11 @@ function App() {
     );
   }
 
+  const matchGroups = useMemo(
+    () => groupMatchesByVerifiedFamily(matches),
+    [matches]
+  );
+
   const visibleRequirements = Object.entries(requirements).filter(
     ([key, value]) =>
       key !== "initialNeed" &&
@@ -3330,10 +3401,18 @@ function App() {
                       <span className="matchingSpinner matchingSpinnerSmall" aria-hidden="true" />
                       {tr(language, "Searching for new results…", "Suche nach neuen Ergebnissen…")}
                     </>
-                  ) : matches.length > 3 && !showAllResults ? (
-                    tr(language, `${matches.length} candidates · showing top 3`, `${matches.length} Kandidaten · Top 3 angezeigt`)
+                  ) : matchGroups.length > 3 && !showAllResults ? (
+                    tr(
+                      language,
+                      `${matches.length} matching SKUs · ${matchGroups.length} solution groups · showing top 3`,
+                      `${matches.length} passende SKUs · ${matchGroups.length} Lösungsgruppen · Top 3 angezeigt`
+                    )
                   ) : (
-                    tr(language, `${matches.length} candidates`, `${matches.length} Kandidaten`)
+                    tr(
+                      language,
+                      `${matches.length} matching SKUs · ${matchGroups.length} solution groups`,
+                      `${matches.length} passende SKUs · ${matchGroups.length} Lösungsgruppen`
+                    )
                   )}
                 </span>
               </div>
@@ -3341,10 +3420,12 @@ function App() {
 
             <div className={`results${matching && matches.length ? " resultsRefreshing" : ""}`}>
               {matches.length ? (
-                (showAllResults ? matches : matches.slice(0, 3)).map((match, index) => (
+                (showAllResults ? matchGroups : matchGroups.slice(0, 3)).map((group, index) => {
+                  const match = group.primary;
+                  return (
                   <article
                     className="productCard"
-                    key={match.product.id}
+                    key={group.key}
                     ref={index === 0 ? firstRecommendationRef : undefined}
                   >
                     <div className="productTop">
@@ -3354,6 +3435,19 @@ function App() {
                         <div className="productMeta">
                           {match.product.manufacturer} · {match.product.category}
                         </div>
+                        {match.family && match.family.verification_status === "verified" && (
+                          <div className="familyBadge">
+                            <span>{tr(language, "Product family", "Produktfamilie")}</span>
+                            <strong>{match.family.name}</strong>
+                            <small>
+                              {tr(
+                                language,
+                                "explicitly verified relationship",
+                                "explizit verifizierte Zuordnung"
+                              )}
+                            </small>
+                          </div>
+                        )}
                       </div>
                       <div className="scoreStack customerScoreStack">
                         <div className="score">{match.match_percent}% {tr(language, "match", "Übereinstimmung")}</div>
@@ -3490,6 +3584,29 @@ function App() {
                       </div>
                     </details>
 
+                    {group.variants.length > 1 && match.family && (
+                      <details className="familyVariants">
+                        <summary>
+                          {tr(
+                            language,
+                            `${group.variants.length} matching SKUs in ${match.family.name}`,
+                            `${group.variants.length} passende SKUs in ${match.family.name}`
+                          )}
+                        </summary>
+                        <div className="familyVariantList">
+                          {group.variants.map((variant) => (
+                            <div className="familyVariantRow" key={variant.product.id}>
+                              <div>
+                                <strong>{variant.product.part_number}</strong>
+                                <span>{variant.product.category}</span>
+                              </div>
+                              <b>{variant.match_percent}%</b>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    )}
+
                     <div className="commercial">
                       <span><b>{tr(language, "Lifecycle", "Lebenszyklus")}:</b> {match.product.lifecycle}</span>
                       <span><b>{tr(language, "Availability", "Verfügbarkeit")}:</b> {match.product.availability}</span>
@@ -3510,7 +3627,8 @@ function App() {
                       </a>
                     </div>
                   </article>
-                ))
+                  );
+                })
               ) : finished ? (
                 <div className="emptyState">{tr(language, "No validated product match was found.", "Es wurde kein passendes validiertes Produkt gefunden.")}</div>
               ) : (
@@ -3518,11 +3636,15 @@ function App() {
                   {tr(language, "Answer the relevant technical questions and suitable SE products will appear here.", "Beantworten Sie die relevanten technischen Fragen; passende SE-Produkte erscheinen anschließend hier.")}
                 </div>
               )}
-              {matches.length > 3 && (
+              {matchGroups.length > 3 && (
                 <button className="showMoreResults" onClick={() => setShowAllResults((v) => !v)}>
                   {showAllResults
                     ? tr(language, "Show top 3 only", "Nur Top 3 anzeigen")
-                    : tr(language, `Show all ${matches.length} candidates`, `Alle ${matches.length} Kandidaten anzeigen`)}
+                    : tr(
+                        language,
+                        `Show all ${matchGroups.length} solution groups`,
+                        `Alle ${matchGroups.length} Lösungsgruppen anzeigen`
+                      )}
                 </button>
               )}
             </div>

@@ -1172,3 +1172,89 @@ Customer UI gets a short explanation such as:
 Developer Mode additionally shows information-gain bits and catalog coverage.
 
 No database migration and no catalog sync are required.
+
+
+# Phase 5.0 — Product Family + SKU Knowledge Graph
+
+Phase 5.0 adds a conservative family/SKU graph layer.
+
+## Safety rule
+
+The system does **not** derive a customer-facing family by truncating or
+guessing from a part number.
+
+For example, `NORA-B206-00B` is not automatically assigned to `NORA-B2`
+because the names look similar.
+
+A verified family membership is created only when the available data explicitly
+states a compatible family/series, such as:
+
+- structured `family` / `series` catalog field
+- `NORA-B2 series` in catalog text/tags
+- `MAYA-W2 series data sheet` in a linked document title
+
+The explicitly stated family must also be compatible with the SKU prefix.
+This blocks unrelated chipset-family text from becoming an SE product-family
+relationship.
+
+## New persisted graph tables
+
+- `product_families`
+- `product_family_members`
+
+They store provenance, confidence, and verification status.
+
+The existing startup `python -m app.seed` now rebuilds the automatic family
+graph after structured product features are refreshed. Existing manually
+curated family rows are designed to be preservable in future curation work.
+
+Manual rebuild:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m app.rebuild_families
+```
+
+## New APIs
+
+- `GET /api/families/status`
+- `GET /api/families`
+- `GET /api/families/{family_id}`
+- `POST /api/families/rebuild`
+- `GET /api/products/{product_id}/knowledge-graph`
+
+The virtual product graph exposes nodes/edges such as:
+
+`SKU -> member_of -> Family`  (verified explicit provenance)
+
+`SKU -> supports -> Technology`  (catalog-derived / inferred)
+
+`SKU -> documented_by -> Document`  (verified document link)
+
+Document links are provenance links; they are not treated as proof that every
+statement in a family document applies to every SKU.
+
+## Recommendation UX
+
+`/api/match` and natural recommendations now annotate returned SKUs with a
+verified family when one is available.
+
+The frontend groups sibling matching SKUs into one solution group only when:
+
+- membership is verified
+- the family contains at least two verified SKUs
+
+The highest-ranked SKU remains the recommended variant. Sibling variants are
+available under an expandable `matching SKUs` section.
+
+This prevents Top 3 from being consumed by three variants of the same verified
+family while leaving unverified products completely unchanged.
+
+## Database deployment
+
+This phase adds new tables. No destructive migration is required in the
+current project architecture because `Base.metadata.create_all()` creates the
+new tables on deployment. The normal Render startup seed then rebuilds the
+derived family graph automatically.
+
+No full web catalog sync is required solely for Phase 5.0.

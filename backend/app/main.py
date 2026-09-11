@@ -13,6 +13,7 @@ from app.routers.health import router as health_router
 from app.routers.products import router as products_router
 from app.routers.requirements import router as requirements_router
 from app.routers.evidence import router as evidence_router
+from app.routers.knowledge import router as knowledge_router
 from app.schemas import RootResponse
 
 Base.metadata.create_all(bind=engine)
@@ -62,6 +63,7 @@ app.include_router(health_router)
 app.include_router(products_router)
 app.include_router(requirements_router)
 app.include_router(evidence_router)
+app.include_router(knowledge_router)
 
 @app.get("/api", response_model=RootResponse)
 def api_root():

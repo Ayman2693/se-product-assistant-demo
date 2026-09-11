@@ -20,6 +20,10 @@ from app.services.matching_engine import (
     technical_evidence_pool as _technical_evidence_pool,
 )
 from app.services.quality_guard import run_shadow_quality_guard
+from app.services.family_graph import (
+    annotate_results_with_families,
+    rebuild_family_graph,
+)
 from app.services.catalog_importer import import_catalog
 from app.services.evidence_service import seed_catalog_evidence
 from app.services.evidence_matcher import (
@@ -90,6 +94,10 @@ async def _run_full_catalog_sync():
 
         evidence = seed_catalog_evidence(db)
 
+        _catalog_sync_state["status"] = "rebuilding_family_graph"
+        family_graph = rebuild_family_graph(db)
+        db.commit()
+
         _catalog_sync_state.update({
             "status": "completed",
             "finished_at": _utcnow_iso(),
@@ -99,6 +107,7 @@ async def _run_full_catalog_sync():
             "sources_requested": result.get("sources_requested", 0),
             "failed": result.get("failed", []),
             "evidence": evidence,
+            "family_graph": family_graph,
         })
     except asyncio.CancelledError:
         _catalog_sync_state.update({
@@ -286,6 +295,7 @@ def match_products(
     evidence_started = time.perf_counter()
     annotate_results_with_evidence(db, r, results)
     results.sort(key=evidence_sort_key, reverse=True)
+    annotate_results_with_families(db, results)
     evidence_ms = (time.perf_counter() - evidence_started) * 1000.0
 
     for row in results:
