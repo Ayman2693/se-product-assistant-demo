@@ -3,10 +3,10 @@ from app.services.requirement_parser import QUESTION_MAP, interpret_text
 
 def test_gnss_question_is_more_customer_friendly():
     q = QUESTION_MAP["gnss_precision"]
-    assert q["text"] == "What positioning performance does your application need?"
-    assert "Standard GNSS / meter-level" in q["options"]
-    assert "High precision / centimeter-level (RTK)" in q["options"]
-    assert "No fixed accuracy / not sure" in q["options"]
+    assert q["text"] == "What positioning accuracy class is required for your application?"
+    assert "Standard positioning — meter-level accuracy" in q["options"]
+    assert "High-precision positioning — centimeter-level RTK" in q["options"]
+    assert "Accuracy not yet defined / open" in q["options"]
 
 
 def test_bluetooth_minimum_versions_parse():

@@ -822,11 +822,11 @@ QUESTION_MAP = {
         "options": ["Host-based", "Open CPU", "u-connectXpress / AT commands", "Standalone"],
     },
     "gnss_precision": {
-        "text": "What positioning performance does your application need?",
+        "text": "What positioning accuracy class is required for your application?",
         "options": [
-            "Standard GNSS / meter-level",
-            "High precision / centimeter-level (RTK)",
-            "No fixed accuracy / not sure",
+            "Standard positioning — meter-level accuracy",
+            "High-precision positioning — centimeter-level RTK",
+            "Accuracy not yet defined / open",
         ],
     },
 }

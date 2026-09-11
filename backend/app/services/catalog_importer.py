@@ -479,6 +479,11 @@ async def import_catalog(
                         max_pages=max_pages,
                         discover_descendants=discover_descendants,
                     )
+                    minimum_expected = int(source.get("minimum_expected_products") or 0)
+                    if minimum_expected and len(rows) < minimum_expected:
+                        raise RuntimeError(
+                            f"Catalog coverage check failed: expected at least {minimum_expected} product(s), got {len(rows)}"
+                        )
                     return source, rows, None
                 except Exception as exc:
                     return source, [], str(exc)

@@ -1187,21 +1187,16 @@
   {
     "id": "CMX655DQ6",
     "manufacturer": "CML Micro",
-    "category": "Audio Codec",
-    "desc": "Ultra-low-power voice codec with digital microphone interface and Class-D speaker amplifier.",
+    "category": "Audio Codecs",
+    "desc": "Ultra-low Power Voice Codec.",
     "tags": [
-      "audio",
-      "codec",
-      "voice",
-      "low power",
-      "Class-D",
-      "I2S",
-      "SPI"
+      "CML Micro",
+      "Audio Codecs"
     ],
     "url": "https://www.spezial.com/en/cmx655dq6-p5267/",
     "exact": true,
-    "path": "Audio Codec · CML Micro",
-    "lifecycle": "Not verified in static demo",
+    "path": "Products → Audio → Codecs",
+    "lifecycle": "Not verified in static bootstrap",
     "availability": "Check live SE page",
     "certifications": [],
     "grade": ""
@@ -2034,6 +2029,193 @@
     "exact": false,
     "path": "Wireless / Embedded · Digi",
     "lifecycle": "Not verified in static demo",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "CMX138AE1",
+    "category": "Audio Codecs",
+    "path": "Products → Audio → Codecs",
+    "url": "https://www.spezial.com/en/cmx138ae1-p5254/",
+    "desc": "Audio Scrambler and Sub-audio Signalling Processor, TSSOP-28.",
+    "tags": [
+      "CML Micro",
+      "Audio Codecs"
+    ],
+    "manufacturer": "CML Micro",
+    "exact": true,
+    "lifecycle": "Not verified in static bootstrap",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "CMX148Q3",
+    "category": "Audio Codecs",
+    "path": "Products → Audio → Codecs",
+    "url": "https://www.spezial.com/en/cmx148q3-p5255/",
+    "desc": "PMR Audio and Data Processor, 48-pin VQFN.",
+    "tags": [
+      "CML Micro",
+      "Audio Codecs"
+    ],
+    "manufacturer": "CML Micro",
+    "exact": true,
+    "lifecycle": "Not verified in static bootstrap",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "CMX638L4",
+    "category": "Audio Codecs",
+    "path": "Products → Audio → Codecs",
+    "url": "https://www.spezial.com/en/cmx638l4-p5262/",
+    "desc": "RALCWI Vocoder, LQFP-48.",
+    "tags": [
+      "CML Micro",
+      "Audio Codecs"
+    ],
+    "manufacturer": "CML Micro",
+    "exact": true,
+    "lifecycle": "Not verified in static bootstrap",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "CMX638Q3",
+    "category": "Audio Codecs",
+    "path": "Products → Audio → Codecs",
+    "url": "https://www.spezial.com/en/audocodec/",
+    "desc": "RALCWI Vocoder, VQFN-48.",
+    "tags": [
+      "CML Micro",
+      "Audio Codecs"
+    ],
+    "manufacturer": "CML Micro",
+    "exact": true,
+    "lifecycle": "Not verified in static bootstrap",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "CMX639D4",
+    "category": "Audio Codecs",
+    "path": "Products → Audio → Codecs",
+    "url": "https://www.spezial.com/en/cmx639d4-p5264/",
+    "desc": "CVSD Voice Codec, SOIC-16.",
+    "tags": [
+      "CML Micro",
+      "Audio Codecs"
+    ],
+    "manufacturer": "CML Micro",
+    "exact": true,
+    "lifecycle": "Not verified in static bootstrap",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "CMX639E2",
+    "category": "Audio Codecs",
+    "path": "Products → Audio → Codecs",
+    "url": "https://www.spezial.com/en/audocodec/",
+    "desc": "CVSD Voice Codec, TSSOP-24.",
+    "tags": [
+      "CML Micro",
+      "Audio Codecs"
+    ],
+    "manufacturer": "CML Micro",
+    "exact": true,
+    "lifecycle": "Not verified in static bootstrap",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "CMX649E3",
+    "category": "Audio Codecs",
+    "path": "Products → Audio → Codecs",
+    "url": "https://www.spezial.com/en/cmx649e3-p5266/",
+    "desc": "Adaptive Delta Modulation (ADM) Voice Codec, TSSOP-20.",
+    "tags": [
+      "CML Micro",
+      "Audio Codecs"
+    ],
+    "manufacturer": "CML Micro",
+    "exact": true,
+    "lifecycle": "Not verified in static bootstrap",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "CMX673D4",
+    "category": "Audio Codecs",
+    "path": "Products → Audio → Codecs",
+    "url": "https://www.spezial.com/en/audocodec/",
+    "desc": "Call Progress Tone Detector, SOIC-16.",
+    "tags": [
+      "CML Micro",
+      "Audio Codecs"
+    ],
+    "manufacturer": "CML Micro",
+    "exact": true,
+    "lifecycle": "Not verified in static bootstrap",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "CMX673D4+T",
+    "category": "Audio Codecs",
+    "path": "Products → Audio → Codecs",
+    "url": "https://www.spezial.com/en/cmx673d4-tr-p5269/",
+    "desc": "Call Progress Tone Detector, SOIC-16, tape/reel ordering code.",
+    "tags": [
+      "CML Micro",
+      "Audio Codecs"
+    ],
+    "manufacturer": "CML Micro",
+    "exact": true,
+    "lifecycle": "Not verified in static bootstrap",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "CMX683E4",
+    "category": "Audio Codecs",
+    "path": "Products → Audio → Codecs",
+    "url": "https://www.spezial.com/en/audocodec/",
+    "desc": "Call Progress and Voice-Audio Detector, TSSOP-16.",
+    "tags": [
+      "CML Micro",
+      "Audio Codecs"
+    ],
+    "manufacturer": "CML Micro",
+    "exact": true,
+    "lifecycle": "Not verified in static bootstrap",
+    "availability": "Check live SE page",
+    "certifications": [],
+    "grade": ""
+  },
+  {
+    "id": "CMX823E4",
+    "category": "Audio Codecs",
+    "path": "Products → Audio → Codecs",
+    "url": "https://www.spezial.com/en/cmx823e4-p5273/",
+    "desc": "Programmable Paging-Tone Decoder, TSSOP-16.",
+    "tags": [
+      "CML Micro",
+      "Audio Codecs"
+    ],
+    "manufacturer": "CML Micro",
+    "exact": true,
+    "lifecycle": "Not verified in static bootstrap",
     "availability": "Check live SE page",
     "certifications": [],
     "grade": ""

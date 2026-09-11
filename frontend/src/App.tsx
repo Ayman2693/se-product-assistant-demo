@@ -416,11 +416,12 @@ const OPTION_DE: Record<string, string> = {
   "Bluetooth LE 5.3 or newer": "Bluetooth LE 5.3 oder neuer",
   "Bluetooth LE 5.4 or newer": "Bluetooth LE 5.4 oder neuer",
   "Bluetooth LE 6.0 or newer": "Bluetooth LE 6.0 oder neuer",
-  "Standard GNSS / meter-level": "Standard-GNSS / Meterbereich",
-  "High precision / centimeter-level (RTK)": "Hochpräzise / Zentimeterbereich (RTK)",
-  "No fixed accuracy / not sure": "Keine feste Genauigkeit / noch unklar",
-  "L1 is sufficient": "L1 ist ausreichend",
-  "Dual-band L1 + L5 required": "Dual-Band L1 + L5 erforderlich",
+  "Standard positioning — meter-level accuracy": "Standardpositionierung — Genauigkeit im Meterbereich",
+  "High-precision positioning — centimeter-level RTK": "Hochpräzise Positionierung — RTK im Zentimeterbereich",
+  "Accuracy not yet defined / open": "Genauigkeitsanforderung noch offen",
+  "Single-band L1 is sufficient": "Single-Band L1 ist ausreichend",
+  "Dual-band L1 + L5 is required": "Dual-Band L1 + L5 ist erforderlich",
+  "Band capability not yet defined / open": "Bandanforderung noch offen",
   "Ceramic / MLCC": "Keramik / MLCC",
   "Tantalum": "Tantal",
   "Film": "Folie",
@@ -491,8 +492,8 @@ function localizeQuestion(
   if (language === "en") return question;
 
   const exact: Record<string, string> = {
-    "I am the SE Product Assistant. How can I help you?<br><span class='botHint'>Briefly describe the application, component, or technical requirement you are looking for.</span>":
-      "Wie kann ich Ihnen helfen?<br><span class='botHint'>Beschreiben Sie kurz Ihre Anwendung, die gesuchte Komponente oder Ihre technische Anforderung.</span>",
+    "Hello.<br>I am the SE Product Assistant. How can I help you?<br><span class='botHint'>Briefly describe the application, component, or technical requirement you are looking for.</span>":
+      "Hallo.<br>Ich bin der SE Product Assistant. Wie kann ich Ihnen helfen?<br><span class='botHint'>Beschreiben Sie kurz Ihre Anwendung, die gesuchte Komponente oder Ihre technische Anforderung.</span>",
     "Which product area best matches what you are looking for?":
       "Welcher Produktbereich passt am besten zu Ihrer Anforderung?",
     "Which connectivity / positioning technologies are required? You can select more than one.":
@@ -529,14 +530,14 @@ function localizeQuestion(
       "Welche Wi-Fi-Generationen sind geeignet? Sie können mehrere auswählen.",
     "What positioning accuracy is required?":
       "Welche Positionierungsgenauigkeit wird benötigt?",
-    "What positioning performance does your application need?":
-      "Welche Positionierungsgenauigkeit benötigt Ihre Anwendung?",
+    "What positioning accuracy class is required for your application?":
+      "Welche Genauigkeitsklasse wird für die GNSS-Positionierung benötigt?",
     "What minimum Bluetooth LE version does your application require?":
       "Welche minimale Bluetooth-LE-Version benötigt Ihre Anwendung?",
     "Should Bluetooth LE also be included in the wireless solution?":
       "Soll Bluetooth LE ebenfalls in der Funklösung enthalten sein?",
-    "Which GNSS frequency-band capability does your application need?":
-      "Welche GNSS-Frequenzband-Fähigkeit benötigt Ihre Anwendung?",
+    "Which GNSS receiver band capability is required?":
+      "Welche GNSS-Empfänger-Bandfähigkeit wird benötigt?",
     "Which host interface does your system support?":
       "Welche Host-Schnittstelle unterstützt Ihr System?",
     "Which external antenna connection do you prefer?":
@@ -1394,7 +1395,7 @@ function questionFor(req: Requirements): { key: QuestionKey; text: string; optio
   if (!req.initialNeed) {
     return {
       key: "initialNeed",
-      text: "I am the SE Product Assistant. How can I help you?<br><span class='botHint'>Briefly describe the application, component, or technical requirement you are looking for.</span>",
+      text: "Hello.<br>I am the SE Product Assistant. How can I help you?<br><span class='botHint'>Briefly describe the application, component, or technical requirement you are looking for.</span>",
     };
   }
 
@@ -1681,11 +1682,11 @@ function questionFor(req: Requirements): { key: QuestionKey; text: string; optio
     if (tech.has("gnss") && !req.gnssPrecision) {
       return {
         key: "gnssPrecision",
-        text: "What positioning performance does your application need?",
+        text: "What positioning accuracy class is required for your application?",
         options: [
-          { label: "Standard GNSS / meter-level", value: "standard" },
-          { label: "High precision / centimeter-level (RTK)", value: "cm" },
-          { label: "No fixed accuracy / not sure", value: "No preference" },
+          { label: "Standard positioning — meter-level accuracy", value: "standard" },
+          { label: "High-precision positioning — centimeter-level RTK", value: "cm" },
+          { label: "Accuracy not yet defined / open", value: "No preference" },
         ],
       };
     }
@@ -1693,11 +1694,11 @@ function questionFor(req: Requirements): { key: QuestionKey; text: string; optio
     if (tech.has("gnss") && !req.gnssDualBand) {
       return {
         key: "gnssDualBand",
-        text: "Which GNSS frequency-band capability does your application need?",
+        text: "Which GNSS receiver band capability is required?",
         options: [
-          { label: "L1 is sufficient", value: "L1 sufficient" },
-          { label: "Dual-band L1 + L5 required", value: "L1 + L5 required" },
-          { label: "No preference / not sure", value: "No preference" },
+          { label: "Single-band L1 is sufficient", value: "L1 sufficient" },
+          { label: "Dual-band L1 + L5 is required", value: "L1 + L5 required" },
+          { label: "Band capability not yet defined / open", value: "No preference" },
         ],
       };
     }
@@ -1706,11 +1707,11 @@ function questionFor(req: Requirements): { key: QuestionKey; text: string; optio
   if (req.productDomain === "positioning" && !req.gnssPrecision) {
     return {
       key: "gnssPrecision",
-      text: "What positioning performance does your application need?",
+      text: "What positioning accuracy class is required for your application?",
       options: [
-        { label: "Standard GNSS / meter-level", value: "standard" },
-        { label: "High precision / centimeter-level (RTK)", value: "cm" },
-        { label: "No fixed accuracy / not sure", value: "No preference" },
+        { label: "Standard positioning — meter-level accuracy", value: "standard" },
+        { label: "High-precision positioning — centimeter-level RTK", value: "cm" },
+        { label: "Accuracy not yet defined / open", value: "No preference" },
       ],
     };
   }
@@ -1718,10 +1719,10 @@ function questionFor(req: Requirements): { key: QuestionKey; text: string; optio
   if (req.productDomain === "positioning" && !req.gnssDualBand) {
     return {
       key: "gnssDualBand",
-      text: "Which GNSS frequency-band capability does your application need?",
+      text: "Which GNSS receiver band capability is required?",
       options: [
-        { label: "L1 is sufficient", value: "L1 sufficient" },
-        { label: "Dual-band L1 + L5 required", value: "L1 + L5 required" },
+        { label: "Single-band L1 is sufficient", value: "L1 sufficient" },
+        { label: "Dual-band L1 + L5 is required", value: "L1 + L5 required" },
         { label: "No preference / not sure", value: "No preference" },
       ],
     };
@@ -2012,11 +2013,11 @@ function tieBreakerFor(
     if (tech.has("gnss") && !req.gnssDualBand) {
       return {
         key: "gnssDualBand",
-        text: "Which GNSS frequency-band capability does your application need?",
+        text: "Which GNSS receiver band capability is required?",
         options: [
-          { label: "L1 is sufficient", value: "L1 sufficient" },
-          { label: "Dual-band L1 + L5 required", value: "L1 + L5 required" },
-          { label: "No preference / not sure", value: "No preference" },
+          { label: "Single-band L1 is sufficient", value: "L1 sufficient" },
+          { label: "Dual-band L1 + L5 is required", value: "L1 + L5 required" },
+          { label: "Band capability not yet defined / open", value: "No preference" },
         ],
       };
     }
@@ -2027,11 +2028,11 @@ function tieBreakerFor(
         hasCandidateDifference(topMatches, candidateGnssBand)) {
       return {
         key: "gnssDualBand",
-        text: "For this high-precision GNSS application, which frequency-band capability is required?",
+        text: "For this high-precision requirement, is dual-band L1 + L5 mandatory?",
         options: [
-          { label: "L1 is sufficient", value: "L1 sufficient" },
-          { label: "Dual-band L1 + L5 required", value: "L1 + L5 required" },
-          { label: "No preference / not sure", value: "No preference" },
+          { label: "Single-band L1 is sufficient", value: "L1 sufficient" },
+          { label: "Dual-band L1 + L5 is required", value: "L1 + L5 required" },
+          { label: "Band capability not yet defined / open", value: "No preference" },
         ],
       };
     }
@@ -2343,11 +2344,11 @@ function editableQuestionFor(
       ],
     },
     gnssPrecision: {
-      text: "Update the required positioning performance:",
+      text: "Update the required GNSS positioning accuracy:",
       options: [
-        { label: "Standard GNSS / meter-level", value: "standard" },
-        { label: "High precision / centimeter-level (RTK)", value: "cm" },
-        { label: "No fixed accuracy / not sure", value: "No preference" },
+        { label: "Standard positioning — meter-level accuracy", value: "standard" },
+        { label: "High-precision positioning — centimeter-level RTK", value: "cm" },
+        { label: "Accuracy not yet defined / open", value: "No preference" },
       ],
     },
     hostInterface: {
@@ -2410,10 +2411,10 @@ function editableQuestionFor(
       ],
     },
     gnssDualBand: {
-      text: "Update the GNSS frequency-band requirement:",
+      text: "Update the required GNSS receiver band capability:",
       options: [
-        { label: "L1 is sufficient", value: "L1 sufficient" },
-        { label: "Dual-band L1 + L5 required", value: "L1 + L5 required" },
+        { label: "Single-band L1 is sufficient", value: "L1 sufficient" },
+        { label: "Dual-band L1 + L5 is required", value: "L1 + L5 required" },
         { label: "No preference / not sure", value: "No preference" },
       ],
     },
@@ -2501,7 +2502,7 @@ function naturalReply(key: QuestionKey, value: Option["value"]) {
       v === "L1 + L5 required"
         ? "Understood — <strong>dual-band L1 + L5</strong> is required."
         : v === "L1 sufficient"
-          ? "Understood — <strong>L1 is sufficient</strong>."
+          ? "Understood — <strong>Single-band L1 is sufficient</strong>."
           : "Okay — no fixed GNSS frequency-band requirement.",
     capacitorCapacitance: `Good — required capacitance: <strong>${htmlEscape(v)}</strong>.`,
     capacitorVoltage: `Good — minimum voltage rating: <strong>${htmlEscape(v)}</strong>.`,
@@ -2808,6 +2809,105 @@ function uniqueSolutionMatches(matches: Match[]): Match[] {
 }
 
 
+function selectedMatchForHandoff(req: Requirements, currentMatches: Match[]): Match | undefined {
+  const selected = req.supportProduct;
+  if (!selected || selected === "Compare top candidates") return undefined;
+  return currentMatches.find((match) => match.product.part_number === selected);
+}
+
+function emailDraftHtml(subject: string, body: string, language: Language) {
+  const href = `mailto:support@spezial.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const formattedBody = htmlEscape(body).replace(/\n/g, "<br>");
+  return `
+    <div class="handoffEmailDraft">
+      <strong>${tr(language, "Suggested email to SE", "Vorgeschlagene E-Mail an SE")}</strong>
+      <div class="emailSubject"><span>${tr(language, "Subject", "Betreff")}:</span> ${htmlEscape(subject)}</div>
+      <div class="emailBody">${formattedBody}</div>
+      <a class="emailDraftAction" href="${href}">${tr(language, "Open email draft", "E-Mail-Entwurf öffnen")}</a>
+    </div>
+  `;
+}
+
+function commercialEmailDraft(req: Requirements, currentMatches: Match[], language: Language) {
+  const product = req.supportProduct ?? "top recommendation";
+  const selectedMatch = selectedMatchForHandoff(req, currentMatches);
+  const productUrl = selectedMatch?.product.product_url;
+
+  if (language === "de") {
+    const subject = `Preis- und Verfügbarkeitsanfrage – ${product}`;
+    const body = [
+      "Hallo SE-Team,",
+      "",
+      "ich möchte eine Preis- und Verfügbarkeitsprüfung für folgendes Produkt anfragen:",
+      `Produkt: ${product}`,
+      req.targetVolume ? `Geplante Jahresmenge: ${req.targetVolume}` : null,
+      req.projectTimeline ? `Benötigter Zeitpunkt: ${req.projectTimeline}` : null,
+      productUrl ? `SE-Produktseite: ${productUrl}` : null,
+      "",
+      "Bitte senden Sie mir, soweit verfügbar, eine Preisindikation, MOQ, aktuelle Verfügbarkeit/Lieferzeit sowie Informationen zur Musterverfügbarkeit.",
+      "",
+      "Vielen Dank und freundliche Grüße",
+    ].filter((line): line is string => line !== null).join("\n");
+    return { subject, body };
+  }
+
+  const subject = `Price / availability request – ${product}`;
+  const body = [
+    "Hello SE Team,",
+    "",
+    "I would like to request a price and availability check for the following product:",
+    `Product: ${product}`,
+    req.targetVolume ? `Expected annual quantity: ${req.targetVolume}` : null,
+    req.projectTimeline ? `Required timing: ${req.projectTimeline}` : null,
+    productUrl ? `SE product page: ${productUrl}` : null,
+    "",
+    "Please provide, where available, a price indication, MOQ, current availability/lead time, and sample availability.",
+    "",
+    "Thank you and best regards,",
+  ].filter((line): line is string => line !== null).join("\n");
+  return { subject, body };
+}
+
+function technicalEmailDraft(req: Requirements, currentMatches: Match[], language: Language) {
+  const product = req.supportProduct ?? "top recommendation";
+  const selectedMatch = selectedMatchForHandoff(req, currentMatches);
+  const productUrl = selectedMatch?.product.product_url;
+  const focus = req.supportTopic ?? (language === "de" ? "Technische Eignung prüfen" : "Validate technical suitability");
+
+  if (language === "de") {
+    const subject = `Technische FAE-Prüfung – ${product}`;
+    const body = [
+      "Hallo SE FAE-Team,",
+      "",
+      "ich möchte eine technische Prüfung für folgende Produktempfehlung anfragen:",
+      `Produkt: ${product}`,
+      `Prüfschwerpunkt: ${focus}`,
+      productUrl ? `SE-Produktseite: ${productUrl}` : null,
+      "",
+      "Bitte prüfen Sie die technische Eignung und weisen Sie auf relevante Integrations-, HF-, Firmware- oder Zertifizierungsthemen hin.",
+      "",
+      "Vielen Dank und freundliche Grüße",
+    ].filter((line): line is string => line !== null).join("\n");
+    return { subject, body };
+  }
+
+  const subject = `Technical FAE review – ${product}`;
+  const body = [
+    "Hello SE FAE Team,",
+    "",
+    "I would like to request a technical review of the following product recommendation:",
+    `Product: ${product}`,
+    `Review focus: ${focus}`,
+    productUrl ? `SE product page: ${productUrl}` : null,
+    "",
+    "Please confirm the technical suitability and highlight any relevant integration, RF, firmware, or certification considerations.",
+    "",
+    "Thank you and best regards,",
+  ].filter((line): line is string => line !== null).join("\n");
+  return { subject, body };
+}
+
+
 function App() {
   const [language, setLanguage] = useState<Language>("en");
   const [viewMode, setViewMode] = useState<ViewMode>("customer");
@@ -2942,22 +3042,24 @@ function App() {
       setMultiSelected([]);
 
       if (nextReq.supportGoal === "technical") {
+        const draft = technicalEmailDraft(nextReq, matches, selectedLanguage);
         addMessage(
           "bot",
           tr(
             selectedLanguage,
-            `FAE handoff context is ready: <strong>${htmlEscape(nextReq.supportProduct ?? "top recommendation")}</strong>${nextReq.supportTopic ? ` · ${htmlEscape(nextReq.supportTopic)}` : ""}. These handoff details do <strong>not</strong> change the technical ranking. Use <strong>Ask an FAE</strong> on the preferred product card to continue.`,
-            `Der FAE-Übergabekontext ist vorbereitet: <strong>${htmlEscape(nextReq.supportProduct ?? "Top-Empfehlung")}</strong>${nextReq.supportTopic ? ` · ${htmlEscape(nextReq.supportTopic)}` : ""}. Diese Übergabeangaben ändern das technische Ranking <strong>nicht</strong>. Nutzen Sie <strong>Ask an FAE</strong> bei der gewünschten Produktkarte.`
-          )
+            `FAE handoff context is ready: <strong>${htmlEscape(nextReq.supportProduct ?? "top recommendation")}</strong>${nextReq.supportTopic ? ` · ${htmlEscape(nextReq.supportTopic)}` : ""}. These handoff details do <strong>not</strong> change the technical ranking.`,
+            `Der FAE-Übergabekontext ist vorbereitet: <strong>${htmlEscape(nextReq.supportProduct ?? "Top-Empfehlung")}</strong>${nextReq.supportTopic ? ` · ${htmlEscape(nextReq.supportTopic)}` : ""}. Diese Übergabeangaben ändern das technische Ranking <strong>nicht</strong>.`
+          ) + emailDraftHtml(draft.subject, draft.body, selectedLanguage)
         );
       } else if (nextReq.supportGoal === "commercial") {
+        const draft = commercialEmailDraft(nextReq, matches, selectedLanguage);
         addMessage(
           "bot",
           tr(
             selectedLanguage,
             `Commercial follow-up context is ready: <strong>${htmlEscape(nextReq.supportProduct ?? "top recommendation")}</strong>${nextReq.targetVolume ? ` · ${htmlEscape(nextReq.targetVolume)}` : ""}${nextReq.projectTimeline ? ` · ${htmlEscape(nextReq.projectTimeline)}` : ""}. These details do <strong>not</strong> change the technical ranking.`,
             `Der kaufmännische Follow-up-Kontext ist vorbereitet: <strong>${htmlEscape(nextReq.supportProduct ?? "Top-Empfehlung")}</strong>${nextReq.targetVolume ? ` · ${htmlEscape(nextReq.targetVolume)}` : ""}${nextReq.projectTimeline ? ` · ${htmlEscape(nextReq.projectTimeline)}` : ""}. Diese Angaben ändern das technische Ranking <strong>nicht</strong>.`
-          )
+          ) + emailDraftHtml(draft.subject, draft.body, selectedLanguage)
         );
       } else if (nextReq.supportGoal === "none") {
         addMessage(
@@ -4032,7 +4134,6 @@ function App() {
       <main className="page">
         <section className="hero">
           <h1 className="assistantTitle">SE PRODUCT ASSISTANT</h1>
-          <button className="restart" onClick={reset}>↻ {tr(language, "Restart conversation", "Konversation neu starten")}</button>
         </section>
 
         <div className="workspace">
@@ -4406,7 +4507,6 @@ function App() {
                   <span>{tr(language, "Online · technical selection", "Online · technische Produktauswahl")}</span>
                 </div>
               </div>
-              <button onClick={reset}>{tr(language, "Restart", "Neu starten")}</button>
             </div>
 
             <div className="chatBody" ref={chatBodyRef}>
@@ -4479,16 +4579,21 @@ function App() {
               <div />
             </div>
 
-            <div className="chatInput">
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && submitText()}
-                placeholder={tr(language, "Describe what you need or type your answer…", "Beschreiben Sie Ihre Anforderung oder geben Sie Ihre Antwort ein…")}
-                disabled={!activeQuestion || matching}
-              />
-              <button onClick={submitText} disabled={!input.trim() || !activeQuestion || matching}>
-                {tr(language, "Send", "Senden")}
+            <div className="chatComposer">
+              <div className="chatInput">
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && submitText()}
+                  placeholder={tr(language, "Describe what you need or type your answer…", "Beschreiben Sie Ihre Anforderung oder geben Sie Ihre Antwort ein…")}
+                  disabled={!activeQuestion || matching}
+                />
+                <button onClick={submitText} disabled={!input.trim() || !activeQuestion || matching}>
+                  {tr(language, "Send", "Senden")}
+                </button>
+              </div>
+              <button type="button" className="restartUnderSend" onClick={reset}>
+                ↻ {tr(language, "Restart conversation", "Konversation neu starten")}
               </button>
             </div>
           </aside>

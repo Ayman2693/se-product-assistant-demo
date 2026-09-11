@@ -1727,3 +1727,14 @@ Normal application startup re-extracts structured features for every product
 and refreshes catalog-derived evidence, so deploying this version is enough to
 backfill the current database. A catalog sync is only needed when the website
 product data itself also needs refreshing.
+
+
+# Phase 5.1.2 — Catalog Recovery, Professional GNSS & Handoff Email
+
+- Corrects the static `CMX655DQ6` category from `Audio Codec` to canonical `Audio Codecs`; the static seed previously overwrote the live category on startup.
+- Bootstraps visible CML Micro codec products and keeps `/en/audocodec/` as the authoritative live source.
+- Adds a minimum source coverage guard so a zero-row codec crawl is reported instead of silently accepted.
+- Uses more professional GNSS accuracy and receiver-band qualification wording.
+- Generates ready-to-open email drafts after technical FAE or commercial follow-up qualification.
+- Adds `Hello` to the opening message.
+- Moves restart below Send and removes reset controls from the hero and chat header.

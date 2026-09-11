@@ -53,7 +53,7 @@ CATALOG_SOURCES = [
 
     # Audio
     {"category": "Vibration", "path": "/en/audiovibration/"},
-    {"category": "Audio Codecs", "path": "/en/audocodec/"},
+    {"category": "Audio Codecs", "path": "/en/audocodec/", "minimum_expected_products": 1},
 
     # Passives
     {"category": "Capacitors", "path": "/en/passivecap/"},

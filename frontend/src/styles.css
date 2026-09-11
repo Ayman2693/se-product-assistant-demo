@@ -312,7 +312,8 @@ a { color: inherit; }
 .quickOptions button:hover { color: #b71c2b; border-color: #b71c2b; }
 .finalActions { border-top: 1px solid #e3e8eb; padding-top: 9px; margin-top: 12px; }
 
-.chatInput { display: flex; gap: 7px; padding: 9px; border-top: 1px solid #dde3e8; }
+.chatComposer { padding: 9px; border-top: 1px solid #dde3e8; background: #fff; }
+.chatInput { display: flex; gap: 7px; padding: 0; border-top: 0; }
 .chatInput input {
   flex: 1; min-width: 0; border: 1px solid #d8dfe4; border-radius: 8px;
   padding: 11px 12px; font-size: 15px; outline: none;
@@ -971,4 +972,39 @@ a.evidenceSource:hover {
   font-size: 11px;
   line-height: 1.35;
   text-align: right;
+}
+
+
+.restartUnderSend {
+  display: block;
+  margin: 7px 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: #64717d;
+  padding: 4px 2px;
+  font-size: 12px;
+  font-weight: 750;
+}
+.restartUnderSend:hover { color: #b71c2b; }
+.handoffEmailDraft {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #d9e0e5;
+  border-radius: 10px;
+  background: #fff;
+}
+.handoffEmailDraft > strong { display: block; margin-bottom: 8px; }
+.emailSubject { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #edf0f2; font-size: 13px; }
+.emailSubject span { color: #64717d; font-weight: 800; }
+.emailBody { color: #36434d; font-size: 13px; line-height: 1.55; }
+.emailDraftAction {
+  display: inline-block;
+  margin-top: 10px;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #b71c2b;
+  color: #fff;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 850;
 }
