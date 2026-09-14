@@ -510,7 +510,7 @@ function localizeQuestion(
 
   const exact: Record<string, string> = {
     "Hello.<br>I am the SE Product Assistant. How can I help you?<br><span class='botHint'>Briefly describe the application, component, or technical requirement you are looking for.</span>":
-      "Hallo.<br>Ich bin der SE Product Assistant. Wie kann ich Ihnen helfen?<br><span class='botHint'>Beschreiben Sie kurz Ihre Anwendung, die gesuchte Komponente oder Ihre technische Anforderung.</span>",
+      "Hallo, Ich bin der SE Product Assistant. Wie kann ich Ihnen helfen?<br><span class='botHint'>Beschreiben Sie kurz Ihre Anwendung, die gesuchte Komponente oder Ihre technische Anforderung.</span>",
     "Which product area best matches what you are looking for?":
       "Welcher Produktbereich passt am besten zu Ihrer Anforderung?",
     "Which connectivity / positioning technologies are required? You can select more than one.":
