@@ -411,48 +411,19 @@ def _question_specs(request: MatchRequest) -> list[dict]:
                 priority=92,
             )
 
-        if tech.intersection({"wifi", "bluetooth"}):
-            add(
-                "architecture",
-                bool(request.architecture),
-                lambda p: p.features.architecture if p.features else None,
-                priority=94,
-            )
+        structured_short_range = request.catalog_category in {"Wi-Fi", "Multiradio", "Bluetooth LE", "Bluetooth Classic + LE"}
 
-            # Host-based wireless modules depend on a host-side transport.
-            # This is core engineering qualification, not only a tie-breaker.
+        if tech.intersection({"wifi", "bluetooth"}) and not structured_short_range:
+            add("architecture", bool(request.architecture), lambda p: p.features.architecture if p.features else None, priority=94)
             if request.architecture == "host":
-                add(
-                    "hostInterface",
-                    bool(request.host_interface),
-                    _host_interface_signal,
-                    required=True,
-                    priority=93,
-                    stage="qualification",
-                )
+                add("hostInterface", bool(request.host_interface), _host_interface_signal, required=True, priority=93, stage="qualification")
 
-        if "wifi" in tech:
-            add(
-                "wifiGeneration",
-                bool(request.wifi_generation),
-                lambda p: p.features.wifi_generation if p.features else None,
-                priority=88,
-                multi_select=True,
-            )
+        if "wifi" in tech and not structured_short_range:
+            add("wifiGeneration", bool(request.wifi_generation), lambda p: p.features.wifi_generation if p.features else None, priority=88, multi_select=True)
 
-        if "bluetooth" in tech:
-            add(
-                "bluetoothRequirement",
-                request.bluetooth_required is True or bool(request.bluetooth_version_min),
-                _bluetooth_version,
-                priority=86,
-            )
-            add(
-                "antenna",
-                bool(request.antenna),
-                lambda p: p.features.antenna if p.features else None,
-                priority=80,
-            )
+        if "bluetooth" in tech and not structured_short_range:
+            add("bluetoothRequirement", request.bluetooth_required is True or bool(request.bluetooth_version_min), _bluetooth_version, priority=86)
+            add("antenna", bool(request.antenna), lambda p: p.features.antenna if p.features else None, priority=80)
 
         if "gnss" in tech:
             add(
@@ -584,7 +555,7 @@ def _question_specs(request: MatchRequest) -> list[dict]:
             key,
             eng_spec.key in explicit_engineering or eng_spec.key in answered_engineering,
             lambda product, field_key=eng_spec.key: _engineering_field_signal(product, field_key),
-            required=False,
+            required=eng_spec.core,
             priority=eng_spec.priority,
             stage="qualification",
             text=eng_spec.question,
@@ -686,7 +657,9 @@ def _dynamic_options(key: str, distribution: Counter, engineering_spec: Engineer
         raw_values = list(distribution.keys())
         options: list[dict] = []
 
-        if engineering_spec.kind == "number":
+        if engineering_spec.choices:
+            options = [{"label": label, "value": value} for label, value in engineering_spec.choices]
+        elif engineering_spec.kind == "number":
             numeric: list[float] = []
             for raw in raw_values:
                 try:
@@ -721,7 +694,7 @@ def _dynamic_options(key: str, distribution: Counter, engineering_spec: Engineer
 
         # An open answer is remembered separately and never becomes a hard
         # matcher constraint.
-        options.append({"label": "No preference / not sure", "value": "__open__"})
+        options.append({"label": "Not determined / open", "value": "__open__"})
         return options
 
     if key == "capacitorCapacitance":

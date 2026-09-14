@@ -28,6 +28,9 @@ MANUFACTURER_ALIASES = {
 
 PRODUCT_PATH_RE = re.compile(r"/en/[^?#]*-p\d+/?$", re.I)
 
+DETAIL_ENRICH_CATEGORIES = {"Wi-Fi", "Multiradio", "Bluetooth LE", "Bluetooth Classic + LE", "Short Range Evaluation", "Other RF Components"}
+DETAIL_FEATURE_LABELS = ("Form factor", "Chip", "Wi-Fi Standard", "Bluetooth Standard", "Antenna Option", "Type", "Software", "max. Range", "S/W Features")
+
 @dataclass
 class ImportedProduct:
     part_number: str
@@ -127,6 +130,39 @@ def discover_child_listing_urls(
 
     return sorted(found)
 
+
+
+def _detail_feature_values(html: str) -> dict[str, str]:
+    plain = _clean(BeautifulSoup(html, "html.parser").get_text(" ", strip=True))
+    if not plain: return {}
+    label_pattern = "|".join(re.escape(label) for label in DETAIL_FEATURE_LABELS)
+    values: dict[str, str] = {}
+    for label in DETAIL_FEATURE_LABELS:
+        pattern = rf"{re.escape(label)}\s*:?\s*(?:\|\s*)?(.{{1,180}}?)(?=\s(?:{label_pattern})\s*:|\s(?:Accessories|Alternative Items|References|Downloads)\b|$)"
+        m=re.search(pattern,plain,re.I)
+        if m:
+            value=_clean(m.group(1)).strip(" |*")
+            if value: values[label]=value
+    operation=re.search(r"Operation\s+modes?\s*:\s*(.{1,140}?)(?=\s(?:Dual[- ]mode|Bluetooth|Variants|Form factor|Chip|Downloads)\b|$)",plain,re.I)
+    if operation: values["Operation modes"]=_clean(operation.group(1)).strip(" |*")
+    return values
+
+
+async def _enrich_product_detail(client: httpx.AsyncClient, item: ImportedProduct, semaphore: asyncio.Semaphore) -> ImportedProduct:
+    async with semaphore:
+        try:
+            response=await client.get(item.product_url); response.raise_for_status()
+        except Exception:
+            return item
+    features=_detail_feature_values(response.text)
+    additions=[f"{label}: {value}" for label,value in features.items() if value and value.lower() not in (item.description or '').lower()]
+    if additions: item.description=_clean(" * ".join([item.description or '', *additions]))
+    return item
+
+
+async def _enrich_detail_products(client: httpx.AsyncClient, products: list[ImportedProduct], *, max_concurrency: int = 6) -> list[ImportedProduct]:
+    semaphore=asyncio.Semaphore(max(1,max_concurrency))
+    return list(await asyncio.gather(*[_enrich_product_detail(client,item,semaphore) for item in products]))
 
 def _listing_label(html: str, fallback: str) -> str:
     soup = BeautifulSoup(html, "html.parser")
@@ -361,7 +397,10 @@ async def crawl_source(
     dedup: dict[str, ImportedProduct] = {}
     for item in products:
         dedup[item.part_number.upper()] = item
-    return list(dedup.values())
+    rows = list(dedup.values())
+    if source.get("category") in DETAIL_ENRICH_CATEGORIES and rows:
+        rows = await _enrich_detail_products(client, rows)
+    return rows
 
 
 def upsert_product(db: Session, item: ImportedProduct) -> Product:

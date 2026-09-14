@@ -157,6 +157,12 @@ def interpret_text(text: str) -> dict[str, Any]:
     # connectivity-specific qualification flow.
 
     category_patterns = [
+        ("connectivity", "Multiradio", r"\bmultiradio\b|\btri[- ]?radio\b|\bwi-?fi\b[^.;]{0,35}\bbluetooth\b|\bbluetooth\b[^.;]{0,35}\bwi-?fi\b"),
+        ("connectivity", "Bluetooth Classic + LE", r"bluetooth[^.;]{0,35}(?:classic|br\s*/?\s*edr)[^.;]{0,35}(?:low\s+energy|\ble\b)|(?:classic|br\s*/?\s*edr)[^.;]{0,35}bluetooth[^.;]{0,35}(?:low\s+energy|\ble\b)|dual[- ]?mode\s+bluetooth"),
+        ("connectivity", "Bluetooth LE", r"bluetooth\s+(?:low\s+energy|le)\s+(?:module|modul)|\bble\s+(?:module|modul)"),
+        ("connectivity", "Wi-Fi", r"\bwi-?fi\b[^.;]{0,22}(?:module|modul)|\bwlan\b[^.;]{0,22}(?:module|modul)"),
+        ("connectivity", "Short Range Evaluation", r"(?:evaluation\s+kit|eval[- ]?kit|\bevk\b)[^.;]{0,45}(?:wi-?fi|bluetooth|multiradio|short[- ]?range)|(?:wi-?fi|bluetooth|multiradio|short[- ]?range)[^.;]{0,45}(?:evaluation\s+kit|eval[- ]?kit|\bevk\b)"),
+        ("antenna", "Other RF Components", r"\bother\s+rf\s+components?\b|\brf\s+components?\b|\bpower\s+amplifier\b|\bgain\s+block\b"),
         ("sensors", "Pressure Sensors", r"\bpressure\s+(?:sensor|transducer)|\bbarometric\b|\bdrucksensor(?:en)?\b|\bdruckaufnehmer\b"),
         ("sensors", "Temperature Sensors", r"\btemperature\s+sensor|\btemperature\s+measurement|\bthermistor\b|\btemperatursensor(?:en)?\b|\btemperaturmessung\b"),
         ("sensors", "Humidity Sensors", r"\bhumidity\s+sensor|\brelative humidity\b|\bfeuchtigkeitssensor(?:en)?\b|\bluftfeuchtigkeit\b"),
@@ -443,6 +449,9 @@ def interpret_text(text: str) -> dict[str, Any]:
         evidence.append("technology:antenna")
 
     out["technologies"] = _uniq(technologies)
+    if out.get("product_domain") == "connectivity" and out.get("catalog_category") is None and set(out["technologies"]) == {"wifi", "bluetooth"}:
+        out["catalog_category"] = "Multiradio"
+        evidence.append("catalog_category:Multiradio")
 
     # Antenna wording is often a requirement of a wireless module, not the
     # requested product domain itself.

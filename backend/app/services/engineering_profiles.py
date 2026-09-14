@@ -15,6 +15,7 @@ class EngineeringFieldSpec:
     priority: int = 60
     weight: int = 14
     choices: tuple[tuple[str, str], ...] = ()
+    core: bool = False
 
 
 # The field library is deliberately category-agnostic. Categories select a
@@ -58,6 +59,101 @@ FIELD_LIBRARY: dict[str, EngineeringFieldSpec] = {
     ),
     "temperature_max_c": EngineeringFieldSpec(
         "temperature_max_c", "Maximum operating temperature", "What maximum operating temperature must the product support?", "number", "°C", "covers_max", 45, 8
+    ),
+
+    # Short-range / wireless selection
+    "wireless_type": EngineeringFieldSpec(
+        "wireless_type", "Type", "Which module type do you need?", "enum", "", "exact", 99, 20,
+        (("Host based", "host_based"), ("Stand-alone", "stand_alone")),
+        True,
+    ),
+    "wireless_chip": EngineeringFieldSpec(
+        "wireless_chip", "Chip", "Which wireless chipset do you need?", "enum", "", "exact", 98, 20,
+        (
+            ("NXP RW612", "nxp_rw612"), ("NXP IW611", "nxp_iw611"), ("NXP IW416", "nxp_iw416"),
+            ("NXP Q9098", "nxp_q9098"), ("NXP 88W8987", "nxp_88w8987"),
+            ("NXP 88W8887A", "nxp_88w8887a"), ("NXP 88W8887", "nxp_88w8887"),
+            ("NXP 88W8801", "nxp_88w8801"), ("RTL8720DF", "rtl8720df"),
+            ("ESP32-S3", "esp32_s3"), ("ESP32-C6", "esp32_c6"), ("ESP32", "esp32"),
+            ("WL1837", "wl1837"), ("nRF52810", "nrf52810"), ("nRF52811", "nrf52811"),
+            ("nRF52832", "nrf52832"), ("nRF52833", "nrf52833"), ("nRF52840", "nrf52840"),
+            ("nRF5340", "nrf5340"), ("nRF54L15", "nrf54l15"),
+        ),
+        True,
+    ),
+    "wifi_standard": EngineeringFieldSpec(
+        "wifi_standard", "Wi-Fi standard", "Which Wi-Fi standard is required?", "enum", "", "exact", 97, 22,
+        (
+            ("Wi-Fi 6E / 6 GHz", "wifi6e"), ("Wi-Fi 6 dual-band", "wifi6_dual"),
+            ("Wi-Fi 6 single-band", "wifi6_single"), ("Wi-Fi 5 dual-band", "wifi5_dual"),
+            ("Wi-Fi 4 dual-band", "wifi4_dual"), ("Wi-Fi 4 single-band", "wifi4_single"),
+        ),
+        True,
+    ),
+    "wifi_band": EngineeringFieldSpec(
+        "wifi_band", "Wi-Fi band", "Which Wi-Fi frequency-band capability is required?", "enum", "", "exact", 100, 22,
+        (("Dual-band 2.4 + 5 GHz", "dual_24_5"), ("2.4 GHz single-band", "single_24"), ("6 GHz / Wi-Fi 6E capability", "band_6ghz")),
+        True,
+    ),
+    "wifi_operation_mode": EngineeringFieldSpec(
+        "wifi_operation_mode", "Wi-Fi operation mode", "Which Wi-Fi operation mode is essential for the application?", "enum", "", "contains", 96, 18,
+        (("Access point", "access_point"), ("Station / client", "station"), ("Wi-Fi Direct", "wifi_direct")),
+        True,
+    ),
+    "bluetooth_standard": EngineeringFieldSpec(
+        "bluetooth_standard", "Bluetooth standard", "Which Bluetooth standard is required?", "enum", "", "exact", 98, 20,
+        (
+            ("Bluetooth LE 6.0", "v6.0_le"), ("Bluetooth LE 5.4", "v5.4_le"),
+            ("Bluetooth LE 5.3", "v5.3_le"), ("Bluetooth LE 5.2", "v5.2_le"),
+            ("Bluetooth LE 5.1", "v5.1_le"), ("Bluetooth LE 5.0", "v5.0_le"),
+            ("Bluetooth 5.3 dual-mode (Classic + LE)", "v5.3_dual"),
+            ("Bluetooth 5.2 dual-mode (Classic + LE)", "v5.2_dual"),
+            ("Bluetooth 5.0 dual-mode (Classic + LE)", "v5.0_dual"),
+            ("Bluetooth 4.2 dual-mode (Classic + LE)", "v4.2_dual"),
+        ),
+        True,
+    ),
+    "antenna_option": EngineeringFieldSpec(
+        "antenna_option", "Antenna option", "Which antenna option do you need?", "enum", "", "exact", 95, 18,
+        (
+            ("2 antenna pins", "two_antenna_pins"), ("2 U.FL connectors", "two_ufl_connectors"),
+            ("Antenna pin", "antenna_pin"), ("Connector for external antenna", "external_antenna_connector"),
+            ("Embedded PCB antenna", "embedded_pcb_antenna"), ("Internal antenna", "internal_antenna"),
+            ("Internal antenna + antenna pin", "internal_plus_antenna_pin"),
+            ("One pin for combined Bluetooth and Wi-Fi external antenna", "combined_bt_wifi_pin"),
+            ("Two pins for separate Bluetooth and Wi-Fi external antennas", "separate_bt_wifi_pins"),
+            ("Two pins for Wi-Fi and one pin for Bluetooth external antennas", "two_wifi_one_bt_pins"),
+        ),
+        True,
+    ),
+    "wireless_software": EngineeringFieldSpec(
+        "wireless_software", "Software", "Which software environment do you need?", "enum", "", "exact", 92, 18,
+        (("Linux / Android", "linux_android"), ("Open CPU", "open_cpu"), ("u-connectXpress", "uconnectxpress"), ("AWS ExpressLink", "aws_expresslink")),
+        True,
+    ),
+    "bluetooth_max_range_m": EngineeringFieldSpec(
+        "bluetooth_max_range_m", "Maximum Bluetooth range", "What minimum Bluetooth range do you need?", "number", "m", "min", 90, 16,
+        (("50 m", "50"), ("100 m", "100"), ("400 m", "400"), ("1000 m", "1000")),
+        True,
+    ),
+    "rf_application": EngineeringFieldSpec(
+        "rf_application", "RF application / family", "Which Other RF product family do you need?", "enum", "", "exact", 100, 22,
+        (
+            ("Maritime Communication", "maritime"), ("Wireline Telecom", "wireline"),
+            ("Wireless Data", "wireless_data"), ("Digital / Analogue 2-way radio", "two_way_radio"),
+            ("RF Building Blocks", "rf_building_blocks"),
+        ),
+        True,
+    ),
+    "rf_component_type": EngineeringFieldSpec(
+        "rf_component_type", "RF component type", "Which RF component type are you looking for?", "enum", "", "exact", 96, 20,
+        (
+            ("Power amplifier", "power_amplifier"), ("Low-noise amplifier / gain block", "lna_gain_block"),
+            ("RF front-end module", "front_end"), ("RF filter", "rf_filter"),
+            ("Transceiver / modem", "transceiver_modem"), ("RF switch", "rf_switch"),
+            ("Baseband / protocol processor", "baseband_processor"), ("Complete communication module", "communication_module"),
+        ),
+        True,
     ),
 
     # Timing / crystals / oscillators
@@ -261,17 +357,17 @@ CATEGORY_PROFILES: dict[str, tuple[str, ...]] = {
     "GNSS Timing": ("interface", "frequency_hz", "supply_voltage_v", "package", "temperature_min_c", "temperature_max_c"),
     "Dead Reckoning": ("interface", "supply_voltage_v", "package", "temperature_min_c", "temperature_max_c"),
     "GNSS Evaluation": ("interface", "supply_voltage_v"),
-    "Bluetooth LE": ("interface", "supply_voltage_v", "package", "temperature_min_c", "temperature_max_c"),
-    "Multiradio": ("interface", "supply_voltage_v", "package", "temperature_min_c", "temperature_max_c"),
-    "Wi-Fi": ("interface", "supply_voltage_v", "package", "temperature_min_c", "temperature_max_c"),
-    "Bluetooth Classic + LE": ("interface", "supply_voltage_v", "package", "temperature_min_c", "temperature_max_c"),
-    "Short Range Evaluation": ("interface", "supply_voltage_v"),
+    "Bluetooth LE": ("bluetooth_standard", "antenna_option", "bluetooth_max_range_m", "interface", "supply_voltage_v", "package", "temperature_min_c", "temperature_max_c"),
+    "Multiradio": ("wireless_type", "wireless_chip", "wifi_standard", "bluetooth_standard", "antenna_option", "wireless_software", "interface", "supply_voltage_v", "package", "temperature_min_c", "temperature_max_c"),
+    "Wi-Fi": ("wifi_band", "wifi_operation_mode", "wireless_chip", "wifi_standard", "antenna_option", "interface", "supply_voltage_v", "package", "temperature_min_c", "temperature_max_c"),
+    "Bluetooth Classic + LE": ("bluetooth_standard", "antenna_option", "bluetooth_max_range_m", "interface", "supply_voltage_v", "package", "temperature_min_c", "temperature_max_c"),
+    "Short Range Evaluation": ("wireless_chip", "interface", "supply_voltage_v"),
 
     # Antenna / RF
     "External Antennas": ("frequency_hz", "package", "temperature_min_c", "temperature_max_c"),
     "SMD Antennas": ("frequency_hz", "mounting", "package", "temperature_min_c", "temperature_max_c"),
     "Embedded Antennas": ("frequency_hz", "package", "temperature_min_c", "temperature_max_c"),
-    "Other RF Components": ("frequency_hz", "rated_power_w", "package", "temperature_min_c", "temperature_max_c"),
+    "Other RF Components": ("rf_application", "rf_component_type", "frequency_hz", "rated_power_w", "package", "temperature_min_c", "temperature_max_c"),
 
     # Computing / memory
     "Computer on Modules": ("cpu_arch", "ram_gb", "onboard_storage_gb", "interface", "ethernet_speed_mbps", "supply_voltage_v", "package", "temperature_min_c", "temperature_max_c"),

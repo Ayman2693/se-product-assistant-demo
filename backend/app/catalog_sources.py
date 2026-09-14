@@ -33,7 +33,17 @@ CATALOG_SOURCES = [
     {"category": "External Antennas", "path": "/en/antext/"},
     {"category": "SMD Antennas", "path": "/en/antsmd/"},
     {"category": "Embedded Antennas", "path": "/en/antemb/"},
-    {"category": "Other RF Components", "path": "/en/rfother/"},
+    {
+        "category": "Other RF Components",
+        "path": "/en/rfother/",
+        "extra_paths": [
+            "/en/maritimecom/",
+            "/en/wirelinetelecom/",
+            "/en/wirelessdata/",
+            "/en/2-way-radio/",
+            "/en/rfbuildblocks/",
+        ],
+    },
 
     # Computing
     {"category": "Computer on Modules", "path": "/en/com/"},

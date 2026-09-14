@@ -375,6 +375,105 @@ def _onboard_storage_gb(text: str) -> float | None:
     return value * 1024.0 if match.group(2).lower() == "tb" else value
 
 
+
+def _wireless_type(text: str) -> str | None:
+    return _enum([("host_based", r"\bhost[- ]?based\b"), ("stand_alone", r"\bstand[- ]?alone\b|\bstandalone\b")], text)
+
+
+def _wireless_chip(text: str) -> str | None:
+    return _enum([
+        ("nxp_rw612", r"\brw612\b"), ("nxp_iw611", r"\biw611\b"), ("nxp_iw416", r"\biw416\b"),
+        ("nxp_q9098", r"\b88q9098\b|\bq9098\b"), ("nxp_88w8987", r"\b88w8987\b"),
+        ("nxp_88w8887a", r"\b88w8887a\b"), ("nxp_88w8887", r"\b88w8887\b"), ("nxp_88w8801", r"\b88w8801\b"),
+        ("rtl8720df", r"\brtl8720df\b"), ("esp32_s3", r"\besp32[- ]?s3\b"), ("esp32_c6", r"\besp32[- ]?c6\b"),
+        ("esp32", r"\besp32\b"), ("wl1837", r"\bwl1837\b"),
+        ("nrf52810", r"\bnrf52810\b"), ("nrf52811", r"\bnrf52811\b"), ("nrf52832", r"\bnrf52832\b"),
+        ("nrf52833", r"\bnrf52833\b"), ("nrf52840", r"\bnrf52840\b"), ("nrf5340", r"\bnrf5340\b"), ("nrf54l15", r"\bnrf54l15\b"),
+    ], text)
+
+
+def _wifi_standard(text: str) -> str | None:
+    t = _norm(text)
+    if re.search(r"wi-?fi\s*6e|\b6\s*ghz\b", t, re.I): return "wifi6e"
+    if re.search(r"wi-?fi\s*6[^.;]{0,32}(?:dual[- ]?band|\bdb\b|2[.,]4[^.;]{0,10}5\s*ghz)", t, re.I): return "wifi6_dual"
+    if re.search(r"wi-?fi\s*6[^.;]{0,24}single[- ]?band", t, re.I): return "wifi6_single"
+    if re.search(r"wi-?fi\s*5[^.;]{0,32}(?:dual[- ]?band|\bdb\b)|802\.11ac[^.;]{0,24}dual[- ]?band", t, re.I): return "wifi5_dual"
+    if re.search(r"wi-?fi\s*4[^.;]{0,32}(?:dual[- ]?band|\bdb\b)|802\.11a/?b/?g/?n[^.;]{0,24}dual[- ]?band", t, re.I): return "wifi4_dual"
+    if re.search(r"wi-?fi\s*4[^.;]{0,28}single[- ]?band|802\.11b/?g/?n[^.;]{0,24}single[- ]?band", t, re.I): return "wifi4_single"
+    return None
+
+
+def _wifi_band(text: str) -> str | None:
+    t=_norm(text)
+    if re.search(r"\b6\s*ghz\b|wi-?fi\s*6e",t,re.I): return "band_6ghz"
+    if re.search(r"dual[- ]?band[^.;]{0,24}2[.,]4[^.;]{0,16}5\s*ghz|2[.,]4\s*(?:and|\+|/)\s*5\s*ghz|wi-?fi\s*[456][^.;]{0,18}(?:dual[- ]?band|\bdb\b)",t,re.I): return "dual_24_5"
+    if re.search(r"2[.,]4\s*ghz[^.;]{0,24}single[- ]?band|wi-?fi\s*[46][^.;]{0,20}single[- ]?band",t,re.I): return "single_24"
+    return None
+
+
+def _wifi_operation_modes(text: str) -> list[str]:
+    t=_norm(text); values=[]
+    if re.search(r"\baccess[- ]?point\b|\bap mode\b",t,re.I): values.append("access_point")
+    if re.search(r"\bstation\b|\bclient mode\b",t,re.I): values.append("station")
+    if re.search(r"wi-?fi\s*direct",t,re.I): values.append("wifi_direct")
+    return list(dict.fromkeys(values))
+
+
+def _bluetooth_standard(text: str) -> str | None:
+    t=_norm(text)
+    m=re.search(r"(?:bluetooth(?:\s+(?:low\s+energy|le|standard))?|\bble|\bbt)\s*:?\s*(?:v(?:ersion)?\s*)?([4-6](?:[.,]\d+)?)",t,re.I)
+    if not m: m=re.search(r"\bv([4-6](?:[.,]\d+)?)\s*\(\s*bluetooth",t,re.I)
+    if not m: return None
+    version=m.group(1).replace(',', '.')
+    dual=bool(re.search(r"dual[- ]?mode\s+bluetooth|bluetooth\s+classic|br\s*/?\s*edr|br/edr",t,re.I))
+    return f"v{version}_{'dual' if dual else 'le'}"
+
+
+def _antenna_option(text: str) -> str | None:
+    t=_norm(text)
+    return _enum([
+        ("two_wifi_one_bt_pins",r"two\s+pins?\s+for\s+wi-?fi\s+and\s+one\s+pin\s+for\s+bluetooth"),
+        ("separate_bt_wifi_pins",r"two\s+pins?\s+for\s+separate\s+bluetooth\s+and\s+wi-?fi"),
+        ("combined_bt_wifi_pin",r"one\s+pin\s+for\s+combined\s+bluetooth\s+and\s+wi-?fi"),
+        ("internal_plus_antenna_pin",r"internal\s+antenna[^.;]{0,20}antenna\s+pin"),
+        ("two_ufl_connectors",r"\b2\s*x?\s*u\.?fl\s+connectors?\b|\b2x\s*u\.?fl\b"),
+        ("two_antenna_pins",r"\b2\s*(?:x\s*)?(?:antenna|ant\.?)\s*pins?\b"),
+        ("embedded_pcb_antenna",r"embedded\s+pcb\s+antenna|\bpcb\s+antenna\b|\bpcb\s+ant\."),
+        ("external_antenna_connector",r"connector\s+for\s+external\s+antenna|\bu\.?fl\s+connector\b"),
+        ("antenna_pin",r"\bantenna\s+pin\b|\bant\.?\s*pin\b"),
+        ("internal_antenna",r"\binternal\s+antenna\b|\bint\.?\s*antenna\b"),
+    ],t)
+
+
+def _wireless_software(text: str) -> str | None:
+    return _enum([("linux_android",r"linux\s*/\s*android|\blinux\b[^.;]{0,12}\bandroid\b"),("uconnectxpress",r"u-?connectxpress|uconnectxpress"),("aws_expresslink",r"aws\s+expresslink"),("open_cpu",r"open\s*cpu|opencpu")],text)
+
+
+def _bluetooth_max_range_m(text: str) -> float | None:
+    return _first_number([r"(?:max(?:imum)?\.?\s*range|bluetooth\s+range|range)[^0-9]{0,18}([0-9]+(?:[.,][0-9]+)?)\s*m\b",r"([0-9]+(?:[.,][0-9]+)?)\s*m\b[^.;]{0,18}(?:bluetooth\s+range|max(?:imum)?\.?\s*range)"],text)
+
+
+def _rf_application(text: str) -> str | None:
+    return _enum([
+        ("maritime",r"maritime\s+communication|\bmarine\b|\bais\b|\bvdes\b"),
+        ("wireline",r"wireline\s+telecom|\bwireline\b"),
+        ("wireless_data",r"wireless\s+data"),
+        ("two_way_radio",r"2[- ]way\s+radio|two[- ]way\s+radio|digital\s*/\s*analogue\s+2[- ]way\s+radio"),
+        ("rf_building_blocks",r"rf\s+building\s+blocks?"),
+    ],text)
+
+
+def _rf_component_type(text: str) -> str | None:
+    return _enum([
+        ("power_amplifier",r"\bpower\s+amplifier\b|\bmmic\s+pa\b|\brf\s+pa\b"),
+        ("lna_gain_block",r"\blow[- ]?noise\s+amplifier\b|\blna\b|\bgain\s+block\b"),
+        ("front_end",r"\bfront[- ]?end\s+module\b|\bfem\b"),
+        ("rf_filter",r"\brf\s+filter\b|\bband[- ]?pass\s+filter\b|\blow[- ]?pass\s+filter\b|\bhigh[- ]?pass\s+filter\b"),
+        ("rf_switch",r"\brf\s+switch\b"), ("transceiver_modem",r"\btransceiver\b|\bwireless\s+modem\b"),
+        ("baseband_processor",r"\bbaseband\s+processor\b|\bprotocol\s+processor\b"),
+        ("communication_module",r"complete\s+.*communication\s+module|software\s+defined\s+radio|\bsdr\b"),
+    ],text)
+
 def _extract_field(key: str, text: str, category: str) -> Any:
     t = _norm(text)
 
@@ -393,6 +492,17 @@ def _extract_field(key: str, text: str, category: str) -> Any:
         return _mounting(text)
     if key == "package":
         return _package(text)
+    if key == "wireless_type": return _wireless_type(text)
+    if key == "wireless_chip": return _wireless_chip(text)
+    if key == "wifi_standard": return _wifi_standard(text)
+    if key == "wifi_band": return _wifi_band(text)
+    if key == "wifi_operation_mode": return _wifi_operation_modes(text)
+    if key == "bluetooth_standard": return _bluetooth_standard(text)
+    if key == "antenna_option": return _antenna_option(text)
+    if key == "wireless_software": return _wireless_software(text)
+    if key == "bluetooth_max_range_m": return _bluetooth_max_range_m(text)
+    if key == "rf_application": return _rf_application(text)
+    if key == "rf_component_type": return _rf_component_type(text)
     if key in {"temperature_min_c", "temperature_max_c"}:
         lo, hi = _temperature_range(text)
         return lo if key.endswith("min_c") else hi

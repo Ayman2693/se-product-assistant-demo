@@ -31,12 +31,13 @@ def test_gnss_questions_use_professional_accuracy_and_band_language():
     assert "Dual-band L1 + L5 is required" in APP
 
 
-def test_email_drafts_are_generated_after_handoff():
-    assert "function commercialEmailDraft" in APP
-    assert "function technicalEmailDraft" in APP
-    assert "Suggested email to SE" in APP
-    assert "Open email draft" in APP
-    assert "price indication, MOQ, current availability/lead time, and sample availability" in APP
+def test_handoff_uses_direct_fae_contact_without_suggested_email():
+    assert "function commercialEmailDraft" not in APP
+    assert "function technicalEmailDraft" not in APP
+    assert "Suggested email to SE" not in APP
+    assert "Open email draft" not in APP
+    assert "Contact FAE" in APP
+    assert "support@spezial.com" in APP
 
 
 def test_opening_has_hello_and_restart_is_only_in_composer_area():

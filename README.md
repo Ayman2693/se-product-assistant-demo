@@ -1738,3 +1738,61 @@ product data itself also needs refreshing.
 - Generates ready-to-open email drafts after technical FAE or commercial follow-up qualification.
 - Adds `Hello` to the opening message.
 - Moves restart below Send and removes reset controls from the hero and chat header.
+
+# Phase 5.1.3 — Short-Range and RF Qualification
+
+The short-range/RF flow now follows the SE catalog structure more closely.
+
+## Handoff
+
+Generated email drafts were removed. After technical or commercial follow-up
+qualification, the UI shows a direct FAE contact link to `support@spezial.com`.
+
+## Multiradio
+
+Multiradio is the first short-range choice and uses these engineering filters:
+Type, Chip, Wi-Fi Standard, Bluetooth Standard, Antenna Option and Software.
+
+## Wi-Fi
+
+Wi-Fi qualification now uses:
+- frequency-band capability, including dual-band 2.4 + 5 GHz
+- operation mode
+- chip
+- Wi-Fi standard
+- antenna option
+
+## Bluetooth
+
+Bluetooth mode selection supports multiple choices. LE-only maps to
+`Bluetooth LE`; Classic, including Classic + LE, maps to
+`Bluetooth Classic + LE`.
+
+Bluetooth qualification now uses Bluetooth Standard, Antenna Option and
+Maximum Range. Fixed filter lists end with `Not determined / open`.
+
+## Evaluation
+
+Short Range Evaluation uses Chip as its first engineering discriminator.
+
+## Other RF Components
+
+The crawler now explicitly covers the complete SE Other RF tree:
+- Maritime Communication
+- Wireline Telecom
+- Wireless Data
+- Digital / Analogue 2-way radio
+- RF Building Blocks
+
+The engineering profile first asks for the RF application/family and then the
+RF component type before applying frequency/power/mechanical criteria.
+
+## Detail enrichment
+
+A full catalog sync follows product detail pages for the relevant short-range
+and RF categories and extracts the SE feature-table fields used by these
+filters, including Chip, Wi-Fi Standard, Bluetooth Standard, Antenna Option,
+Type, Software, maximum range and operation modes.
+
+No database migration is required. Run `POST /api/catalog/sync` after deploying
+this phase so existing catalog rows receive the new detail-level data.

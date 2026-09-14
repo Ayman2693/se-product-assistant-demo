@@ -47,7 +47,9 @@ def test_antenna_is_requirement_not_domain_for_wifi_module():
         "Ich brauche ein Wi-Fi-6-Modul mit externer Antenne für Deutschland"
     )["requirements"]
     assert result["product_domain"] == "connectivity"
-    assert result["catalog_category"] is None
+    # Explicit Wi-Fi module requests now enter the SE Wi-Fi catalog profile so
+    # category-specific engineering filters can run.
+    assert result["catalog_category"] == "Wi-Fi"
     assert result["antenna"] == "external"
 
 

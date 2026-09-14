@@ -27,6 +27,7 @@ type Requirements = {
   projectTimeline?: string;
   projectPartners?: string;
   technologies?: string[];
+  bluetoothModes?: string[];
   positioning?: "yes" | "no";
   cellularClass?: string;
   region?: string;
@@ -81,6 +82,7 @@ type QuestionKey =
   | "projectTimeline"
   | "projectPartners"
   | "technologies"
+  | "bluetoothModes"
   | "positioning"
   | "lowPower"
   | "cellularClass"
@@ -312,6 +314,7 @@ const LABELS_DE: Record<string, string> = {
   projectTimeline: "Projektphase",
   projectPartners: "Projektpartner",
   technologies: "Technologie",
+  bluetoothModes: "Bluetooth-Modi",
   positioning: "Positionierung",
   lowPower: "Low Power",
   cellularClass: "Mobilfunkklasse",
@@ -464,6 +467,20 @@ const OPTION_DE: Record<string, string> = {
   "6 GHz / Wi-Fi 6E capable": "6 GHz / Wi-Fi 6E-fähig",
   "Active antenna": "Aktive Antenne",
   "Passive antenna": "Passive Antenne",
+  "Multiradio (Wi-Fi + Bluetooth)": "Multiradio (Wi-Fi + Bluetooth)",
+  "Evaluation / development kits": "Evaluation / Entwicklungskits",
+  "Other RF components": "Weitere HF-Komponenten",
+  "Bluetooth Low Energy (LE)": "Bluetooth Low Energy (LE)",
+  "Bluetooth Classic (BR/EDR)": "Bluetooth Classic (BR/EDR)",
+  "Not determined / open": "Noch nicht festgelegt / offen",
+  "Host based": "Host-basiert",
+  "Stand-alone": "Stand-alone",
+  "Dual-band 2.4 + 5 GHz": "Dual-Band 2,4 + 5 GHz",
+  "2.4 GHz single-band": "2,4 GHz Single-Band",
+  "6 GHz / Wi-Fi 6E capability": "6 GHz / Wi-Fi-6E-Fähigkeit",
+  "Access point": "Access Point",
+  "Station / client": "Station / Client",
+  "Wi-Fi Direct": "Wi-Fi Direct",
   "Development service provider": "Entwicklungsdienstleister",
   "Manufacturer / EMS": "Hersteller / EMS",
   "EMC laboratory": "EMV-Labor",
@@ -498,6 +515,19 @@ function localizeQuestion(
       "Welcher Produktbereich passt am besten zu Ihrer Anforderung?",
     "Which connectivity / positioning technologies are required? You can select more than one.":
       "Welche Funk- bzw. Positionierungstechnologien werden benötigt? Sie können mehrere auswählen.",
+    "Which Bluetooth modes are required? You can select more than one.":
+      "Welche Bluetooth-Modi werden benötigt? Sie können mehrere auswählen.",
+    "Which module type do you need?": "Welchen Modultyp benötigen Sie?",
+    "Which wireless chipset do you need?": "Welchen Funkchip benötigen Sie?",
+    "Which Wi-Fi standard is required?": "Welcher Wi-Fi-Standard wird benötigt?",
+    "Which Wi-Fi frequency-band capability is required?": "Welche Wi-Fi-Frequenzband-Fähigkeit wird benötigt?",
+    "Which Wi-Fi operation mode is essential for the application?": "Welcher Wi-Fi-Betriebsmodus ist für die Anwendung erforderlich?",
+    "Which Bluetooth standard is required?": "Welcher Bluetooth-Standard wird benötigt?",
+    "Which antenna option do you need?": "Welche Antennenoption benötigen Sie?",
+    "Which software environment do you need?": "Welche Softwareumgebung benötigen Sie?",
+    "What minimum Bluetooth range do you need?": "Welche minimale Bluetooth-Reichweite benötigen Sie?",
+    "Which Other RF product family do you need?": "Welche weitere HF-Produktfamilie benötigen Sie?",
+    "Which RF component type are you looking for?": "Welchen HF-Komponententyp suchen Sie?",
     "Do you have a preferred electrical interface or sensor output?":
       "Bevorzugen Sie eine bestimmte elektrische Schnittstelle bzw. einen Sensorausgang?",
     "Are there any important design constraints or special requirements?":
@@ -667,6 +697,10 @@ const ENGINEERING_LABELS_DE: Record<string, string> = {
   gas_type: "Gas / Luftqualitätsziel",
   audio_interface: "Audio-Schnittstelle",
   sample_rate_khz: "Abtastrate",
+  wireless_type: "Modultyp", wireless_chip: "Funkchip", wifi_standard: "Wi-Fi-Standard",
+  wifi_band: "Wi-Fi-Frequenzband", wifi_operation_mode: "Wi-Fi-Betriebsmodus",
+  bluetooth_standard: "Bluetooth-Standard", antenna_option: "Antennenoption", wireless_software: "Software",
+  bluetooth_max_range_m: "Maximale Bluetooth-Reichweite", rf_application: "HF-Anwendungsfamilie", rf_component_type: "HF-Komponententyp",
   vibration_type: "Haptik-Aktuatortyp",
 };
 
@@ -723,6 +757,21 @@ const ENGINEERING_VALUE_LABELS: Record<string, string> = {
   imu: "IMU", accelerometer: "Accelerometer", gyroscope: "Gyroscope", magnetometer: "Magnetometer", hall: "Hall sensor",
   co2: "CO₂", co: "CO", voc: "VOC", no2: "NO₂", o2: "O₂", air_quality: "Air quality / multi-gas",
   i2s: "I²S", tdm: "TDM", pcm: "PCM", analog: "Analog", digital: "Digital",
+  host_based: "Host based", stand_alone: "Stand-alone",
+  nxp_rw612: "NXP RW612", nxp_iw611: "NXP IW611", nxp_iw416: "NXP IW416", nxp_q9098: "NXP Q9098",
+  nxp_88w8987: "NXP 88W8987", nxp_88w8887a: "NXP 88W8887A", nxp_88w8887: "NXP 88W8887", nxp_88w8801: "NXP 88W8801",
+  rtl8720df: "RTL8720DF", esp32_s3: "ESP32-S3", esp32_c6: "ESP32-C6", esp32: "ESP32", wl1837: "WL1837",
+  nrf52810: "nRF52810", nrf52811: "nRF52811", nrf52832: "nRF52832", nrf52833: "nRF52833", nrf52840: "nRF52840", nrf5340: "nRF5340", nrf54l15: "nRF54L15",
+  wifi6e: "Wi-Fi 6E / 6 GHz", wifi6_dual: "Wi-Fi 6 dual-band", wifi6_single: "Wi-Fi 6 single-band", wifi5_dual: "Wi-Fi 5 dual-band", wifi4_dual: "Wi-Fi 4 dual-band", wifi4_single: "Wi-Fi 4 single-band",
+  dual_24_5: "Dual-band 2.4 + 5 GHz", single_24: "2.4 GHz single-band", band_6ghz: "6 GHz / Wi-Fi 6E",
+  access_point: "Access point", station: "Station / client", wifi_direct: "Wi-Fi Direct",
+  "v6.0_le": "Bluetooth LE 6.0", "v5.4_le": "Bluetooth LE 5.4", "v5.3_le": "Bluetooth LE 5.3", "v5.2_le": "Bluetooth LE 5.2", "v5.1_le": "Bluetooth LE 5.1", "v5.0_le": "Bluetooth LE 5.0",
+  "v5.3_dual": "Bluetooth 5.3 Classic + LE", "v5.2_dual": "Bluetooth 5.2 Classic + LE", "v5.0_dual": "Bluetooth 5.0 Classic + LE", "v4.2_dual": "Bluetooth 4.2 Classic + LE",
+  two_antenna_pins: "2 antenna pins", two_ufl_connectors: "2 U.FL connectors", antenna_pin: "Antenna pin", external_antenna_connector: "Connector for external antenna", embedded_pcb_antenna: "Embedded PCB antenna", internal_antenna: "Internal antenna", internal_plus_antenna_pin: "Internal antenna + antenna pin",
+  combined_bt_wifi_pin: "Combined Bluetooth/Wi-Fi antenna pin", separate_bt_wifi_pins: "Separate Bluetooth/Wi-Fi antenna pins", two_wifi_one_bt_pins: "2 Wi-Fi pins + 1 Bluetooth pin",
+  linux_android: "Linux / Android", open_cpu: "Open CPU", uconnectxpress: "u-connectXpress", aws_expresslink: "AWS ExpressLink",
+  maritime: "Maritime Communication", wireline: "Wireline Telecom", wireless_data: "Wireless Data", two_way_radio: "Digital / Analogue 2-way radio", rf_building_blocks: "RF Building Blocks",
+  power_amplifier: "Power amplifier", lna_gain_block: "LNA / gain block", front_end: "RF front-end module", rf_filter: "RF filter", transceiver_modem: "Transceiver / modem", rf_switch: "RF switch", baseband_processor: "Baseband / protocol processor", communication_module: "Complete communication module",
   erm: "ERM", lra: "LRA", piezo: "Piezo", feedthrough: "Feed-through", lc_pi: "LC / pi", line: "Mains / line",
 };
 
@@ -755,7 +804,7 @@ function formatEngineeringRequirementValue(field: string, value: unknown) {
     storage_capacity_gb: "GB", onboard_storage_gb: "GB", ram_gb: "GB", ethernet_speed_mbps: "Mbit/s",
     pressure_range_kpa: "kPa", accuracy_pct: "%", force_range_n: "N", airflow_range_lpm: "L/min", humidity_max_pct: "%RH",
     temperature_min_c: "°C", temperature_max_c: "°C", measurement_temp_min_c: "°C", measurement_temp_max_c: "°C", temperature_accuracy_c: "°C",
-    accel_range_g: "g", gyro_range_dps: "°/s", sample_rate_khz: "kHz",
+    accel_range_g: "g", gyro_range_dps: "°/s", sample_rate_khz: "kHz", bluetooth_max_range_m: "m",
   };
   return `${compact(number)}${units[field] ? ` ${units[field]}` : ""}`;
 }
@@ -804,6 +853,7 @@ const LABELS: Record<string, string> = {
   projectTimeline: "Project phase",
   projectPartners: "Project partners",
   technologies: "Technology",
+  bluetoothModes: "Bluetooth modes",
   positioning: "Positioning",
   lowPower: "Low power",
   cellularClass: "Cellular class",
@@ -1338,6 +1388,7 @@ async function interpretWithBackend(text: string): Promise<Partial<Requirements>
     catalogCategory: r.catalog_category ?? undefined,
     genericInterface: r.generic_interface ?? undefined,
     technologies: r.technologies?.length ? r.technologies : undefined,
+    bluetoothModes: r.catalog_category === "Bluetooth Classic + LE" ? ["classic", "le"] : r.catalog_category === "Bluetooth LE" ? ["le"] : undefined,
     cellularClass: r.cellular_class ?? undefined,
     region: r.region ?? undefined,
     architecture: r.architecture ?? undefined,
@@ -1417,22 +1468,21 @@ function questionFor(req: Requirements): { key: QuestionKey; text: string; optio
     };
   }
 
-  if (req.productDomain === "connectivity" && !req.technologies?.some((t) =>
-      ["wifi", "bluetooth", "cellular", "gnss"].includes(t)
-    )) {
+  const wirelessCatalogSelected = ["Multiradio", "Wi-Fi", "Bluetooth LE", "Bluetooth Classic + LE", "Short Range Evaluation", "Other RF Components"].includes(req.catalogCategory ?? "");
+  if (req.productDomain === "connectivity" && !wirelessCatalogSelected && !req.technologies?.some((t) => ["wifi", "bluetooth", "cellular", "gnss"].includes(t))) {
     return {
       key: "technologies",
       text: "Which connectivity / positioning technologies are required? You can select more than one.",
       options: [
-        { label: "Cellular", value: ["cellular"] },
-        { label: "Bluetooth", value: ["bluetooth"] },
-        { label: "Wi-Fi", value: ["wifi"] },
-        { label: "GNSS", value: ["gnss"] },
+        { label: "Multiradio (Wi-Fi + Bluetooth)", value: ["multiradio"] },
+        { label: "Cellular", value: ["cellular"] }, { label: "Bluetooth", value: ["bluetooth"] },
+        { label: "Wi-Fi", value: ["wifi"] }, { label: "GNSS", value: ["gnss"] },
+        { label: "Evaluation / development kits", value: ["evaluation"] }, { label: "Other RF components", value: ["other_rf"] },
       ],
     };
   }
 
-  if (req.productDomain === "antenna") {
+  if (req.productDomain === "antenna" && req.catalogCategory !== "Other RF Components") {
     if (!req.antennaApplication) {
       return {
         key: "antennaApplication",
@@ -1578,6 +1628,11 @@ function questionFor(req: Requirements): { key: QuestionKey; text: string; optio
   const tech = new Set(req.technologies ?? []);
 
   if (req.productDomain === "connectivity") {
+    if (tech.has("bluetooth") && req.catalogCategory !== "Multiradio" && !req.bluetoothModes?.length) {
+      return { key: "bluetoothModes", text: "Which Bluetooth modes are required? You can select more than one.", options: [
+        { label: "Bluetooth Low Energy (LE)", value: "le" }, { label: "Bluetooth Classic (BR/EDR)", value: "classic" }, { label: "Not determined / open", value: "__open__" },
+      ]};
+    }
     if (req.application === "asset tracking" && !tech.has("gnss") && !req.positioning) {
       return {
         key: "positioning",
@@ -1625,58 +1680,43 @@ function questionFor(req: Requirements): { key: QuestionKey; text: string; optio
       };
     }
 
-    if ((tech.has("bluetooth") || tech.has("wifi")) && !req.architecture) {
+    const exactShortRangeProfile = ["Wi-Fi", "Multiradio", "Bluetooth LE", "Bluetooth Classic + LE"].includes(req.catalogCategory ?? "");
+
+    if (!exactShortRangeProfile && (tech.has("bluetooth") || tech.has("wifi")) && !req.architecture) {
       return {
         key: "architecture",
-        text: tech.has("wifi")
-          ? "Should the wireless solution be standalone / AT-command based or host-based?"
-          : "How should the Bluetooth module be used in the application?",
+        text: tech.has("wifi") ? "Should the wireless solution be standalone / AT-command based or host-based?" : "How should the Bluetooth module be used in the application?",
         options: [
-          { label: "Open CPU", value: "open" },
-          { label: "u-connectXpress / AT commands", value: "uconnect" },
-          { label: "Host-based", value: "host" },
+          { label: "Open CPU", value: "open" }, { label: "u-connectXpress / AT commands", value: "uconnect" },
+          { label: "Host-based", value: "host" }, { label: "Not determined / open", value: "No preference" },
         ],
       };
     }
 
-    if (tech.has("bluetooth") && !req.bluetoothRequirement) {
+    if (!exactShortRangeProfile && tech.has("bluetooth") && !req.bluetoothRequirement) {
       return {
         key: "bluetoothRequirement",
         text: "What minimum Bluetooth LE version does your application require?",
         options: [
-          { label: "Version open / not sure", value: "Bluetooth required, version open" },
-          { label: "Bluetooth LE 5.0 or newer", value: "Bluetooth 5.0+" },
-          { label: "Bluetooth LE 5.1 or newer", value: "Bluetooth 5.1+" },
-          { label: "Bluetooth LE 5.2 or newer", value: "Bluetooth 5.2+" },
-          { label: "Bluetooth LE 5.3 or newer", value: "Bluetooth 5.3+" },
-          { label: "Bluetooth LE 5.4 or newer", value: "Bluetooth 5.4+" },
-          { label: "Bluetooth LE 6.0 or newer", value: "Bluetooth 6.0+" },
+          { label: "Bluetooth LE 5.0 or newer", value: "Bluetooth 5.0+" }, { label: "Bluetooth LE 5.1 or newer", value: "Bluetooth 5.1+" },
+          { label: "Bluetooth LE 5.2 or newer", value: "Bluetooth 5.2+" }, { label: "Bluetooth LE 5.3 or newer", value: "Bluetooth 5.3+" },
+          { label: "Bluetooth LE 5.4 or newer", value: "Bluetooth 5.4+" }, { label: "Bluetooth LE 6.0 or newer", value: "Bluetooth 6.0+" },
+          { label: "Not determined / open", value: "Bluetooth required, version open" },
         ],
       };
     }
 
-    if (tech.has("bluetooth") && !req.antenna) {
-      return {
-        key: "antenna",
-        text: "Which module antenna approach do you prefer?",
-        options: [
-          { label: "Integrated / PCB antenna", value: "internal" },
-          { label: "External antenna / antenna pin", value: "external" },
-        ],
-      };
+    if (!exactShortRangeProfile && tech.has("bluetooth") && !req.antenna) {
+      return { key: "antenna", text: "Which module antenna approach do you prefer?", options: [
+        { label: "Integrated / PCB antenna", value: "internal" }, { label: "External antenna / antenna pin", value: "external" },
+        { label: "Not determined / open", value: "No preference" },
+      ]};
     }
 
-    if (tech.has("wifi") && !req.wifiGeneration?.length) {
-      return {
-        key: "wifiGeneration",
-        text: "Which Wi-Fi generations are acceptable? You can select more than one.",
-        options: [
-          { label: "Wi-Fi 4", value: "4" },
-          { label: "Wi-Fi 5", value: "5" },
-          { label: "Wi-Fi 6", value: "6" },
-          { label: "Wi-Fi 6E", value: "6E" },
-        ],
-      };
+    if (!exactShortRangeProfile && tech.has("wifi") && !req.wifiGeneration?.length) {
+      return { key: "wifiGeneration", text: "Which Wi-Fi generations are acceptable? You can select more than one.", options: [
+        { label: "Wi-Fi 4", value: "4" }, { label: "Wi-Fi 5", value: "5" }, { label: "Wi-Fi 6", value: "6" }, { label: "Wi-Fi 6E", value: "6E" },
+      ]};
     }
 
     if (tech.has("gnss") && !req.gnssPrecision) {
@@ -2098,6 +2138,7 @@ function isMultiSelectKey(key: QuestionKey | null): boolean {
     key === "specialRequirements" ||
     key === "projectPartners" ||
     key === "technologies" ||
+    key === "bluetoothModes" ||
     key === "wifiGeneration"
   );
 }
@@ -2105,6 +2146,8 @@ function isMultiSelectKey(key: QuestionKey | null): boolean {
 function isExclusiveMultiOption(key: QuestionKey, label: string): boolean {
   if (key === "specialRequirements") return /no special requirements/i.test(label);
   if (key === "projectPartners") return /none yet/i.test(label);
+  if (key === "bluetoothModes") return /not determined|open/i.test(label);
+  if (key === "technologies") return /multiradio|evaluation \/ development kits|other rf components/i.test(label);
   return false;
 }
 
@@ -2247,11 +2290,14 @@ function editableQuestionFor(
     technologies: {
       text: "Update the required technologies. You can select more than one:",
       options: [
-        { label: "Cellular", value: ["cellular"] },
-        { label: "Bluetooth", value: ["bluetooth"] },
-        { label: "Wi-Fi", value: ["wifi"] },
-        { label: "GNSS", value: ["gnss"] },
+        { label: "Multiradio (Wi-Fi + Bluetooth)", value: ["multiradio"] }, { label: "Cellular", value: ["cellular"] },
+        { label: "Bluetooth", value: ["bluetooth"] }, { label: "Wi-Fi", value: ["wifi"] }, { label: "GNSS", value: ["gnss"] },
+        { label: "Evaluation / development kits", value: ["evaluation"] }, { label: "Other RF components", value: ["other_rf"] },
       ],
+    },
+    bluetoothModes: {
+      text: "Update the required Bluetooth modes. You can select more than one:",
+      options: [ { label: "Bluetooth Low Energy (LE)", value: "le" }, { label: "Bluetooth Classic (BR/EDR)", value: "classic" }, { label: "Not determined / open", value: "__open__" } ],
     },
     positioning: {
       text: "Update the positioning requirement:",
@@ -2461,6 +2507,7 @@ function naturalReply(key: QuestionKey, value: Option["value"]) {
       ? "Okay — no external project partner is involved at the moment."
       : `Thanks — I’ll note <strong>${htmlEscape(v)}</strong>.`,
     technologies: `Perfect — I’ll focus on <strong>${htmlEscape(v)}</strong>.`,
+    bluetoothModes: `Understood — Bluetooth mode requirement: <strong>${htmlEscape(v)}</strong>.`,
     positioning:
       value === "yes" ? "Yes — positioning will be part of the solution." : "Okay — positioning is not required.",
     lowPower:
@@ -2540,6 +2587,7 @@ function localizedNaturalReply(key: QuestionKey, value: Option["value"], languag
       ? "Okay — die Schnittstelle wird nicht als Filter verwendet."
       : `Gut — bevorzugte Schnittstelle: <strong>${htmlEscape(v.toUpperCase())}</strong>.`,
     technologies: "Verstanden — die ausgewählten Technologien werden berücksichtigt.",
+    bluetoothModes: `Bluetooth-Modi: <strong>${htmlEscape(v)}</strong>.`,
     specialRequirements: "Danke — die Designvorgaben sind berücksichtigt.",
     positioning: v === "yes" ? "Verstanden — GNSS-Positionierung wird berücksichtigt." : "Verstanden — keine zusätzliche GNSS-Positionierung.",
     lowPower: value === true ? "Verstanden — geringer Stromverbrauch ist wichtig." : "Verstanden.",
@@ -2809,102 +2857,8 @@ function uniqueSolutionMatches(matches: Match[]): Match[] {
 }
 
 
-function selectedMatchForHandoff(req: Requirements, currentMatches: Match[]): Match | undefined {
-  const selected = req.supportProduct;
-  if (!selected || selected === "Compare top candidates") return undefined;
-  return currentMatches.find((match) => match.product.part_number === selected);
-}
-
-function emailDraftHtml(subject: string, body: string, language: Language) {
-  const href = `mailto:support@spezial.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  const formattedBody = htmlEscape(body).replace(/\n/g, "<br>");
-  return `
-    <div class="handoffEmailDraft">
-      <strong>${tr(language, "Suggested email to SE", "Vorgeschlagene E-Mail an SE")}</strong>
-      <div class="emailSubject"><span>${tr(language, "Subject", "Betreff")}:</span> ${htmlEscape(subject)}</div>
-      <div class="emailBody">${formattedBody}</div>
-      <a class="emailDraftAction" href="${href}">${tr(language, "Open email draft", "E-Mail-Entwurf öffnen")}</a>
-    </div>
-  `;
-}
-
-function commercialEmailDraft(req: Requirements, currentMatches: Match[], language: Language) {
-  const product = req.supportProduct ?? "top recommendation";
-  const selectedMatch = selectedMatchForHandoff(req, currentMatches);
-  const productUrl = selectedMatch?.product.product_url;
-
-  if (language === "de") {
-    const subject = `Preis- und Verfügbarkeitsanfrage – ${product}`;
-    const body = [
-      "Hallo SE-Team,",
-      "",
-      "ich möchte eine Preis- und Verfügbarkeitsprüfung für folgendes Produkt anfragen:",
-      `Produkt: ${product}`,
-      req.targetVolume ? `Geplante Jahresmenge: ${req.targetVolume}` : null,
-      req.projectTimeline ? `Benötigter Zeitpunkt: ${req.projectTimeline}` : null,
-      productUrl ? `SE-Produktseite: ${productUrl}` : null,
-      "",
-      "Bitte senden Sie mir, soweit verfügbar, eine Preisindikation, MOQ, aktuelle Verfügbarkeit/Lieferzeit sowie Informationen zur Musterverfügbarkeit.",
-      "",
-      "Vielen Dank und freundliche Grüße",
-    ].filter((line): line is string => line !== null).join("\n");
-    return { subject, body };
-  }
-
-  const subject = `Price / availability request – ${product}`;
-  const body = [
-    "Hello SE Team,",
-    "",
-    "I would like to request a price and availability check for the following product:",
-    `Product: ${product}`,
-    req.targetVolume ? `Expected annual quantity: ${req.targetVolume}` : null,
-    req.projectTimeline ? `Required timing: ${req.projectTimeline}` : null,
-    productUrl ? `SE product page: ${productUrl}` : null,
-    "",
-    "Please provide, where available, a price indication, MOQ, current availability/lead time, and sample availability.",
-    "",
-    "Thank you and best regards,",
-  ].filter((line): line is string => line !== null).join("\n");
-  return { subject, body };
-}
-
-function technicalEmailDraft(req: Requirements, currentMatches: Match[], language: Language) {
-  const product = req.supportProduct ?? "top recommendation";
-  const selectedMatch = selectedMatchForHandoff(req, currentMatches);
-  const productUrl = selectedMatch?.product.product_url;
-  const focus = req.supportTopic ?? (language === "de" ? "Technische Eignung prüfen" : "Validate technical suitability");
-
-  if (language === "de") {
-    const subject = `Technische FAE-Prüfung – ${product}`;
-    const body = [
-      "Hallo SE FAE-Team,",
-      "",
-      "ich möchte eine technische Prüfung für folgende Produktempfehlung anfragen:",
-      `Produkt: ${product}`,
-      `Prüfschwerpunkt: ${focus}`,
-      productUrl ? `SE-Produktseite: ${productUrl}` : null,
-      "",
-      "Bitte prüfen Sie die technische Eignung und weisen Sie auf relevante Integrations-, HF-, Firmware- oder Zertifizierungsthemen hin.",
-      "",
-      "Vielen Dank und freundliche Grüße",
-    ].filter((line): line is string => line !== null).join("\n");
-    return { subject, body };
-  }
-
-  const subject = `Technical FAE review – ${product}`;
-  const body = [
-    "Hello SE FAE Team,",
-    "",
-    "I would like to request a technical review of the following product recommendation:",
-    `Product: ${product}`,
-    `Review focus: ${focus}`,
-    productUrl ? `SE product page: ${productUrl}` : null,
-    "",
-    "Please confirm the technical suitability and highlight any relevant integration, RF, firmware, or certification considerations.",
-    "",
-    "Thank you and best regards,",
-  ].filter((line): line is string => line !== null).join("\n");
-  return { subject, body };
+function faeContactHtml(language: Language) {
+  return `<div class="faeContact"><strong>${tr(language, "Contact FAE", "FAE kontaktieren")}:</strong> <a href="mailto:support@spezial.com">support@spezial.com</a></div>`;
 }
 
 
@@ -2947,6 +2901,7 @@ function App() {
       "productDomain",
       "catalogCategory",
       "technologies",
+      "bluetoothModes",
     ]);
 
     const showQuestion = (
@@ -3042,24 +2997,22 @@ function App() {
       setMultiSelected([]);
 
       if (nextReq.supportGoal === "technical") {
-        const draft = technicalEmailDraft(nextReq, matches, selectedLanguage);
         addMessage(
           "bot",
           tr(
             selectedLanguage,
             `FAE handoff context is ready: <strong>${htmlEscape(nextReq.supportProduct ?? "top recommendation")}</strong>${nextReq.supportTopic ? ` · ${htmlEscape(nextReq.supportTopic)}` : ""}. These handoff details do <strong>not</strong> change the technical ranking.`,
             `Der FAE-Übergabekontext ist vorbereitet: <strong>${htmlEscape(nextReq.supportProduct ?? "Top-Empfehlung")}</strong>${nextReq.supportTopic ? ` · ${htmlEscape(nextReq.supportTopic)}` : ""}. Diese Übergabeangaben ändern das technische Ranking <strong>nicht</strong>.`
-          ) + emailDraftHtml(draft.subject, draft.body, selectedLanguage)
+          ) + faeContactHtml(selectedLanguage)
         );
       } else if (nextReq.supportGoal === "commercial") {
-        const draft = commercialEmailDraft(nextReq, matches, selectedLanguage);
         addMessage(
           "bot",
           tr(
             selectedLanguage,
             `Commercial follow-up context is ready: <strong>${htmlEscape(nextReq.supportProduct ?? "top recommendation")}</strong>${nextReq.targetVolume ? ` · ${htmlEscape(nextReq.targetVolume)}` : ""}${nextReq.projectTimeline ? ` · ${htmlEscape(nextReq.projectTimeline)}` : ""}. These details do <strong>not</strong> change the technical ranking.`,
             `Der kaufmännische Follow-up-Kontext ist vorbereitet: <strong>${htmlEscape(nextReq.supportProduct ?? "Top-Empfehlung")}</strong>${nextReq.targetVolume ? ` · ${htmlEscape(nextReq.targetVolume)}` : ""}${nextReq.projectTimeline ? ` · ${htmlEscape(nextReq.projectTimeline)}` : ""}. Diese Angaben ändern das technische Ranking <strong>nicht</strong>.`
-          ) + emailDraftHtml(draft.subject, draft.body, selectedLanguage)
+          ) + faeContactHtml(selectedLanguage)
         );
       } else if (nextReq.supportGoal === "none") {
         addMessage(
@@ -3163,22 +3116,21 @@ function App() {
 
     if (requirements.productDomain === "connectivity") {
       expected.push("technologies");
+      const exactShortRangeProfile = ["Wi-Fi", "Multiradio", "Bluetooth LE", "Bluetooth Classic + LE", "Short Range Evaluation"].includes(requirements.catalogCategory ?? "");
       if (requirements.application === "asset tracking") expected.push("lowPower");
       if (requirements.technologies?.includes("cellular")) expected.push("cellularClass", "region");
-      if (requirements.technologies?.includes("wifi")) expected.push("architecture", "wifiGeneration");
-      if (requirements.technologies?.includes("bluetooth"))
-        expected.push("architecture", "bluetoothRequirement", "antenna");
-      if (requirements.technologies?.includes("gnss"))
-        expected.push("gnssPrecision", "gnssDualBand");
+      if (requirements.technologies?.includes("bluetooth") && requirements.catalogCategory !== "Multiradio") expected.push("bluetoothModes");
+      if (!exactShortRangeProfile && requirements.technologies?.includes("wifi")) expected.push("architecture", "wifiGeneration");
+      if (!exactShortRangeProfile && requirements.technologies?.includes("bluetooth")) expected.push("architecture", "bluetoothRequirement", "antenna");
+      if (requirements.technologies?.includes("gnss")) expected.push("gnssPrecision", "gnssDualBand");
     } else if (requirements.productDomain === "positioning") {
       expected.push("gnssPrecision", "gnssDualBand");
     } else if (requirements.productDomain === "antenna") {
-      expected.push("catalogCategory", "antennaApplication");
-      if (requirements.antennaApplication === "gnss") {
-        expected.push("antennaBand", "antennaActive");
-      }
-      if (requirements.antennaApplication === "wifi_bt") {
-        expected.push("antennaBand");
+      expected.push("catalogCategory");
+      if (requirements.catalogCategory !== "Other RF Components") {
+        expected.push("antennaApplication");
+        if (requirements.antennaApplication === "gnss") expected.push("antennaBand", "antennaActive");
+        if (requirements.antennaApplication === "wifi_bt") expected.push("antennaBand");
       }
     } else if (DOMAIN_CATEGORY_OPTIONS[requirements.productDomain ?? ""]?.length) {
       expected.push("catalogCategory");
@@ -3626,9 +3578,18 @@ function App() {
         break;
       }
       case "technologies": {
-        next.technologies = [
-          ...new Set(Array.isArray(value) ? value.map(String) : [String(value)]),
-        ];
+        const selected = [...new Set(Array.isArray(value) ? value.map(String) : [String(value)])];
+        const actualTechnologies = selected.filter((item) => ["cellular", "bluetooth", "wifi", "gnss"].includes(item));
+        if (selected.includes("multiradio")) { actualTechnologies.push("wifi", "bluetooth"); next.catalogCategory = "Multiradio"; }
+        else if (selected.includes("evaluation")) { next.catalogCategory = "Short Range Evaluation"; }
+        else if (selected.includes("other_rf")) { next.catalogCategory = "Other RF Components"; next.productDomain = "antenna"; }
+        else {
+          const uniqueActual=[...new Set(actualTechnologies)];
+          if (uniqueActual.length===1 && uniqueActual[0]==="wifi") next.catalogCategory="Wi-Fi";
+          else if (uniqueActual.length===2 && uniqueActual.includes("wifi") && uniqueActual.includes("bluetooth")) next.catalogCategory="Multiradio";
+          else if (["Wi-Fi","Multiradio","Bluetooth LE","Bluetooth Classic + LE","Short Range Evaluation","Other RF Components"].includes(next.catalogCategory ?? "")) next.catalogCategory=undefined;
+        }
+        next.technologies=[...new Set(actualTechnologies)];
 
         if (!next.technologies.includes("cellular")) {
           next.cellularClass = undefined;
@@ -3640,6 +3601,7 @@ function App() {
         }
         if (!next.technologies.includes("bluetooth")) {
           next.bluetoothRequirement = undefined;
+          next.bluetoothModes = undefined;
         }
         if (!next.technologies.includes("wifi") && !next.technologies.includes("bluetooth")) {
           next.architecture = undefined;
@@ -3651,6 +3613,14 @@ function App() {
           next.gnssPrecision = undefined;
           next.gnssDualBand = undefined;
         }
+        break;
+      }
+      case "bluetoothModes": {
+        const values=[...new Set(Array.isArray(value) ? value.map(String) : [String(value)])];
+        next.bluetoothModes=values;
+        if (values.includes("__open__")) { if (["Bluetooth LE","Bluetooth Classic + LE"].includes(next.catalogCategory ?? "")) next.catalogCategory=undefined; }
+        else if (values.includes("classic")) next.catalogCategory="Bluetooth Classic + LE";
+        else if (values.includes("le")) next.catalogCategory="Bluetooth LE";
         break;
       }
       case "positioning":
