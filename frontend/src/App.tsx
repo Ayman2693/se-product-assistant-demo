@@ -1446,7 +1446,7 @@ function questionFor(req: Requirements): { key: QuestionKey; text: string; optio
   if (!req.initialNeed) {
     return {
       key: "initialNeed",
-      text: "Hello.<br>I am the SE Product Assistant. How can I help you?<br><span class='botHint'>Briefly describe the application, component, or technical requirement you are looking for.</span>",
+      text: "Hello, I am the SE Product Assistant. How can I help you?<br><span class='botHint'>Briefly describe the application, component, or technical requirement you are looking for.</span>",
     };
   }
 
