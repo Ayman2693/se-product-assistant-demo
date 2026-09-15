@@ -990,3 +990,51 @@ a.evidenceSource:hover {
 .faeContact strong { margin-right: 6px; }
 .faeContact a { color: #b71c2b; font-weight: 850; text-decoration: none; }
 .faeContact a:hover { text-decoration: underline; }
+
+
+.brandRefresh {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  text-align: right;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.brandRefresh strong,
+.brandRefresh span {
+  display: block;
+}
+
+.brandRefresh:hover strong {
+  text-decoration: underline;
+}
+
+.brandRefresh {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.brandRefresh strong {
+  display: block;
+  font-size: 16px;
+}
+
+.brandRefresh span {
+  display: block;
+  color: #64717d;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.brandRefresh:hover strong {
+  color: #b71c2b;
+}

@@ -510,7 +510,7 @@ function localizeQuestion(
 
   const exact: Record<string, string> = {
     "Hello.<br>I am the SE Product Assistant. How can I help you?<br><span class='botHint'>Briefly describe the application, component, or technical requirement you are looking for.</span>":
-      "Hallo, Ich bin der SE Product Assistant. Wie kann ich Ihnen helfen?<br><span class='botHint'>Beschreiben Sie kurz Ihre Anwendung, die gesuchte Komponente oder Ihre technische Anforderung.</span>",
+      "Hallo.<br>Ich bin der SE Product Assistant. Wie kann ich Ihnen helfen?<br><span class='botHint'>Beschreiben Sie kurz Ihre Anwendung, die gesuchte Komponente oder Ihre technische Anforderung.</span>",
     "Which product area best matches what you are looking for?":
       "Welcher Produktbereich passt am besten zu Ihrer Anforderung?",
     "Which connectivity / positioning technologies are required? You can select more than one.":
@@ -1446,7 +1446,7 @@ function questionFor(req: Requirements): { key: QuestionKey; text: string; optio
   if (!req.initialNeed) {
     return {
       key: "initialNeed",
-      text: "Hello, I am the SE Product Assistant. How can I help you?<br><span class='botHint'>Briefly describe the application, component, or technical requirement you are looking for.</span>",
+      text: "Hello.<br>I am the SE Product Assistant. How can I help you?<br><span class='botHint'>Briefly describe the application, component, or technical requirement you are looking for.</span>",
     };
   }
 
@@ -4062,7 +4062,19 @@ function App() {
       <header className="topbar">
         <div className="brand">
           <img src="/se-logo.png" alt="SE Spezial-Electronic" className="seLogo" />
-          <div>
+          <div
+            role="button"
+            tabIndex={0}
+            title={tr(language, "Restart conversation", "Konversation neu starten")}
+            onClick={reset}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                reset();
+              }
+            }}
+            style={{ cursor: "pointer" }}
+          >
             <strong>{tr(language, "Intelligent Product Assistant", "Intelligenter Produktassistent")}</strong>
             <span>{tr(language, "FAE-guided product selection", "FAE-gestützte Produktauswahl")}</span>
           </div>
